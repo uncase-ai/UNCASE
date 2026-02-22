@@ -1,0 +1,13 @@
+User-Agent: *
+Allow: /
+
+# Sitemap locations
+Sitemap: https://shadcn-nextjs-flow-landing-page.vercel.app/sitemap.xml
+
+# Disallow specific paths
+Disallow: /private/*
+Disallow: /*?*                        # Disallow URLs with a query string
+Disallow: /login                      # Exclude login page
+Disallow: /register                   # Exclude registration page
+Disallow: /forgot-password            # Exclude password recovery page
+Disallow: /reset-password             # Exclude password reset page

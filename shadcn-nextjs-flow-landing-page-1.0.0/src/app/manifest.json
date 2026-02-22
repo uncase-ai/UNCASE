@@ -1,0 +1,74 @@
+{
+  "name": "Flow - SaaS Landing page",
+  "short_name": "Flow",
+  "description": "Grow your product faster with an all-in-one sales and analytics platform. Track performance, automate follow-ups, and make smarter decisions easily.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "categories": [
+    "sales",
+    "analytics",
+    "productivity",
+    "business intelligence",
+    "growth",
+    "saas"
+  ],
+  "icons": [
+    {
+      "src": "/favicon/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/images/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Home",
+      "short_name": "Home",
+      "description": "Go to homepage",
+      "url": "/"
+    },
+    {
+      "name": "Blog",
+      "short_name": "Blog",
+      "description": "Explore blog posts",
+      "url": "/blog"
+    },
+    {
+      "name": "Pricing",
+      "short_name": "Pricing",
+      "description": "Explore pricing options",
+      "url": "/pricing"
+    }
+  ]
+}
