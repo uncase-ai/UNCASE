@@ -28,27 +28,27 @@ import RegularUpdatesCard from '@/components/blocks/features/regular-updates-car
 
 const visitorData = [
   {
-    product: 'Desktop',
-    percentage: 28,
-    amount: 23.82,
+    product: 'ROUGE-L',
+    percentage: 65,
+    amount: 0.65,
     trend: 'up',
-    heightClass: 'h-[28%]',
+    heightClass: 'h-[65%]',
     color: 'bg-primary'
   },
   {
-    product: 'Tablet',
-    percentage: 78,
-    amount: 13.61,
-    trend: 'down',
-    heightClass: 'h-[78%]',
+    product: 'Factual',
+    percentage: 90,
+    amount: 0.90,
+    trend: 'up',
+    heightClass: 'h-[90%]',
     color: 'bg-secondary'
   },
   {
-    product: 'Mobile',
-    percentage: 32,
-    amount: 47.14,
+    product: 'Privacy',
+    percentage: 100,
+    amount: 0.00,
     trend: 'up',
-    heightClass: 'h-[32%]',
+    heightClass: 'h-[100%]',
     color: 'bg-primary/60'
   }
 ]
@@ -64,12 +64,12 @@ const Features = () => {
           transition={{ duration: 0.5 }}
           className='mb-12 space-y-4 text-center sm:mb-16 lg:mb-24'
         >
-          <p className='text-primary text-sm font-medium uppercase'>Features</p>
+          <p className='text-primary text-sm font-medium uppercase'>Architecture</p>
 
-          <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>Powerful Features, Simple to Use</h2>
+          <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>5-Layer Pipeline, Zero Real Data</h2>
 
           <p className='text-muted-foreground text-xl'>
-            Everything you need to manage sales, track growth, and stay focused-without the clutter.
+            From expert knowledge to trained LoRA adapters — every layer delivers value independently.
           </p>
         </MotionPreset>
 
@@ -88,9 +88,9 @@ const Features = () => {
                   >
                     <StatCard
                       avatarIcon={<UsersRoundIcon className='size-4' />}
-                      title='Total visitors'
-                      statNumber='23.02K'
-                      percentage={-6}
+                      title='Quality Score'
+                      statNumber='0.92'
+                      percentage={12}
                     />
                   </MotionPreset>
 
@@ -143,8 +143,8 @@ const Features = () => {
                           </AvatarFallback>
                         </Avatar>
                         <p className='text-muted-foreground text-xs'>
-                          User are improved by <span className='text-card-foreground'>32%</span> than last month and
-                          product reached to 2,432 new users
+                          Quality metrics improved by <span className='text-card-foreground'>32%</span> with seed
+                          optimization — zero PII detected across 40K synthetic conversations
                         </p>
                       </MotionPreset>
                     </Magnetic>
@@ -160,7 +160,7 @@ const Features = () => {
                     transition={{ duration: 0.5 }}
                     className='text-2xl font-semibold'
                   >
-                    Product reach
+                    Layer 0 — Seed Engine
                   </MotionPreset>
                   <MotionPreset
                     component='p'
@@ -170,8 +170,8 @@ const Features = () => {
                     transition={{ duration: 0.5 }}
                     className='text-muted-foreground'
                   >
-                    See how many people discover and engage with your product visitors, views and conversion signals at
-                    a glance.
+                    Convert expert conversations into abstract seed structures — capturing reasoning patterns without
+                    any sensitive data.
                   </MotionPreset>
                 </CardContent>
               </Card>
@@ -229,7 +229,7 @@ const Features = () => {
                   >
                     <Badge className='bg-background text-foreground border-border gap-2.5 px-3 py-1.5 transition-shadow duration-200 hover:shadow-sm'>
                       <ZapIcon className='size-3.5' />
-                      Athlete
+                      Healthcare
                     </Badge>
                   </MotionPreset>
 
@@ -256,7 +256,7 @@ const Features = () => {
                   >
                     <Badge className='bg-background text-foreground border-border gap-2.5 px-3 py-1.5 transition-shadow duration-200 hover:shadow-sm'>
                       <PaintbrushIcon className='size-3.5' />
-                      Artists
+                      Finance
                     </Badge>
                   </MotionPreset>
 
@@ -283,7 +283,7 @@ const Features = () => {
                   >
                     <Badge className='bg-background text-foreground border-border gap-2.5 px-3 py-1.5 transition-shadow duration-200 hover:shadow-sm'>
                       <BriefcaseBusinessIcon className='size-3.5' />
-                      Professionals
+                      Legal
                     </Badge>
                   </MotionPreset>
 
@@ -310,7 +310,7 @@ const Features = () => {
                   >
                     <Badge className='bg-background text-foreground border-border gap-2.5 px-3 py-1.5 transition-shadow duration-200 hover:shadow-sm'>
                       <GraduationCapIcon className='size-3.5' />
-                      Student
+                      Education
                     </Badge>
                   </MotionPreset>
                 </MotionPreset>
@@ -325,7 +325,7 @@ const Features = () => {
                     transition={{ duration: 0.5 }}
                     className='text-2xl font-semibold'
                   >
-                    Targeted Visibility
+                    Domain-Agnostic Design
                   </MotionPreset>
 
                   <MotionPreset
@@ -337,7 +337,7 @@ const Features = () => {
                     transition={{ duration: 0.5 }}
                     className='text-muted-foreground'
                   >
-                    Show your product only to selected customers, segments or regions tiers for precise marketing.
+                    The same core pipeline works across healthcare, finance, legal, education, and manufacturing — one framework, any industry.
                   </MotionPreset>
                 </CardContent>
               </Card>
@@ -473,7 +473,7 @@ const Features = () => {
                     transition={{ duration: 0.5 }}
                     className='text-2xl font-semibold'
                   >
-                    Customer Payments
+                    Regulatory Compliance
                   </MotionPreset>
 
                   <MotionPreset
@@ -485,8 +485,8 @@ const Features = () => {
                     transition={{ duration: 0.5 }}
                     className='text-muted-foreground'
                   >
-                    Track who paid, how much, and the payment status - one clear ledger for sales, refunds and
-                    reconciliations.
+                    GDPR, HIPAA, LFPDPPP, AI Act, CCPA — UNCASE is designed to comply with all major privacy
+                    regulations simultaneously.
                   </MotionPreset>
                 </CardContent>
               </Card>

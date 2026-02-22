@@ -26,12 +26,12 @@ const CTASection = () => {
               className='flex flex-col items-center justify-center gap-4'
             >
               <h2 className='dark:text-foreground text-2xl font-semibold text-white md:text-3xl lg:text-4xl'>
-                Take Control of Your Sales Pipeline
+                Build the Future of Privacy-First AI
               </h2>
 
               <p className='dark:text-muted-foreground w-full text-xl text-white/80 lg:max-w-2xl'>
-                Join Flow and get a complete overview of your users, sales, and performance - all from one powerful
-                dashboard.
+                Join the UNCASE community. Contribute to the framework, extend domain namespaces, or deploy your own
+                specialized LoRA adapters.
               </p>
             </MotionPreset>
             <MotionPreset
@@ -60,12 +60,12 @@ const CTASection = () => {
               <Input
                 type='email'
                 name='cta-email'
-                placeholder='Your email address'
+                placeholder='Your email for updates'
                 className='h-10 border-none shadow-none focus-visible:ring-transparent dark:bg-transparent'
                 required
               />
               <PrimaryFlowButton size='lg' className='hidden shrink-0 sm:inline-flex'>
-                Get started
+                Stay updated
               </PrimaryFlowButton>
               <PrimaryFlowButton size='icon-lg' className='hidden shrink-0 max-sm:inline-flex' type='submit'>
                 <SendIcon />

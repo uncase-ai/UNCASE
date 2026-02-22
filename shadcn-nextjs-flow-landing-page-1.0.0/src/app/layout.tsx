@@ -22,19 +22,21 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    template: 'Demo: %s - Flow | Shadcn Studio',
-    default: 'Demo: Flow - SaaS Landing page | Shadcn Studio'
+    template: '%s | UNCASE',
+    default: 'UNCASE — Open Source Synthetic Data Framework for Regulated Industries'
   },
   description:
-    'Grow your product faster with an all-in-one sales and analytics platform. Track performance, automate follow-ups, and make smarter decisions easily.',
+    'Generate high-quality synthetic conversational data for LoRA fine-tuning in privacy-sensitive industries. Healthcare, finance, legal, and more — without exposing real data.',
   robots: 'index,follow',
   keywords: [
-    'sales analytics',
-    'product growth',
-    'sales dashboard',
-    'business analytics',
-    'growth tracking',
-    'sales performance'
+    'synthetic data',
+    'LoRA fine-tuning',
+    'privacy AI',
+    'open source framework',
+    'regulated industries',
+    'conversational AI',
+    'GDPR compliant AI',
+    'seed engineering'
   ],
   icons: {
     icon: [
@@ -79,13 +81,13 @@ export const metadata: Metadata = {
   metadataBase: new URL(`${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}`),
   openGraph: {
     title: {
-      template: 'Demo: %s - Flow | Shadcn Studio',
-      default: 'Demo: Flow - SaaS Landing page | Shadcn Studio'
+      template: '%s | UNCASE',
+      default: 'UNCASE — Open Source Synthetic Data Framework for Regulated Industries'
     },
     description:
-      'Grow your product faster with an all-in-one sales and analytics platform. Track performance, automate follow-ups, and make smarter decisions easily.',
+      'Generate high-quality synthetic conversational data for LoRA fine-tuning in privacy-sensitive industries. Healthcare, finance, legal, and more — without exposing real data.',
     type: 'website',
-    siteName: 'Flow',
+    siteName: 'UNCASE',
     url: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}`,
     images: [
       {
@@ -93,25 +95,25 @@ export const metadata: Metadata = {
         type: 'image/png',
         width: 1200,
         height: 630,
-        alt: 'Flow - SaaS Landing page'
+        alt: 'UNCASE — Synthetic Data Framework'
       }
     ]
   },
   twitter: {
     card: 'summary_large_image',
     title: {
-      template: 'Demo: %s - Flow | Shadcn Studio',
-      default: 'Demo: Flow - SaaS Landing page | Shadcn Studio'
+      template: '%s | UNCASE',
+      default: 'UNCASE — Open Source Synthetic Data Framework for Regulated Industries'
     },
     description:
-      'Grow your product faster with an all-in-one sales and analytics platform. Track performance, automate follow-ups, and make smarter decisions easily.'
+      'Generate high-quality synthetic conversational data for LoRA fine-tuning in privacy-sensitive industries. Healthcare, finance, legal, and more — without exposing real data.'
   }
 }
 
 const RootLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
   return (
     <html
-      lang='en'
+      lang='es'
       className={cn(geistSans.variable, geistMono.variable, 'flex min-h-full w-full scroll-smooth antialiased')}
       suppressHydrationWarning
     >

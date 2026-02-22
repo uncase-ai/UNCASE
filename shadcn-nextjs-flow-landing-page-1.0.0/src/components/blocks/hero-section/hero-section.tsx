@@ -49,7 +49,7 @@ const HeroSection = () => {
             className='z-10'
           >
             <Badge variant='outline' className='bg-background text-sm font-normal'>
-              Trusted by 5,000+ growing businesses
+              Open Source Framework — Privacy-First Synthetic Data
             </Badge>
           </MotionPreset>
 
@@ -62,7 +62,7 @@ const HeroSection = () => {
             component='h1'
             className='z-10 text-center text-3xl font-semibold md:text-4xl lg:text-5xl lg:leading-[1.29167]'
           >
-            Supercharge Your Product&rsquo;s <TextFlip />
+            Fine-tune AI for <TextFlip />
           </MotionPreset>
 
           <MotionPreset
@@ -74,8 +74,8 @@ const HeroSection = () => {
             component='p'
             className='text-muted-foreground z-10 max-w-156 text-center text-xl'
           >
-            Track every key metric in one clean dashboard - no code, no setup, just real-time insights that help you
-            grow smarter.
+            Generate high-quality synthetic conversational data for LoRA fine-tuning — without exposing a single real
+            data point. Privacy by design, domain-agnostic, open source.
           </MotionPreset>
 
           <MotionPreset
@@ -87,8 +87,8 @@ const HeroSection = () => {
             className='z-10'
           >
             <PrimaryFlowButton size='lg' asChild>
-              <Link href='#'>
-                Start building now
+              <Link href='https://github.com/marianomoralesr/UNCASE'>
+                View on GitHub
                 <ArrowUpRightIcon />
               </Link>
             </PrimaryFlowButton>
@@ -399,10 +399,10 @@ const HeroSection = () => {
           <div className='bg-primary text-primary-foreground mt-2 flex items-center gap-10 rounded-xl px-3.5 py-2 shadow-lg'>
             <div className='flex items-center gap-2 font-medium'>
               <FlowLogo className='size-8 rounded-full shadow-[0_20px_25px_-8px_var(--primary-foreground),0_8px_10px_-6px_var(--primary-foreground)]' />
-              {scrollProgress < 27 && <span>Welcome to dashboard</span>}
-              {scrollProgress >= 27 && scrollProgress < 37 && <span>Your product orders</span>}
-              {scrollProgress >= 37 && scrollProgress < 47 && <span>Product&rsquo;s insight</span>}
-              {scrollProgress >= 47 && <span>User payments</span>}
+              {scrollProgress < 27 && <span>Seed Engine ready</span>}
+              {scrollProgress >= 27 && scrollProgress < 37 && <span>Parsing conversations</span>}
+              {scrollProgress >= 37 && scrollProgress < 47 && <span>Quality validated</span>}
+              {scrollProgress >= 47 && <span>LoRA adapter trained</span>}
             </div>
             {scrollProgress >= 47 ? (
               <CircleCheckIcon className='size-4.5' />

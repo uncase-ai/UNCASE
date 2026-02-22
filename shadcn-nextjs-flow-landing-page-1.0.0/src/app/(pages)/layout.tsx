@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react'
 
 import {
-  LayoutDashboardIcon,
-  TelescopeIcon,
-  ChartScatterIcon,
-  ChartPieIcon,
-  GitPullRequestIcon,
-  UsersIcon
+  LayersIcon,
+  ShieldCheckIcon,
+  BrainCircuitIcon,
+  DatabaseIcon,
+  FileTextIcon,
+  BookOpenIcon
 } from 'lucide-react'
 
 import Header from '@/components/layout/header'
@@ -15,55 +15,55 @@ import type { Navigation } from '@/components/layout/header-navigation'
 
 const navigationData: Navigation[] = [
   {
-    title: 'Features',
+    title: 'Architecture',
     contentClassName: '!w-141 grid-cols-2',
     splitItems: true,
     items: [
       {
         type: 'section',
-        title: 'Analytics & Insights',
+        title: 'Core Pipeline',
         items: [
           {
-            title: 'Unified Dashboard',
+            title: '5-Layer Architecture',
             href: '/#features',
-            description: 'Get every key business metric in one place.',
-            icon: <LayoutDashboardIcon className='size-4' />
+            description: 'From seed engineering to LoRA-ready adapters.',
+            icon: <LayersIcon className='size-4' />
           },
           {
-            title: 'Competitor Tracking',
-            href: '#',
-            description: 'Benchmark performance and market trends.',
-            icon: <TelescopeIcon className='size-4' />
+            title: 'Privacy by Design',
+            href: '/#features',
+            description: 'Zero real data transits through the pipeline.',
+            icon: <ShieldCheckIcon className='size-4' />
           },
           {
-            title: 'Sales Analytics',
-            href: '#',
-            description: 'Track revenue growth, conversions & profitability.',
-            icon: <ChartScatterIcon className='size-4' />
+            title: 'Synthetic Generation',
+            href: '/#features',
+            description: 'High-quality conversational data from abstract seeds.',
+            icon: <BrainCircuitIcon className='size-4' />
           }
         ]
       },
       {
         type: 'section',
-        title: 'Productivity & Optimization',
+        title: 'Integration',
         items: [
           {
-            title: 'Report & Export',
-            href: '#',
-            description: 'Share insights quickly with automated reporting.',
-            icon: <ChartPieIcon className='size-4' />
+            title: 'Multi-format Parser',
+            href: '/#features',
+            description: 'WhatsApp, JSON, CRM, transcriptions, and more.',
+            icon: <DatabaseIcon className='size-4' />
           },
           {
-            title: 'Workflow Scheduling',
-            href: '#',
-            description: 'Plan content & operational tasks seamlessly.',
-            icon: <GitPullRequestIcon className='size-4' />
+            title: 'LoRA Pipeline',
+            href: '/#features',
+            description: 'Automated fine-tuning with ShareGPT, Alpaca, ChatML.',
+            icon: <FileTextIcon className='size-4' />
           },
           {
-            title: 'User Management',
-            href: '#',
-            description: 'Manage roles and access with complete control.',
-            icon: <UsersIcon className='size-4' />
+            title: 'Documentation',
+            href: '/#faq',
+            description: 'Whitepapers, guides, and technical specs.',
+            icon: <BookOpenIcon className='size-4' />
           }
         ]
       }
@@ -74,16 +74,12 @@ const navigationData: Navigation[] = [
     href: '/#benefits'
   },
   {
-    title: 'Testimonials',
+    title: 'Use Cases',
     href: '/#testimonials'
   },
   {
-    title: 'Pricing',
-    href: '/pricing'
-  },
-  {
-    title: 'Blog',
-    href: '/blog'
+    title: 'Open Source',
+    href: '/#pricing'
   }
 ]
 

@@ -2,79 +2,80 @@ import type { TestimonialItem } from '@/components/blocks/testimonials/testimoni
 
 export const testimonials: TestimonialItem[] = [
   {
-    name: 'Emily Watson',
-    username: '@emilywatson',
+    name: 'Automotive Dealership',
+    username: '@automotive.sales',
     avatar: '/images/avatar/avatar-7.webp',
-    rating: 4.5,
+    rating: 5,
     content: (
       <>
-        Finally, a dashboard that shows{' '}
-        <span className='bg-primary/5 text-primary'>everything that matters-users, orders, and revenue</span> all in one
-        clean view. It helps us make informed decisions much faster.
+        6 sales points, 150 salespeople, thousands of WhatsApp conversations.{' '}
+        <span className='bg-primary/5 text-primary'>80 seeds generated 40,000 synthetic conversations</span> — new
+        salespeople onboard with a specialized AI assistant in 12 weeks.
       </>
     )
   },
   {
-    name: 'Alex Rivera',
-    username: '@alexrivera',
+    name: 'Primary Care Network',
+    username: '@medical.consultation',
     avatar: '/images/avatar/avatar-8.webp',
     rating: 5,
     content: (
       <>
-        The interface is incredibly intuitive and the tools are very practical. We&apos;ve{' '}
-        <span className='bg-primary/5 text-primary'>cut our deal cycle time almost in half</span> since making the
-        switch. Adoption across the team was effortless.
+        45 rural clinics with chronic physician shortage. Experienced doctors became seed engineers —{' '}
+        <span className='bg-primary/5 text-primary'>synthetic triage protocols specific to local disease patterns</span>{' '}
+        expanded nursing capacity without replacing physicians.
       </>
     )
   },
   {
-    name: 'Marcus Johnson',
-    username: '@marcusjohnson',
+    name: 'Corporate Law Firm',
+    username: '@legal.advisory',
     avatar: '/images/avatar/avatar-9.webp',
     rating: 4.5,
     content: (
       <>
-        The seamless integrations streamlined my daily workflow significantly. I can manage emails, track clients, and
-        schedule follow-ups <span className='bg-primary/5 text-primary'>without ever leaving the platform</span>.
+        20 years of privileged attorney-client conversations. Seeds capture{' '}
+        <span className='bg-primary/5 text-primary'>analytical patterns without conversation details</span> — the model
+        learns domain rigor while attorney-client privilege remains intact.
       </>
     )
   },
   {
-    name: 'Sarah Chen',
-    username: '@sarahchen',
+    name: 'Wealth Management',
+    username: '@finance.advisory',
     avatar: '/images/avatar/avatar-10.webp',
     rating: 5,
     content: (
       <>
-        From onboarding to daily usage, everything feels well thought out. The components are{' '}
-        <span className='bg-primary/5 text-primary'>polished, consistent, and production-ready</span>. Shipping new
-        features is noticeably faster.
+        15 portfolio advisors, high-net-worth clients. Seeds abstract rebalancing and{' '}
+        <span className='bg-primary/5 text-primary'>risk communication patterns during market volatility</span> —
+        consistent, specialized client communication at scale.
       </>
     )
   },
   {
-    name: 'Ncdai',
-    username: '@ncdai',
+    name: 'Manufacturing Plant',
+    username: '@industrial.support',
     avatar: '/images/avatar/avatar-2.webp',
-    rating: 4,
+    rating: 4.5,
     content: (
       <>
-        Clean design and sensible defaults make a huge difference. The{' '}
-        <span className='bg-primary/5 text-primary'>documentation is clear and easy to follow</span>, which saved me
-        hours during setup.
+        Decades of fault diagnosis expertise from senior technicians.{' '}
+        <span className='bg-primary/5 text-primary'>Predictive maintenance patterns encoded as seeds</span> — new
+        engineers diagnose issues faster with AI-assisted troubleshooting.
       </>
     )
   },
   {
-    name: 'Lisa Thompson',
-    username: '@lisathompson',
+    name: 'E-learning Platform',
+    username: '@education.tutoring',
     avatar: '/images/avatar/avatar-1.webp',
     rating: 5,
     content: (
       <>
-        I&apos;ve used many UI kits, but this one strikes the perfect balance. The{' '}
-        <span className='bg-primary/5 text-primary'>customization options are incredibly flexible</span> without
-        sacrificing design quality.
+        Adaptive evaluation patterns from master teachers.{' '}
+        <span className='bg-primary/5 text-primary'>Synthetic tutoring sessions personalized to learning gaps</span> —
+        AI tutors that understand pedagogical strategies, not just content.
       </>
     )
   }

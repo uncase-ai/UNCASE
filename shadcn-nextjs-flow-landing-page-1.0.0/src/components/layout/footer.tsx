@@ -21,12 +21,12 @@ const Footer = () => {
             <Logo />
           </Link>
           <p className='text-muted-foreground'>
-            Flow helps you centralize your product, sales, and user data - all in one simple, real-time dashboard built
-            for growing businesses.
+            UNCASE — Open source framework for generating high-quality synthetic conversational data for LoRA fine-tuning
+            in privacy-sensitive industries.
           </p>
           <Separator className='w-35!' />
           <div className='flex items-center gap-4'>
-            <Link href='#' aria-label='Github Link'>
+            <Link href='https://github.com/marianomoralesr/UNCASE' aria-label='Github Link'>
               <GithubIcon className='text-muted-foreground hover:text-foreground size-5' />
             </Link>
             <Link href='#' aria-label='Instagram Link'>
@@ -42,16 +42,11 @@ const Footer = () => {
         </div>
         <div className='col-span-full grid grid-cols-2 gap-6 sm:grid-cols-4 lg:col-span-4 lg:gap-8'>
           <div className='flex flex-col gap-5'>
-            <div className='text-lg font-medium'>Company</div>
+            <div className='text-lg font-medium'>Framework</div>
             <ul className='text-muted-foreground space-y-3'>
               <li>
-                <Link href='/#testimonials' className='hover:text-foreground transition-colors duration-300'>
-                  Testimonials
-                </Link>
-              </li>
-              <li>
                 <Link href='/#features' className='hover:text-foreground transition-colors duration-300'>
-                  Features
+                  Architecture
                 </Link>
               </li>
               <li>
@@ -60,38 +55,43 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link href='/pricing' className='hover:text-foreground transition-colors duration-300'>
-                  Pricing
+                <Link href='/#testimonials' className='hover:text-foreground transition-colors duration-300'>
+                  Use Cases
                 </Link>
               </li>
               <li>
-                <Link href='/blog' className='hover:text-foreground transition-colors duration-300'>
-                  Blog
+                <Link href='/#pricing' className='hover:text-foreground transition-colors duration-300'>
+                  Open Source
+                </Link>
+              </li>
+              <li>
+                <Link href='/#faq' className='hover:text-foreground transition-colors duration-300'>
+                  FAQ
                 </Link>
               </li>
             </ul>
           </div>
           <div className='flex flex-col gap-5'>
-            <div className='text-lg font-medium'>Help</div>
+            <div className='text-lg font-medium'>Resources</div>
             <ul className='text-muted-foreground space-y-3'>
               <li>
-                <Link href='#' className='hover:text-foreground transition-colors duration-300'>
-                  Customer Support
+                <Link href='https://github.com/marianomoralesr/UNCASE' className='hover:text-foreground transition-colors duration-300'>
+                  GitHub Repository
+                </Link>
+              </li>
+              <li>
+                <Link href='https://github.com/marianomoralesr/UNCASE/issues' className='hover:text-foreground transition-colors duration-300'>
+                  Report Issues
                 </Link>
               </li>
               <li>
                 <Link href='#' className='hover:text-foreground transition-colors duration-300'>
-                  Delivery Details
+                  SCSF Whitepaper
                 </Link>
               </li>
               <li>
                 <Link href='#' className='hover:text-foreground transition-colors duration-300'>
-                  Terms & Conditions
-                </Link>
-              </li>
-              <li>
-                <Link href='#' className='hover:text-foreground transition-colors duration-300'>
-                  Privacy Policy
+                  Contributing Guide
                 </Link>
               </li>
             </ul>
@@ -124,11 +124,11 @@ const Footer = () => {
 
       <div className='mx-auto flex max-w-7xl justify-center px-4 py-6 sm:px-6'>
         <p className='text-muted-foreground text-center text-balance'>
-          {`©${new Date().getFullYear()}`}{' '}
+          {`©2025–${new Date().getFullYear()}`}{' '}
           <Link className='text-foreground font-medium hover:underline' href='/#home'>
-            Flow
+            UNCASE
           </Link>{' '}
-          All rights reserved | Built to empower product teams worldwide.
+          — Open Source Framework for Privacy-Sensitive Synthetic Data Generation.
         </p>
       </div>
     </footer>

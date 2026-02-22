@@ -33,7 +33,7 @@ export type Plans = {
 }[]
 
 const Pricing = ({ plans }: { plans: Plans }) => {
-  const [billingPeriod, setBillingPeriod] = useState('monthly')
+  const [billingPeriod] = useState('monthly')
 
   return (
     <section id='pricing' className='relative overflow-hidden py-8 sm:py-16 lg:py-24'>
@@ -46,44 +46,18 @@ const Pricing = ({ plans }: { plans: Plans }) => {
           blur
           transition={{ duration: 0.5 }}
         >
-          <p className='text-primary text-sm font-medium uppercase'>Pricing</p>
+          <p className='text-primary text-sm font-medium uppercase'>Open Source</p>
 
-          <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>Pricing Details</h2>
+          <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>Free and Open Source</h2>
 
           <p className='text-muted-foreground text-xl'>
-            A comprehensive breakdown of our pricing plans to help you make the best choice.
+            UNCASE is open source at its core. Enterprise and research programs offer additional support.
           </p>
 
           <div className='mx-auto mb-9 w-fit rounded-lg border border-dashed px-2 py-0.5'>
             <p className='text-muted-foreground'>
-              Flat <span className='text-destructive'>20%</span> off for first 250 user
+              The core framework is <span className='text-primary font-semibold'>100% free</span> — forever
             </p>
-          </div>
-
-          {/* Billing Toggle */}
-          <div className='flex justify-center'>
-            <Tabs
-              value={billingPeriod === 'yearly' ? 'yearly' : 'monthly'}
-              onValueChange={value => setBillingPeriod(value)}
-              className='bg-muted rounded-lg p-0.75'
-            >
-              <TabsList className='h-auto bg-transparent p-0'>
-                <TabsTrigger
-                  value='monthly'
-                  className='data-[state=active]:bg-background data-[state=active]:text-muted dark:data-[state=active]:text-muted dark:data-[state=active]:bg-background px-3 py-1 data-[state=active]:shadow-sm dark:data-[state=active]:border-transparent'
-                  aria-hidden
-                >
-                  <span className='text-foreground text-base'>Monthly</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value='yearly'
-                  className='data-[state=active]:bg-background data-[state=active]:text-muted dark:data-[state=active]:text-muted dark:data-[state=active]:bg-background px-3 py-1 data-[state=active]:shadow-sm dark:data-[state=active]:border-transparent'
-                  aria-hidden
-                >
-                  <span className='text-foreground text-base'>Yearly</span>
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
           </div>
         </MotionPreset>
 

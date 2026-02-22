@@ -20,12 +20,12 @@ const Testimonials = ({ testimonials }: { testimonials: TestimonialItem[] }) => 
         blur
         transition={{ duration: 0.5 }}
       >
-        <p className='text-primary text-sm font-medium uppercase'>Testimonials</p>
+        <p className='text-primary text-sm font-medium uppercase'>Use Cases</p>
 
-        <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>Trusted by People Who Sell Smarter</h2>
+        <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>Real-World Applications Across Industries</h2>
 
         <p className='text-muted-foreground text-xl'>
-          Real stories from users who simplified their sales process and grew their revenue with Flow.
+          From automotive dealerships to rural clinics — UNCASE turns specialized knowledge into AI capabilities.
         </p>
       </MotionPreset>
 
@@ -48,8 +48,8 @@ const Testimonials = ({ testimonials }: { testimonials: TestimonialItem[] }) => 
             <p className='text-muted-foreground text-sm font-medium'>Stars out of 5</p>
           </div>
           <PrimaryFlowButton size='lg' asChild>
-            <Link href='#'>
-              View all testimonials
+            <Link href='https://github.com/marianomoralesr/UNCASE'>
+              Read the whitepaper
               <ExternalLinkIcon />
             </Link>
           </PrimaryFlowButton>

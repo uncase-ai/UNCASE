@@ -13,7 +13,7 @@ const TrustedBrands = ({ brandLogos }: { brandLogos: brandLogos[] }) => {
       <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
         {/* Header */}
         <div className='mb-4 space-y-4 text-center sm:mb-6 lg:mb-8'>
-          <p className='text-muted-foreground text-xl'>Trusted by startups, enterprises, and industry giants alike.</p>
+          <p className='text-muted-foreground text-xl'>Built on research from leading institutions and validated empirically.</p>
         </div>
 
         <div className='relative'>

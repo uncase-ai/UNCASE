@@ -1,61 +1,61 @@
-import { Flower2Icon, FlowerIcon, SproutIcon } from 'lucide-react'
+import { SproutIcon, FlowerIcon, Flower2Icon } from 'lucide-react'
 
 import { type Plans } from '@/components/blocks/pricing/pricing'
 
 export const plans: Plans = [
   {
     icon: <SproutIcon />,
-    title: 'Essential Plan',
-    description: 'Perfect for solo founders and small teams',
+    title: 'Community',
+    description: 'Open source — free forever for everyone.',
     price: {
-      yearly: 24,
-      monthly: 29
+      yearly: 0,
+      monthly: 0
     },
-    period: '/month',
-    buttonText: 'Basic Access',
+    period: ' free',
+    buttonText: 'Get Started',
     features: [
-      '1 user seat',
-      'Real-time product analytics',
-      'Up to 1K tracked users',
-      'Basic revenue insights',
-      'Email support'
+      'Full 5-layer SCSF pipeline',
+      'All 6 industry namespaces',
+      'SeedSchema v1 specification',
+      'Quality evaluation metrics',
+      'Community support via GitHub'
     ]
   },
   {
     icon: <FlowerIcon />,
-    title: 'Advanced Plan',
-    description: 'Build for small businesses.',
+    title: 'Enterprise',
+    description: 'For organizations in regulated industries.',
     price: {
-      yearly: 39,
-      monthly: 49
+      yearly: 0,
+      monthly: 0
     },
-    period: '/month',
-    buttonText: 'Premium Access',
+    period: ' contact us',
+    buttonText: 'Contact Sales',
     features: [
-      'Up to 10 user seats',
-      'Advanced sales & engagement reports',
-      'Up to 10K tracked users',
-      'Smart growth insights'
+      'Everything in Community',
+      'Dedicated seed engineering workshops',
+      'Custom domain namespace setup',
+      'Compliance audit documentation'
     ],
-    extraFeatures: ['API & integrations', 'Team collaboration tools', 'Secure data infrastructure'],
+    extraFeatures: ['Priority support & SLA', 'On-premise deployment', 'Custom LLM integration'],
     isPopular: true
   },
   {
     icon: <Flower2Icon />,
-    title: 'Pro Plan',
-    description: 'Designed for growing teams and business.',
+    title: 'Research',
+    description: 'For academic and research institutions.',
     price: {
-      yearly: 80,
-      monthly: 99
+      yearly: 0,
+      monthly: 0
     },
-    period: '/month',
-    buttonText: 'Elite Access',
+    period: ' free',
+    buttonText: 'Apply for Access',
     features: [
-      'Up to 25 user seats',
-      'Advanced automation workflows',
-      'Up to 50K tracked users',
-      'Predictive growth insights',
-      'Priority email & chat support'
+      'Everything in Community',
+      'Early access to new layers',
+      'Research collaboration program',
+      'Co-authorship opportunities',
+      'Dedicated research support'
     ]
   }
 ]

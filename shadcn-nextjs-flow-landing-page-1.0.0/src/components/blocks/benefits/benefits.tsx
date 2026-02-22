@@ -147,21 +147,21 @@ const Benefits = ({ featuresList }: { featuresList: Features }) => {
       >
         <p className='text-primary text-sm font-medium uppercase'>Benefits</p>
 
-        <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>How Flow Helps You</h2>
+        <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>Why UNCASE Matters</h2>
 
         <p className='text-muted-foreground mx-auto max-w-3xl text-xl'>
-          It&apos;s built to simplify your sales process and keep everything easy to manage.
+          73% of fine-tuning projects fail due to privacy, quality, or regulatory obstacles. UNCASE eliminates all three.
         </p>
 
         <div className='flex flex-wrap items-center justify-center gap-4 text-center'>
           <PrimaryFlowButton size='lg' asChild>
-            <Link href='#'>
-              Start building now
+            <Link href='https://github.com/marianomoralesr/UNCASE'>
+              View on GitHub
               <ArrowUpRightIcon />
             </Link>
           </PrimaryFlowButton>
           <SecondaryFlowButton size='lg' asChild>
-            <Link href='#'>Learn more</Link>
+            <Link href='/#faq'>Learn more</Link>
           </SecondaryFlowButton>
         </div>
       </MotionPreset>

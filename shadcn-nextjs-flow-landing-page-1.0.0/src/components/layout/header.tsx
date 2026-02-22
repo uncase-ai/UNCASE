@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-import { ExternalLinkIcon, LogInIcon } from 'lucide-react'
+import { ExternalLinkIcon } from 'lucide-react'
 
 import Link from 'next/link'
 
@@ -52,7 +52,7 @@ const Header = ({ navigationData, className }: HeaderProps) => {
         <Link href='/#home'>
           <div className='flex items-center gap-3'>
             <FlowLogo className='size-8' />
-            <span className='text-xl font-semibold max-[430px]:hidden'>Flow</span>
+            <span className='text-xl font-semibold max-[430px]:hidden'>UNCASE</span>
           </div>
         </Link>
 
@@ -67,35 +67,35 @@ const Header = ({ navigationData, className }: HeaderProps) => {
           <ModeToggle />
 
           <SecondaryFlowButton size='lg' className='max-sm:hidden' asChild>
-            <Link href='/login'>Login</Link>
+            <Link href='https://github.com/marianomoralesr/UNCASE'>GitHub</Link>
           </SecondaryFlowButton>
 
           <PrimaryFlowButton size='lg' className='max-sm:hidden' asChild>
-            <Link href='#'>Try demo</Link>
+            <Link href='/#features'>Explore</Link>
           </PrimaryFlowButton>
 
           <Tooltip>
             <TooltipTrigger asChild>
               <SecondaryFlowButton size='icon-lg' className='sm:hidden' asChild>
-                <Link href='/login'>
-                  <LogInIcon />
-                  <span className='sr-only'>Login</span>
+                <Link href='https://github.com/marianomoralesr/UNCASE'>
+                  <ExternalLinkIcon />
+                  <span className='sr-only'>GitHub</span>
                 </Link>
               </SecondaryFlowButton>
             </TooltipTrigger>
-            <TooltipContent>Login</TooltipContent>
+            <TooltipContent>GitHub</TooltipContent>
           </Tooltip>
 
           <Tooltip>
             <TooltipTrigger asChild>
               <PrimaryFlowButton size='icon-lg' className='sm:hidden' asChild>
-                <Link href='#'>
+                <Link href='/#features'>
                   <ExternalLinkIcon />
-                  <span className='sr-only'>Try Demo</span>
+                  <span className='sr-only'>Explore</span>
                 </Link>
               </PrimaryFlowButton>
             </TooltipTrigger>
-            <TooltipContent>Try Demo</TooltipContent>
+            <TooltipContent>Explore</TooltipContent>
           </Tooltip>
 
           <HeaderNavigationSmallScreen navigationData={navigationData} />

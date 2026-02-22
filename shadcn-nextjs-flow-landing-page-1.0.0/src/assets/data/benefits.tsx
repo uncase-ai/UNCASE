@@ -1,34 +1,34 @@
-import { ChartPieIcon, BotMessageSquareIcon, LayersIcon, ChartSplineIcon } from 'lucide-react'
+import { ShieldCheckIcon, BrainCircuitIcon, LayersIcon, ZapIcon } from 'lucide-react'
 
 import { type Features } from '@/components/blocks/benefits/benefits'
 
 export const benefits: Features = [
   {
-    icon: <ChartPieIcon />,
-    title: 'Unified Sales Overview',
+    icon: <ShieldCheckIcon />,
+    title: 'Privacy by Design',
     description:
-      'Monitor leads, purchases, and orders in real-time to stay updated on every key business metric. This ensures you have the latest insights to make informed decisions.',
+      'No real patient, client, or user data ever transits through the pipeline. Seeds capture reasoning patterns and domain structure — not conversations. Compliant with GDPR, HIPAA, LFPDPPP, and AI Act from day one.',
     image: '/images/benefits/image-01.webp'
   },
   {
-    icon: <BotMessageSquareIcon />,
-    title: 'Automated Follow-Ups',
+    icon: <BrainCircuitIcon />,
+    title: 'Expert Knowledge, Preserved',
     description:
-      'Let smart reminders handle repetitive tasks, allowing you to concentrate on closing more deals rather than managing them. This way, you can maximise your productivity and achieve better results.',
+      'Transform decades of specialized expertise into abstract seed structures that train AI models. Your best professionals become seed engineers — their knowledge scales without exposing privileged information.',
     image: '/images/benefits/image-02.webp'
   },
   {
     icon: <LayersIcon />,
-    title: 'Clean & Simple Workflow',
+    title: 'Modular 5-Layer Pipeline',
     description:
-      'Move deals effortlessly through stages with our intuitive pipeline system designed for clarity and control. This system ensures that you always have a clear view of your progress.',
+      'Each layer delivers value independently. Start with seed engineering, add parsing, quality evaluation, synthetic generation, and LoRA training incrementally. No big-bang deployment needed.',
     image: '/images/benefits/image-03.webp'
   },
   {
-    icon: <ChartSplineIcon />,
-    title: 'Instant Performance Insights',
+    icon: <ZapIcon />,
+    title: 'Radical Cost Efficiency',
     description:
-      'Get accurate reports and analytics that help you understand growth patterns and make confident decisions. These insights empower you to strategies effectively for future success.',
+      'LoRA adapters of 50–150 MB instead of 28 GB base models. Training in 2–8 hours on a single A100. Infrastructure cost: $15–$45 USD per specialized adapter. Fine-tuning is no longer a luxury.',
     image: '/images/benefits/image-04.webp'
   }
 ]

@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { cn } from '@/lib/utils'
 
 const TextFlip = ({
-  words = ['Growth', 'Revenue', 'Sales'],
+  words = ['Healthcare', 'Finance', 'Legal', 'Manufacturing'],
   duration = 3000
 }: {
   words?: string[]

@@ -22,11 +22,11 @@ const jsonLd = {
       '@context': 'https://schema.org',
       '@type': 'WebSite',
       '@id': `${process.env.NEXT_PUBLIC_APP_URL}#website`,
-      name: 'Flow',
+      name: 'UNCASE',
       description:
-        'Grow your product faster with an all-in-one sales and analytics platform. Track performance, automate follow-ups, and make smarter decisions easily.',
+        'Open source framework for generating high-quality synthetic conversational data for LoRA fine-tuning in privacy-sensitive industries.',
       url: `${process.env.NEXT_PUBLIC_APP_URL}`,
-      inLanguage: 'en-US'
+      inLanguage: 'es'
     }
   ]
 }
