@@ -10,7 +10,7 @@ $$\normalsize\text{Documento de Progreso — Framework Open Source}$$
 
 $$\small\text{Versión 1.0 — 22 de febrero de 2026}$$
 
-$$\small\text{Autor: Mariano Morales}$$
+$$\small\text{Autor: UNCASE Contributors}$$
 
 $$\small\text{Licencia: Por definir (Open Source)}$$
 
@@ -700,6 +700,6 @@ $$\rule{12cm}{0.4pt}$$
 
 $$\small\text{UNCASE — Framework Open Source para Datos Sintéticos en Industrias Reguladas}$$
 
-$$\small\text{© 2025–2026 Mariano Morales. Todos los derechos reservados hasta publicación de licencia.}$$
+$$\small\text{© 2025–2026 UNCASE Contributors. Todos los derechos reservados hasta publicación de licencia.}$$
 
 $$\small\textit{Este documento se actualizará conforme avance el desarrollo del framework.}$$
