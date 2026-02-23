@@ -1,0 +1,66 @@
+# ═══════════════════════════════════════════════════════════════
+# UNCASE — .dockerignore
+# Mantener el contexto de build limpio y pequeño
+# ═══════════════════════════════════════════════════════════════
+
+# Git
+.git
+.gitignore
+
+# Landing page (no necesaria para el backend)
+shadcn-nextjs-flow-landing-page-1.0.0/
+
+# Documentación
+docs/
+*.pdf
+*.md
+!README.md
+
+# Entornos y secretos
+.env
+.env.*
+!.env.example
+
+# Python artifacts
+__pycache__
+*.py[cod]
+.venv/
+dist/
+build/
+*.egg-info/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# ML / Modelos
+models/
+*.safetensors
+*.pt
+*.pth
+mlruns/
+
+# Datos
+data/
+datasets/
+exports/
+*.parquet
+*.csv
+*.jsonl
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# CI
+.github/
+
+# Claude
+.claude/
+CLAUDE.md

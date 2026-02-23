@@ -1,0 +1,114 @@
+# ═══════════════════════════════════════════════════════════════
+# UNCASE — Docker Compose
+#
+# Uso:
+#   docker compose up -d                  # API + PostgreSQL
+#   docker compose --profile ml up -d     # + MLflow tracking
+#   docker compose --profile gpu up -d    # + API con GPU
+#   docker compose down                   # Detener todo
+#   docker compose logs -f api            # Ver logs de la API
+# ═══════════════════════════════════════════════════════════════
+
+services:
+  # ── API FastAPI ────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: uncase-api
+    ports:
+      - "${API_PORT:-8000}:8000"
+    env_file: .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-uncase}:${POSTGRES_PASSWORD:-uncase}@postgres:5432/${POSTGRES_DB:-uncase}
+      - UNCASE_ENV=${UNCASE_ENV:-development}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - models_data:/app/models
+      - exports_data:/app/exports
+
+  # ── PostgreSQL ─────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: uncase-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-uncase}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-uncase}
+      POSTGRES_DB: ${POSTGRES_DB:-uncase}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-uncase}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ── MLflow Tracking (perfil ml) ────────────────────────────
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.19.0
+    container_name: uncase-mlflow
+    profiles: ["ml"]
+    ports:
+      - "${MLFLOW_PORT:-5000}:5000"
+    environment:
+      - MLFLOW_BACKEND_STORE_URI=postgresql://${POSTGRES_USER:-uncase}:${POSTGRES_PASSWORD:-uncase}@postgres:5432/${POSTGRES_DB:-uncase}
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlflow/artifacts
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - mlflow_data:/mlflow/artifacts
+    command: >
+      mlflow server
+        --host 0.0.0.0
+        --port 5000
+        --backend-store-uri postgresql://${POSTGRES_USER:-uncase}:${POSTGRES_PASSWORD:-uncase}@postgres:5432/${POSTGRES_DB:-uncase}
+        --default-artifact-root /mlflow/artifacts
+    restart: unless-stopped
+
+  # ── API con GPU (perfil gpu) ───────────────────────────────
+  api-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: nvidia/cuda:12.4.1-runtime-ubuntu22.04
+        INSTALL_EXTRAS: all
+    container_name: uncase-api-gpu
+    profiles: ["gpu"]
+    ports:
+      - "${API_GPU_PORT:-8001}:8000"
+    env_file: .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-uncase}:${POSTGRES_PASSWORD:-uncase}@postgres:5432/${POSTGRES_DB:-uncase}
+      - UNCASE_ENV=${UNCASE_ENV:-development}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    volumes:
+      - models_data:/app/models
+      - exports_data:/app/exports
+
+volumes:
+  postgres_data:
+    driver: local
+  models_data:
+    driver: local
+  exports_data:
+    driver: local
+  mlflow_data:
+    driver: local

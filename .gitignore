@@ -1,0 +1,87 @@
+# ═══════════════════════════════════════════════════════════════
+# UNCASE — .gitignore
+# ═══════════════════════════════════════════════════════════════
+
+# ── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+.venv/
+.eggs/
+*.whl
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ── Herramientas Python ──────────────────────────────────────
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# ── uv ───────────────────────────────────────────────────────
+# uv.lock se trackea para reproducibilidad
+
+# ── Node.js ──────────────────────────────────────────────────
+node_modules/
+.next/
+.vercel
+.turbo/
+*.tsbuildinfo
+
+# ── ML / Modelos ─────────────────────────────────────────────
+models/
+*.safetensors
+*.pt
+*.pth
+*.bin
+*.onnx
+*.gguf
+mlruns/
+mlartifacts/
+
+# ── Datos ────────────────────────────────────────────────────
+data/
+datasets/
+exports/
+*.parquet
+*.csv
+*.jsonl
+*.tsv
+
+# ── Secretos ─────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+credentials.json
+service-account*.json
+
+# ── IDE ──────────────────────────────────────────────────────
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ── Logs ─────────────────────────────────────────────────────
+*.log
+logs/
