@@ -1,0 +1,6 @@
+conversation_id,turn_number,role,content,seed_id,domain
+conv_001,1,vendedor,Buenos dias en que puedo ayudarle?,seed_001,automotive.sales
+conv_001,2,cliente,Busco informacion sobre vehiculos.,seed_001,automotive.sales
+conv_001,3,vendedor,Con gusto que tipo de vehiculo le interesa?,seed_001,automotive.sales
+conv_002,1,vendedor,Bienvenido al concesionario.,seed_002,automotive.sales
+conv_002,2,cliente,Quiero cotizar un sedan.,seed_002,automotive.sales

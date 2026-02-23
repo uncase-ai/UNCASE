@@ -11,7 +11,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from uncase._version import __version__
 from uncase.api.middleware import register_exception_handlers
 from uncase.api.routers.health import router as health_router
+from uncase.api.routers.imports import router as imports_router
 from uncase.api.routers.organizations import router as organizations_router
+from uncase.api.routers.templates import router as templates_router
+from uncase.api.routers.tools import router as tools_router
 from uncase.config import UNCASESettings
 from uncase.db.engine import close_engine, init_engine
 from uncase.logging import setup_logging
@@ -58,6 +61,9 @@ def create_app() -> FastAPI:
     # Routers
     application.include_router(health_router)
     application.include_router(organizations_router)
+    application.include_router(templates_router)
+    application.include_router(tools_router)
+    application.include_router(imports_router)
 
     # Mount MCP server (lazy import to avoid hard dependency at module level)
     try:

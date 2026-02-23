@@ -7,6 +7,7 @@ Dual approach:
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from fastmcp import FastMCP
@@ -111,6 +112,152 @@ def create_mcp_server() -> FastMCP:
                 "herramientas": [],
                 "metadata": {},
             },
+        }
+
+    # -- Template tools -----------------------------------------------------
+
+    @mcp.tool()
+    def list_templates() -> dict[str, Any]:
+        """List all available chat template formats for fine-tuning export."""
+        from uncase.templates import get_template_registry, register_all_templates
+
+        register_all_templates()
+        registry = get_template_registry()
+        templates = []
+        for name in registry.list_names():
+            t = registry.get(name)
+            templates.append(
+                {
+                    "name": t.name,
+                    "display_name": t.display_name,
+                    "supports_tool_calls": t.supports_tool_calls,
+                    "special_tokens": t.get_special_tokens(),
+                }
+            )
+        return {"templates": templates, "count": len(templates)}
+
+    @mcp.tool()
+    def render_template(conversations_json: str, template_name: str) -> dict[str, Any]:
+        """Render conversations using a specific chat template format.
+
+        Args:
+            conversations_json: JSON string with a list of conversations.
+            template_name: Template name (e.g. 'chatml', 'llama', 'mistral').
+
+        Returns:
+            Rendered output for each conversation.
+        """
+        import json
+
+        from uncase.schemas.conversation import Conversation
+        from uncase.templates import get_template_registry, register_all_templates
+
+        try:
+            raw = json.loads(conversations_json)
+        except json.JSONDecodeError as e:
+            return {"error": f"Invalid JSON: {e}"}
+
+        if not isinstance(raw, list):
+            return {"error": "Expected a JSON array of conversations."}
+
+        try:
+            conversations = [Conversation.model_validate(item) for item in raw]
+        except Exception as e:
+            return {"error": f"Conversation validation failed: {e}"}
+
+        register_all_templates()
+        registry = get_template_registry()
+
+        try:
+            template = registry.get(template_name)
+        except Exception as e:
+            return {"error": str(e)}
+
+        rendered: list[str] = []
+        for conv in conversations:
+            try:
+                rendered.append(template.render(conv))
+            except Exception as e:
+                rendered.append(f"[render error: {e}]")
+
+        return {
+            "rendered": rendered,
+            "template_name": template_name,
+            "count": len(rendered),
+        }
+
+    # -- Tool framework tools -----------------------------------------------
+
+    @mcp.tool()
+    def list_tools(domain: str = "") -> dict[str, Any]:
+        """List registered tool definitions, optionally filtered by domain.
+
+        Args:
+            domain: Optional domain namespace to filter by (e.g. 'automotive.sales').
+        """
+        from uncase.tools import get_registry
+
+        # Ensure builtins are loaded (side-effect import, already guarded).
+        with contextlib.suppress(ImportError):
+            import uncase.tools._builtin  # noqa: F401
+
+        registry = get_registry()
+        tools = registry.list_by_domain(domain) if domain else [registry.get(name) for name in registry.list_names()]
+
+        tool_summaries = [
+            {
+                "name": t.name,
+                "description": t.description,
+                "domains": t.domains,
+                "category": t.category,
+                "execution_mode": t.execution_mode,
+                "version": t.version,
+            }
+            for t in tools
+        ]
+        return {"tools": tool_summaries, "count": len(tool_summaries)}
+
+    @mcp.tool()
+    def simulate_tool(tool_name: str, arguments_json: str = "{}") -> dict[str, Any]:
+        """Simulate execution of a registered tool with given arguments.
+
+        Args:
+            tool_name: Name of the tool to simulate.
+            arguments_json: JSON string of arguments to pass to the tool.
+        """
+        import asyncio
+        import json
+
+        from uncase.tools import get_registry
+        from uncase.tools.executor import SimulatedToolExecutor
+        from uncase.tools.schemas import ToolCall
+
+        try:
+            arguments = json.loads(arguments_json)
+        except json.JSONDecodeError as e:
+            return {"error": f"Invalid arguments JSON: {e}"}
+
+        if not isinstance(arguments, dict):
+            return {"error": "Arguments must be a JSON object."}
+
+        tool_call = ToolCall(tool_name=tool_name, arguments=arguments)
+        executor = SimulatedToolExecutor(registry=get_registry())
+
+        try:
+            result = asyncio.run(executor.execute(tool_call))
+        except RuntimeError:
+            # If an event loop is already running, use it directly.
+            import concurrent.futures
+
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                result = pool.submit(asyncio.run, executor.execute(tool_call)).result()
+
+        return {
+            "tool_call_id": result.tool_call_id,
+            "tool_name": result.tool_name,
+            "status": result.status,
+            "result": result.result,
+            "duration_ms": result.duration_ms,
         }
 
     return mcp

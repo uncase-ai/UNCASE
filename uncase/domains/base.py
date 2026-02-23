@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from uncase.tools.schemas import ToolDefinition  # noqa: TC001
+
 
 class DomainConfig(BaseModel):
     """Configuration for a specific industry domain.
@@ -53,4 +55,9 @@ class DomainConfig(BaseModel):
     required_parametros: list[str] = Field(
         default_factory=list,
         description="Domain-specific parameters that every seed must include.",
+    )
+
+    tool_definitions: list[ToolDefinition] | None = Field(
+        default=None,
+        description="Structured tool definitions for this domain.",
     )

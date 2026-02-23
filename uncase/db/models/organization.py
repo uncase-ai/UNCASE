@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime  # noqa: TC003 — SQLAlchemy needs runtime access for Mapped annotations
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -52,13 +52,9 @@ class APIKeyModel(TimestampMixin, Base):
 
     # Relationships
     organization: Mapped[OrganizationModel] = relationship(back_populates="api_keys")
-    audit_logs: Mapped[list[APIKeyAuditLogModel]] = relationship(
-        back_populates="api_key", cascade="all, delete-orphan"
-    )
+    audit_logs: Mapped[list[APIKeyAuditLogModel]] = relationship(back_populates="api_key", cascade="all, delete-orphan")
 
-    __table_args__ = (
-        Index("ix_api_keys_org_active", "organization_id", "is_active"),
-    )
+    __table_args__ = (Index("ix_api_keys_org_active", "organization_id", "is_active"),)
 
     def __repr__(self) -> str:
         return f"<APIKeyModel key_id={self.key_id} org={self.organization_id}>"

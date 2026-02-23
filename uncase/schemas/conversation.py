@@ -7,6 +7,8 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel, Field
 
+from uncase.tools.schemas import ToolCall, ToolResult  # noqa: TC001
+
 
 class ConversationTurn(BaseModel):
     """A single turn in a conversation."""
@@ -15,6 +17,8 @@ class ConversationTurn(BaseModel):
     rol: str = Field(..., description="Role of the speaker")
     contenido: str = Field(..., min_length=1, description="Turn content")
     herramientas_usadas: list[str] = Field(default_factory=list, description="Tools used in this turn")
+    tool_calls: list[ToolCall] | None = Field(default=None, description="Tool calls made in this turn")
+    tool_results: list[ToolResult] | None = Field(default=None, description="Tool results received in this turn")
     metadata: dict[str, str] = Field(default_factory=dict, description="Turn-level metadata")
 
 

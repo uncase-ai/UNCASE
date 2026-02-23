@@ -1,0 +1,2 @@
+{"messages": [{"role": "system", "content": "Eres un asesor de ventas."}, {"role": "user", "content": "Busco un auto nuevo."}, {"role": "assistant", "content": "Con gusto le ayudo."}]}
+{"messages": [{"role": "user", "content": "Quiero cotizar un sedan."}, {"role": "assistant", "content": "Tenemos varias opciones disponibles."}]}

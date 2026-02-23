@@ -68,6 +68,20 @@ class APIKeyNotFoundError(UNCASEError):
     detail = "API key not found"
 
 
+class TemplateNotFoundError(UNCASEError):
+    """Requested template does not exist."""
+
+    status_code = 404
+    detail = "Template not found"
+
+
+class ToolNotFoundError(UNCASEError):
+    """Requested tool does not exist."""
+
+    status_code = 404
+    detail = "Tool not found"
+
+
 # -- Validation --
 
 
@@ -90,6 +104,20 @@ class QualityThresholdError(UNCASEError):
 
     status_code = 422
     detail = "Quality thresholds not met"
+
+
+class ImportFormatError(UNCASEError):
+    """Import format is not supported."""
+
+    status_code = 422
+    detail = "Unsupported import format"
+
+
+class ImportParsingError(UNCASEError):
+    """Failed to parse the provided import data."""
+
+    status_code = 422
+    detail = "Failed to parse import data"
 
 
 # -- Conflict --

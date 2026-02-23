@@ -5,7 +5,10 @@ from __future__ import annotations
 import typer
 
 from uncase._version import __version__
+from uncase.cli.import_cmd import import_app
 from uncase.cli.seed import seed_app
+from uncase.cli.template import template_app
+from uncase.cli.tool import tool_app
 
 app = typer.Typer(
     name="uncase",
@@ -16,6 +19,9 @@ app = typer.Typer(
 
 # Register subcommands
 app.add_typer(seed_app, name="seed")
+app.add_typer(template_app, name="template")
+app.add_typer(import_app, name="import")
+app.add_typer(tool_app, name="tool")
 
 
 def version_callback(value: bool) -> None:

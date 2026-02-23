@@ -7,10 +7,13 @@ the essential patterns of a real interaction without any PII.
 from __future__ import annotations
 
 import uuid
+import warnings
 from datetime import UTC, datetime
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, model_validator
+
+from uncase.tools.schemas import ToolDefinition  # noqa: TC001
 
 SUPPORTED_DOMAINS = frozenset(
     {
@@ -30,7 +33,25 @@ class ParametrosFactuales(BaseModel):
     contexto: str = Field(..., description="Contextual description of the scenario")
     restricciones: list[str] = Field(default_factory=list, description="Domain constraints or rules")
     herramientas: list[str] = Field(default_factory=list, description="Tools available in the interaction")
+    herramientas_definidas: list[ToolDefinition] | None = Field(
+        default=None, description="Structured tool definitions available in the interaction"
+    )
     metadata: dict[str, str] = Field(default_factory=dict, description="Additional domain-specific metadata")
+
+    @model_validator(mode="after")
+    def warn_mismatched_tools(self) -> ParametrosFactuales:
+        """Warn if herramientas names don't match herramientas_definidas."""
+        if self.herramientas and self.herramientas_definidas:
+            defined_names = {td.name for td in self.herramientas_definidas}
+            for name in self.herramientas:
+                if name not in defined_names:
+                    warnings.warn(
+                        f"Tool '{name}' in herramientas does not match any "
+                        f"herramientas_definidas entry. Defined: {sorted(defined_names)}",
+                        UserWarning,
+                        stacklevel=2,
+                    )
+        return self
 
 
 class Privacidad(BaseModel):

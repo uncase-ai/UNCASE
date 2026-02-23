@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import ForeignKey, Index, String, Text
-from sqlalchemy import JSON
+from sqlalchemy import JSON, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from uncase.db.base import Base, TimestampMixin

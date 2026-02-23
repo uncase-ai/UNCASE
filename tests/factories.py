@@ -11,6 +11,7 @@ from uncase.schemas.seed import (
     Privacidad,
     SeedSchema,
 )
+from uncase.tools.schemas import ToolCall, ToolDefinition, ToolResult
 
 
 def make_seed(**overrides: object) -> SeedSchema:
@@ -75,3 +76,92 @@ def make_quality_metrics(**overrides: object) -> QualityMetrics:
     }
     defaults.update(overrides)
     return QualityMetrics(**defaults)  # type: ignore[arg-type]
+
+
+def make_tool_definition(**overrides: object) -> ToolDefinition:
+    """Create a valid ToolDefinition with fictional automotive defaults."""
+    defaults: dict[str, object] = {
+        "name": "buscar_inventario",
+        "description": "Buscar vehiculos en el inventario del concesionario ficticio",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "marca": {"type": "string", "description": "Marca del vehiculo"},
+                "modelo": {"type": "string", "description": "Modelo del vehiculo"},
+            },
+        },
+        "output_schema": {
+            "type": "object",
+            "properties": {
+                "vehiculos": {"type": "array", "items": {"type": "object"}},
+                "total_resultados": {"type": "integer"},
+            },
+        },
+        "domains": ["automotive.sales"],
+        "category": "automotive",
+        "execution_mode": "simulated",
+    }
+    defaults.update(overrides)
+    return ToolDefinition(**defaults)  # type: ignore[arg-type]
+
+
+def make_tool_call(**overrides: object) -> ToolCall:
+    """Create a valid ToolCall with fictional automotive defaults."""
+    defaults: dict[str, object] = {
+        "tool_name": "buscar_inventario",
+        "arguments": {"marca": "Toyota", "modelo": "Corolla"},
+    }
+    defaults.update(overrides)
+    return ToolCall(**defaults)  # type: ignore[arg-type]
+
+
+def make_tool_result(**overrides: object) -> ToolResult:
+    """Create a valid ToolResult with fictional automotive defaults."""
+    defaults: dict[str, object] = {
+        "tool_call_id": "test_call_001",
+        "tool_name": "buscar_inventario",
+        "result": {"vehiculos": [{"id": "v001", "marca": "Toyota", "modelo": "Corolla"}], "total_resultados": 1},
+        "status": "success",
+        "duration_ms": 150,
+    }
+    defaults.update(overrides)
+    return ToolResult(**defaults)  # type: ignore[arg-type]
+
+
+def make_conversation_with_tools(seed_id: str = "test_seed_001", **overrides: object) -> Conversation:
+    """Create a valid Conversation with tool calls and results using fictional data."""
+    defaults: dict[str, object] = {
+        "seed_id": seed_id,
+        "dominio": "automotive.sales",
+        "idioma": "es",
+        "turnos": [
+            ConversationTurn(turno=1, rol="vendedor", contenido="Buenos dias, en que puedo ayudarle?"),
+            ConversationTurn(turno=2, rol="cliente", contenido="Busco un Toyota Corolla."),
+            ConversationTurn(
+                turno=3,
+                rol="vendedor",
+                contenido="Permita buscar en nuestro inventario.",
+                tool_calls=[
+                    ToolCall(tool_name="buscar_inventario", arguments={"marca": "Toyota", "modelo": "Corolla"})
+                ],
+            ),
+            ConversationTurn(
+                turno=4,
+                rol="herramienta",
+                contenido="Resultado de busqueda.",
+                tool_results=[
+                    ToolResult(
+                        tool_call_id="test_001",
+                        tool_name="buscar_inventario",
+                        result={"vehiculos": [{"id": "v001"}], "total": 1},
+                        status="success",
+                        duration_ms=120,
+                    )
+                ],
+            ),
+            ConversationTurn(turno=5, rol="vendedor", contenido="Tenemos un Toyota Corolla disponible."),
+        ],
+        "es_sintetica": True,
+    }
+    defaults.update(overrides)
+    return Conversation(**defaults)  # type: ignore[arg-type]
