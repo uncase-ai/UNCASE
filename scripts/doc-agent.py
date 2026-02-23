@@ -164,9 +164,9 @@ def process_commit(client: anthropic.Anthropic | None) -> None:
 
     categories = analyze_changes(changed_files)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("  UNCASE Doc Agent — Post-Commit Report")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Report what changed
     for cat, files in categories.items():
@@ -215,7 +215,7 @@ def process_commit(client: anthropic.Anthropic | None) -> None:
         print("  Note: Set ANTHROPIC_API_KEY to enable automatic translation")
         print("  and changelog generation.\n")
 
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
 
 def translate_file_command(client: anthropic.Anthropic, filepath_str: str) -> None:

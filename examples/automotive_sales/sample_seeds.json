@@ -1,0 +1,252 @@
+[
+  {
+    "seed_id": "seed_consulta_financiamiento_001",
+    "version": "1.0",
+    "dominio": "automotive.sales",
+    "idioma": "es",
+    "etiquetas": ["financiamiento", "credito", "consulta"],
+    "roles": ["vendedor", "cliente"],
+    "descripcion_roles": {
+      "vendedor": "Asesor de ventas especializado en financiamiento automotriz",
+      "cliente": "Persona interesada en adquirir un vehiculo con financiamiento"
+    },
+    "objetivo": "El cliente consulta opciones de financiamiento para la compra de un vehiculo nuevo",
+    "tono": "profesional",
+    "pasos_turnos": {
+      "turnos_min": 8,
+      "turnos_max": 16,
+      "flujo_esperado": [
+        "saludo_inicial",
+        "identificacion_necesidades",
+        "presentacion_opciones_financiamiento",
+        "resolucion_dudas",
+        "proximos_pasos"
+      ]
+    },
+    "parametros_factuales": {
+      "contexto": "Concesionario de autos nuevos con alianzas bancarias para credito automotriz",
+      "restricciones": [
+        "Tasas de interes entre 8% y 15% anual",
+        "Plazo maximo 72 meses",
+        "Enganche minimo 10%"
+      ],
+      "herramientas": ["cotizador", "simulador_credito", "crm"],
+      "metadata": {
+        "tipo_vehiculo": "nuevo",
+        "rango_precio": "300000-600000 MXN"
+      }
+    },
+    "privacidad": {
+      "pii_eliminado": true,
+      "metodo_anonimizacion": "presidio",
+      "nivel_confianza": 0.85,
+      "campos_sensibles_detectados": []
+    },
+    "metricas_calidad": {
+      "rouge_l_min": 0.65,
+      "fidelidad_min": 0.90,
+      "diversidad_lexica_min": 0.55,
+      "coherencia_dialogica_min": 0.85
+    }
+  },
+  {
+    "seed_id": "seed_busqueda_inventario_002",
+    "version": "1.0",
+    "dominio": "automotive.sales",
+    "idioma": "es",
+    "etiquetas": ["inventario", "busqueda", "modelos"],
+    "roles": ["vendedor", "cliente"],
+    "descripcion_roles": {
+      "vendedor": "Asesor de ventas con acceso al inventario del concesionario",
+      "cliente": "Persona buscando un vehiculo que se ajuste a sus necesidades"
+    },
+    "objetivo": "Ayudar al cliente a encontrar un vehiculo adecuado dentro del inventario disponible",
+    "tono": "amigable",
+    "pasos_turnos": {
+      "turnos_min": 6,
+      "turnos_max": 14,
+      "flujo_esperado": [
+        "saludo",
+        "identificacion_preferencias",
+        "consulta_inventario",
+        "presentacion_opciones",
+        "comparacion_modelos"
+      ]
+    },
+    "parametros_factuales": {
+      "contexto": "Concesionario multimarca con inventario de vehiculos nuevos y seminuevos",
+      "restricciones": [
+        "Disponibilidad sujeta a inventario actual",
+        "Precios no incluyen tenencia ni seguro"
+      ],
+      "herramientas": ["inventario", "comparador_modelos", "crm"],
+      "metadata": {
+        "marcas_disponibles": "multiple",
+        "tipo": "nuevos_y_seminuevos"
+      }
+    },
+    "privacidad": {
+      "pii_eliminado": true,
+      "metodo_anonimizacion": "presidio",
+      "nivel_confianza": 0.85,
+      "campos_sensibles_detectados": []
+    },
+    "metricas_calidad": {
+      "rouge_l_min": 0.65,
+      "fidelidad_min": 0.90,
+      "diversidad_lexica_min": 0.55,
+      "coherencia_dialogica_min": 0.85
+    }
+  },
+  {
+    "seed_id": "seed_negociacion_precio_003",
+    "version": "1.0",
+    "dominio": "automotive.sales",
+    "idioma": "es",
+    "etiquetas": ["negociacion", "precio", "descuento"],
+    "roles": ["vendedor", "cliente", "gerente_financiero"],
+    "descripcion_roles": {
+      "vendedor": "Asesor de ventas con autoridad limitada de descuento",
+      "cliente": "Comprador experimentado negociando el precio de un vehiculo",
+      "gerente_financiero": "Gerente con autoridad para aprobar descuentos adicionales"
+    },
+    "objetivo": "Negociacion de precio y condiciones de compra de un vehiculo",
+    "tono": "profesional",
+    "pasos_turnos": {
+      "turnos_min": 10,
+      "turnos_max": 24,
+      "flujo_esperado": [
+        "presentacion_precio_lista",
+        "contraoferta_cliente",
+        "consulta_gerente",
+        "presentacion_oferta_final",
+        "cierre_negociacion"
+      ]
+    },
+    "parametros_factuales": {
+      "contexto": "Etapa de negociacion final en concesionario, cliente ya selecciono vehiculo",
+      "restricciones": [
+        "Descuento maximo 8% sobre precio lista",
+        "Bonificaciones de armadora sujetas a vigencia",
+        "Accesorios con margen negociable"
+      ],
+      "herramientas": ["cotizador", "crm", "sistema_bonificaciones"],
+      "metadata": {
+        "etapa_venta": "negociacion",
+        "vehiculo_seleccionado": "si"
+      }
+    },
+    "privacidad": {
+      "pii_eliminado": true,
+      "metodo_anonimizacion": "presidio",
+      "nivel_confianza": 0.85,
+      "campos_sensibles_detectados": []
+    },
+    "metricas_calidad": {
+      "rouge_l_min": 0.65,
+      "fidelidad_min": 0.90,
+      "diversidad_lexica_min": 0.55,
+      "coherencia_dialogica_min": 0.85
+    }
+  },
+  {
+    "seed_id": "seed_objecion_tasa_004",
+    "version": "1.0",
+    "dominio": "automotive.sales",
+    "idioma": "es",
+    "etiquetas": ["objecion", "tasa_interes", "financiamiento"],
+    "roles": ["vendedor", "cliente"],
+    "descripcion_roles": {
+      "vendedor": "Asesor financiero del concesionario especializado en manejo de objeciones",
+      "cliente": "Comprador que considera la tasa de interes demasiado alta"
+    },
+    "objetivo": "Manejar la objecion del cliente respecto a la tasa de interes ofrecida",
+    "tono": "empatico",
+    "pasos_turnos": {
+      "turnos_min": 8,
+      "turnos_max": 18,
+      "flujo_esperado": [
+        "presentacion_objecion",
+        "escucha_activa",
+        "contextualizacion_tasa",
+        "alternativas_financiamiento",
+        "resolucion"
+      ]
+    },
+    "parametros_factuales": {
+      "contexto": "Cliente en proceso de financiamiento objeta la tasa de interes propuesta",
+      "restricciones": [
+        "Tasa sujeta a historial crediticio del cliente",
+        "Opciones de tasa preferencial con mayor enganche",
+        "Promociones vigentes con instituciones bancarias"
+      ],
+      "herramientas": ["simulador_credito", "comparador_tasas", "crm"],
+      "metadata": {
+        "tipo_objecion": "tasa_interes",
+        "fase": "financiamiento"
+      }
+    },
+    "privacidad": {
+      "pii_eliminado": true,
+      "metodo_anonimizacion": "presidio",
+      "nivel_confianza": 0.85,
+      "campos_sensibles_detectados": []
+    },
+    "metricas_calidad": {
+      "rouge_l_min": 0.65,
+      "fidelidad_min": 0.90,
+      "diversidad_lexica_min": 0.55,
+      "coherencia_dialogica_min": 0.85
+    }
+  },
+  {
+    "seed_id": "seed_seguimiento_postventa_005",
+    "version": "1.0",
+    "dominio": "automotive.sales",
+    "idioma": "es",
+    "etiquetas": ["postventa", "seguimiento", "satisfaccion"],
+    "roles": ["asesor_servicio", "cliente"],
+    "descripcion_roles": {
+      "asesor_servicio": "Asesor de servicio postventa del concesionario",
+      "cliente": "Propietario de vehiculo recien adquirido"
+    },
+    "objetivo": "Realizar seguimiento postventa para asegurar satisfaccion del cliente",
+    "tono": "cordial",
+    "pasos_turnos": {
+      "turnos_min": 6,
+      "turnos_max": 12,
+      "flujo_esperado": [
+        "saludo_seguimiento",
+        "consulta_experiencia",
+        "identificacion_necesidades_servicio",
+        "programacion_servicio",
+        "despedida"
+      ]
+    },
+    "parametros_factuales": {
+      "contexto": "Llamada de seguimiento 7 dias despues de la entrega del vehiculo",
+      "restricciones": [
+        "Primer servicio gratuito incluido en la compra",
+        "Garantia de 3 anios o 60,000 km",
+        "Programa de referidos activo"
+      ],
+      "herramientas": ["crm", "agenda_servicio", "encuesta_satisfaccion"],
+      "metadata": {
+        "dias_post_entrega": "7",
+        "tipo_contacto": "seguimiento_proactivo"
+      }
+    },
+    "privacidad": {
+      "pii_eliminado": true,
+      "metodo_anonimizacion": "presidio",
+      "nivel_confianza": 0.85,
+      "campos_sensibles_detectados": []
+    },
+    "metricas_calidad": {
+      "rouge_l_min": 0.65,
+      "fidelidad_min": 0.90,
+      "diversidad_lexica_min": 0.55,
+      "coherencia_dialogica_min": 0.85
+    }
+  }
+]

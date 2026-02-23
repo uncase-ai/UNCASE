@@ -1,0 +1,21 @@
+{
+  "error.not_found": "The requested resource was not found.",
+  "error.unauthorized": "Invalid or missing API key.",
+  "error.forbidden": "You do not have sufficient permissions for this operation.",
+  "error.validation": "The provided data is not valid.",
+  "error.pii_detected": "Personally identifiable information (PII) was detected in the data. Remove it before continuing.",
+  "error.quality_threshold": "The data does not meet the minimum required quality threshold.",
+  "success.seed_created": "Seed created successfully.",
+  "success.seed_validated": "Seed validated successfully.",
+  "success.org_created": "Organization created successfully.",
+  "success.key_created": "API key generated successfully.",
+  "success.key_revoked": "API key revoked successfully.",
+  "label.domain": "Domain",
+  "label.seed": "Seed",
+  "label.conversation": "Conversation",
+  "label.quality_score": "Quality score",
+  "label.organization": "Organization",
+  "label.api_key": "API key",
+  "info.processing": "Processing request, please wait.",
+  "info.export_ready": "The export is ready to download."
+}

@@ -1,0 +1,21 @@
+{
+  "error.not_found": "El recurso solicitado no fue encontrado.",
+  "error.unauthorized": "Clave de API inválida o faltante.",
+  "error.forbidden": "No tienes permisos suficientes para esta operación.",
+  "error.validation": "Los datos proporcionados no son válidos.",
+  "error.pii_detected": "Se detectó información personal identificable (PII) en los datos. Elimínala antes de continuar.",
+  "error.quality_threshold": "Los datos no cumplen con el umbral mínimo de calidad requerido.",
+  "success.seed_created": "Semilla creada exitosamente.",
+  "success.seed_validated": "Semilla validada exitosamente.",
+  "success.org_created": "Organización creada exitosamente.",
+  "success.key_created": "Clave de API generada exitosamente.",
+  "success.key_revoked": "Clave de API revocada exitosamente.",
+  "label.domain": "Dominio",
+  "label.seed": "Semilla",
+  "label.conversation": "Conversación",
+  "label.quality_score": "Puntaje de calidad",
+  "label.organization": "Organización",
+  "label.api_key": "Clave de API",
+  "info.processing": "Procesando solicitud, por favor espera.",
+  "info.export_ready": "La exportación está lista para descargar."
+}
