@@ -1,0 +1,27 @@
+#!/bin/bash
+# ═══════════════════════════════════════════════════════════════
+# UNCASE — Post-commit hook
+# Runs the Haiku doc-agent after every commit to:
+#   - Report changed files and documentation status
+#   - Auto-translate docs (if ANTHROPIC_API_KEY is set)
+#   - Suggest documentation updates for code changes
+#
+# Setup: git config core.hooksPath .githooks
+# ═══════════════════════════════════════════════════════════════
+
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+DOC_AGENT="${SCRIPT_DIR}/scripts/doc-agent.py"
+
+if [ ! -f "$DOC_AGENT" ]; then
+    exit 0
+fi
+
+# Run doc-agent in background so it doesn't block the commit
+if command -v uv > /dev/null 2>&1; then
+    uv run python "$DOC_AGENT" &
+elif command -v python3 > /dev/null 2>&1; then
+    python3 "$DOC_AGENT" &
+fi
+
+# Don't wait for it — let it run asynchronously
+disown 2>/dev/null || true

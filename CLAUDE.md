@@ -2,17 +2,38 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Idioma
+## Language
 
-Todo commit, documentación, archivo .md, guía o nota debe escribirse en español (usando "tú", no "usted"). Los mensajes de commit siguen el formato convencional en español (feat:, fix:, chore:, etc.).
+All development, commits, and code documentation must be written in **English**. Commit messages follow conventional format (feat:, fix:, chore:, etc.) in English.
+
+**Documentation must be bilingual (EN + ES).** Every doc file, guide, or note needs both an English and a Spanish version. The Haiku doc-agent (`scripts/doc-agent.py`) handles automatic translation on each commit.
 
 ## Commits
 
-**Los commits NO deben ir firmados con `Co-Authored-By: Claude` ni con ninguna firma de IA**, a menos que el usuario lo solicite explícitamente en ese commit en particular. No agregar firma por defecto.
+**Commits must NOT include `Co-Authored-By: Claude` or any AI signature**, unless the user explicitly requests it for that particular commit. Do not add signatures by default.
 
 ## Deployment
 
-Usar siempre `./deploy.sh <entorno>` para desplegar. El script valida que no haya cambios sin committear, que todo esté pushed, y que se use el canal correcto. Entornos válidos: `production`, `development`, `preview`.
+Always use `./deploy.sh <environment>` to deploy. The script validates no uncommitted changes, everything is pushed, and the correct channel is used. Valid environments: `production`, `development`, `preview`.
+
+## Doc Agent
+
+A Haiku-powered post-commit hook runs automatically after every commit:
+- Detects changed documentation files and translates them (en <-> es)
+- Reports code changes that may require documentation updates
+- Can generate changelog entries from commit messages
+
+Setup: `git config core.hooksPath .githooks` (already configured)
+
+Manual usage:
+```bash
+python scripts/doc-agent.py                  # process last commit
+python scripts/doc-agent.py --all            # translate all docs
+python scripts/doc-agent.py --translate FILE # translate specific file
+python scripts/doc-agent.py --changelog      # generate changelog entry
+```
+
+Requires `ANTHROPIC_API_KEY` in the environment for translation features.
 
 ## Visión general
 

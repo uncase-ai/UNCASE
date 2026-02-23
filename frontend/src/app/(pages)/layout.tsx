@@ -80,6 +80,10 @@ const navigationData: Navigation[] = [
   {
     title: 'Open Source',
     href: '/#pricing'
+  },
+  {
+    title: 'Docs',
+    href: '/docs'
   }
 ]
 
