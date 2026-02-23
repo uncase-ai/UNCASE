@@ -39,7 +39,7 @@ const FAQ = ({ faqItems }: { faqItems: FAQs }) => {
           <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>Frequently asked questions</h2>
 
           <p className='text-muted-foreground mx-auto max-w-2xl text-xl'>
-            Here are some quick answers to help you understand how Flow powers your product success.
+            Common questions about UNCASE, the SCSF pipeline, and privacy-first synthetic data generation.
           </p>
         </MotionPreset>
 

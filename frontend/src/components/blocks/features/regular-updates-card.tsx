@@ -16,41 +16,37 @@ import Logo from '@/assets/svg/flow-logo'
 
 export type NotificationCard = {
   id: string
-  productName: string
-  productImage: string
-  productAlt: string
+  seedId: string
+  domain: string
   percentageChange: number
   stats: {
-    reach: number
-    users: number
-    queries: number
+    seeds: number
+    domains: number
+    passRate: number
   }
 }
 
 const notificationsList: NotificationCard[] = [
   {
     id: '1',
-    productName: 'Headset 22R',
-    productImage: '/images/products/headset.webp',
-    productAlt: 'headset',
-    percentageChange: -2.5,
-    stats: { reach: 2432, users: 142, queries: 36 }
+    seedId: 'seed_financiamiento_001',
+    domain: 'automotive.sales',
+    percentageChange: 12.5,
+    stats: { seeds: 2432, domains: 6, passRate: 94 }
   },
   {
     id: '2',
-    productName: 'Dell Vision 7',
-    productImage: '/images/products/laptop.webp',
-    productAlt: 'laptop',
-    percentageChange: 5.6,
-    stats: { reach: 1235, users: 138, queries: 28 }
+    seedId: 'seed_triage_rural_012',
+    domain: 'medical.consultation',
+    percentageChange: 8.3,
+    stats: { seeds: 1235, domains: 6, passRate: 91 }
   },
   {
     id: '3',
-    productName: 'Playstation 5',
-    productImage: '/images/products/play-station.webp',
-    productAlt: 'play-station',
-    percentageChange: 10,
-    stats: { reach: 2696, users: 169, queries: 18 }
+    seedId: 'seed_due_diligence_007',
+    domain: 'legal.advisory',
+    percentageChange: 15.1,
+    stats: { seeds: 2696, domains: 6, passRate: 97 }
   }
 ]
 
@@ -89,9 +85,9 @@ const RegularUpdatesCard = () => {
             </div>
             <div className='space-y-1'>
               <p className='font-medium'>
-                <NumberTicker value={activeIndex.stats.reach} />
+                <NumberTicker value={activeIndex.stats.seeds} />
               </p>
-              <p className='text-muted-foreground text-xs'>Product Reach</p>
+              <p className='text-muted-foreground text-xs'>Seeds Processed</p>
             </div>
           </div>
           <div className='bg-card flex w-27 flex-col items-start gap-2.5 rounded-xl border p-3 shadow-lg'>
@@ -100,9 +96,9 @@ const RegularUpdatesCard = () => {
             </div>
             <div className='space-y-1'>
               <p className='font-medium'>
-                <NumberTicker value={activeIndex.stats.users} />
+                <NumberTicker value={activeIndex.stats.domains} />
               </p>
-              <p className='text-muted-foreground text-xs'>New users</p>
+              <p className='text-muted-foreground text-xs'>Domains Active</p>
             </div>
           </div>
           <div className='bg-card flex w-27 flex-col items-start gap-2.5 rounded-xl border p-3 shadow-lg'>
@@ -111,9 +107,9 @@ const RegularUpdatesCard = () => {
             </div>
             <div className='space-y-1'>
               <p className='font-medium'>
-                <NumberTicker value={activeIndex.stats.queries} />
+                <NumberTicker value={activeIndex.stats.passRate} />%
               </p>
-              <p className='text-muted-foreground text-xs'>User queries</p>
+              <p className='text-muted-foreground text-xs'>Quality Pass Rate</p>
             </div>
           </div>
         </div>
@@ -139,14 +135,14 @@ const RegularUpdatesCard = () => {
             }}
           >
             <div className='flex flex-col gap-1'>
-              <p className='text-xl font-semibold'>{notification.productName}</p>
+              <p className='text-xl font-semibold'>{notification.seedId}</p>
               <Badge className='bg-primary/10 [a&]:hover:bg-primary/5 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 text-primary focus-visible:outline-none'>
                 {notification.percentageChange > 0 ? <TrendingUpIcon /> : <TrendingDownIcon />}
                 {notification.percentageChange}%
               </Badge>
             </div>
 
-            <img src={notification.productImage} alt={notification.productAlt} className='size-13' />
+            <Badge variant='outline' className='shrink-0 text-xs'>{notification.domain}</Badge>
           </motion.div>
         ))}
       </MotionPreset>
@@ -160,7 +156,7 @@ const RegularUpdatesCard = () => {
           transition={{ duration: 0.5 }}
           className='text-2xl font-semibold'
         >
-          Regular Updates
+          Multi-Domain Processing
         </MotionPreset>
         <MotionPreset
           component='p'
@@ -170,8 +166,8 @@ const RegularUpdatesCard = () => {
           transition={{ duration: 0.5 }}
           className='text-muted-foreground'
         >
-          Get regular real-time alerts and notifications for orders, payments, and customer activity—so nothing slips
-          through the cracks
+          Process seeds across all six industry namespaces simultaneously — each domain carries its own constraints and
+          quality thresholds.
         </MotionPreset>
       </CardContent>
     </Card>

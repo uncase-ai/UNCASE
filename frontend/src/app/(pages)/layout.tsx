@@ -74,8 +74,8 @@ const navigationData: Navigation[] = [
     href: '/#benefits'
   },
   {
-    title: 'Use Cases',
-    href: '/#testimonials'
+    title: 'Pipeline',
+    href: '/#pipeline'
   },
   {
     title: 'Open Source',

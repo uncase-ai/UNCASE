@@ -11,7 +11,7 @@ import {
   ZapIcon
 } from 'lucide-react'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Marquee } from '@/components/ui/marquee'
@@ -388,77 +388,59 @@ const Features = () => {
                 >
                   <Marquee pauseOnHover reverse duration={30} gap={0.5} className='px-2 py-1.5'>
                     <div className='flex w-58 items-center gap-3 rounded-xl border py-1.5 pr-3 pl-2 hover:shadow-md'>
-                      <Avatar className='size-9.5'>
-                        <AvatarImage src='/images/avatar/avatar-1.webp' alt='Riley Smith' />
-                        <AvatarFallback className='text-xs'>RS</AvatarFallback>
-                      </Avatar>
+                      <Badge className='bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 shrink-0'>
+                        Certified
+                      </Badge>
                       <div className='flex flex-1 flex-col items-start gap-0.5'>
+                        <span className='text-sm'>seed_fin_001</span>
                         <span className='text-muted-foreground text-xs font-light'>09:15</span>
-                        <span className='text-sm'>Riley Smith</span>
                       </div>
-                      <span className='text-green-600 dark:text-green-400'>$2,000</span>
                     </div>
 
                     <div className='flex w-58 items-center gap-3 rounded-xl border py-1.5 pr-3 pl-2 hover:shadow-md'>
-                      <Avatar className='size-9.5'>
-                        <AvatarImage src='/images/avatar/avatar-2.webp' alt='Taylor Morgan' />
-                        <AvatarFallback className='text-xs'>TM</AvatarFallback>
-                      </Avatar>
+                      <Badge className='bg-primary/10 text-primary shrink-0'>Generated</Badge>
                       <div className='flex flex-1 flex-col items-start gap-0.5'>
+                        <span className='text-sm'>seed_tri_012</span>
                         <span className='text-muted-foreground text-xs font-light'>11:45</span>
-                        <span className='text-sm'>Taylor Morgan</span>
                       </div>
-                      <span className='text-green-600 dark:text-green-400'>$2,200</span>
                     </div>
 
                     <div className='flex w-58 items-center gap-3 rounded-xl border py-1.5 pr-3 pl-2 hover:shadow-md'>
-                      <Avatar className='size-9.5'>
-                        <AvatarImage src='/images/avatar/avatar-3.webp' alt='Alex Thomas' />
-                        <AvatarFallback className='text-xs'>AT</AvatarFallback>
-                      </Avatar>
+                      <Badge variant='outline' className='shrink-0'>Validated</Badge>
                       <div className='flex flex-1 flex-col items-start gap-0.5'>
-                        <span className='text-muted-foreground text-xs font-light'>14:45</span>
-                        <span className='text-sm'>Alex Thomas</span>
+                        <span className='text-sm'>seed_due_007</span>
+                        <span className='text-muted-foreground text-xs font-light'>14:30</span>
                       </div>
-                      <span className='text-green-600 dark:text-green-400'>$1,500</span>
                     </div>
                   </Marquee>
 
                   <Marquee pauseOnHover duration={30} gap={0.5} className='px-2 py-1.5'>
                     <div className='flex w-58 items-center gap-3 rounded-xl border py-1.5 pr-3 pl-2 hover:shadow-md'>
-                      <Avatar className='size-9.5'>
-                        <AvatarImage src='/images/avatar/avatar-4.webp' alt='Jamie Parker' />
-                        <AvatarFallback className='text-xs'>JP</AvatarFallback>
-                      </Avatar>
+                      <Badge className='bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 shrink-0'>
+                        Certified
+                      </Badge>
                       <div className='flex flex-1 flex-col items-start gap-0.5'>
+                        <span className='text-sm'>seed_edu_003</span>
                         <span className='text-muted-foreground text-xs font-light'>19:15</span>
-                        <span className='text-sm'>Jamie Parker</span>
                       </div>
-                      <span className='text-green-600 dark:text-green-400'>$800</span>
                     </div>
 
                     <div className='flex w-58 items-center gap-3 rounded-xl border py-1.5 pr-3 pl-2 hover:shadow-md'>
-                      <Avatar className='size-9.5'>
-                        <AvatarImage src='/images/avatar/avatar-5.webp' alt='Casey Reynolds' />
-                        <AvatarFallback className='text-xs'>CR</AvatarFallback>
-                      </Avatar>
+                      <Badge className='bg-primary/10 text-primary shrink-0'>Generated</Badge>
                       <div className='flex flex-1 flex-col items-start gap-0.5'>
+                        <span className='text-sm'>seed_mfg_018</span>
                         <span className='text-muted-foreground text-xs font-light'>18:30</span>
-                        <span className='text-sm'>Casey Reynolds</span>
                       </div>
-                      <span className='text-green-600 dark:text-green-400'>$750</span>
                     </div>
 
                     <div className='flex w-58 items-center gap-3 rounded-xl border py-1.5 pr-3 pl-2 hover:shadow-md'>
-                      <Avatar className='size-9.5'>
-                        <AvatarImage src='/images/avatar/avatar-6.webp' alt='Jordan Lee' />
-                        <AvatarFallback className='text-xs'>JP</AvatarFallback>
-                      </Avatar>
+                      <Badge className='bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 shrink-0'>
+                        Certified
+                      </Badge>
                       <div className='flex flex-1 flex-col items-start gap-0.5'>
+                        <span className='text-sm'>seed_adv_009</span>
                         <span className='text-muted-foreground text-xs font-light'>09:15</span>
-                        <span className='text-sm'>Jordan Lee</span>
                       </div>
-                      <span className='text-green-600 dark:text-green-400'>$3,250</span>
                     </div>
                   </Marquee>
                 </MotionPreset>

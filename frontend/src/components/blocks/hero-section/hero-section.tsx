@@ -399,12 +399,13 @@ const HeroSection = () => {
           <div className='bg-primary text-primary-foreground mt-2 flex items-center gap-10 rounded-xl px-3.5 py-2 shadow-lg'>
             <div className='flex items-center gap-2 font-medium'>
               <FlowLogo className='size-8 rounded-full shadow-[0_20px_25px_-8px_var(--primary-foreground),0_8px_10px_-6px_var(--primary-foreground)]' />
-              {scrollProgress < 27 && <span>Seed Engine ready</span>}
-              {scrollProgress >= 27 && scrollProgress < 37 && <span>Parsing conversations</span>}
-              {scrollProgress >= 37 && scrollProgress < 47 && <span>Quality validated</span>}
-              {scrollProgress >= 47 && <span>LoRA adapter trained</span>}
+              {scrollProgress < 20 && <span>Layer 0: Seed Engine ready</span>}
+              {scrollProgress >= 20 && scrollProgress < 30 && <span>Layer 1: Parsing conversations</span>}
+              {scrollProgress >= 30 && scrollProgress < 40 && <span>Layer 2: Quality validated</span>}
+              {scrollProgress >= 40 && scrollProgress < 50 && <span>Layer 3: Generating synthetic data</span>}
+              {scrollProgress >= 50 && <span>Layer 4: LoRA adapter trained</span>}
             </div>
-            {scrollProgress >= 47 ? (
+            {scrollProgress >= 50 ? (
               <CircleCheckIcon className='size-4.5' />
             ) : (
               <LoaderIcon className='size-4.5 animate-spin' />

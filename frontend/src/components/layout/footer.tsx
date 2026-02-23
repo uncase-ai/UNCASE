@@ -55,8 +55,8 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link href='/#testimonials' className='hover:text-foreground transition-colors duration-300'>
-                  Use Cases
+                <Link href='/#pipeline' className='hover:text-foreground transition-colors duration-300'>
+                  Pipeline
                 </Link>
               </li>
               <li>

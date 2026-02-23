@@ -1,15 +1,20 @@
 import Hero from '@/components/blocks/hero-section/hero-section'
-import TrustedBrands from '@/components/blocks/trusted-brands/trusted-brands'
 import Features from '@/components/blocks/features/features'
 import Benefits from '@/components/blocks/benefits/benefits'
-import Testimonials from '@/components/blocks/testimonials/testimonials'
 import Pricing from '@/components/blocks/pricing/pricing'
 import FAQ from '@/components/blocks/faq/faq'
 import CTA from '@/components/blocks/cta/cta'
+import PipelineTimeline from '@/components/blocks/pipeline/pipeline-timeline'
+import PipelineDataFlow from '@/components/blocks/pipeline/pipeline-data-flow'
+import Capabilities from '@/components/blocks/capabilities/capabilities'
 
-import { logos } from '@/assets/data/trusted-brands'
+// TrustedBrands and Testimonials commented out while UNCASE is in development
+// import TrustedBrands from '@/components/blocks/trusted-brands/trusted-brands'
+// import Testimonials from '@/components/blocks/testimonials/testimonials'
+// import { logos } from '@/assets/data/trusted-brands'
+// import { testimonials } from '@/assets/data/testimonials'
+
 import { plans } from '@/assets/data/pricing'
-import { testimonials } from '@/assets/data/testimonials'
 import { faqItems } from '@/assets/data/faqs'
 import { benefits } from '@/assets/data/benefits'
 
@@ -38,7 +43,16 @@ const Home = () => {
 
       <SectionSeparator />
 
+      {/* TrustedBrands — commented out while UNCASE is in development
       <TrustedBrands brandLogos={logos} />
+      <SectionSeparator />
+      */}
+
+      <PipelineTimeline />
+
+      <SectionSeparator />
+
+      <PipelineDataFlow />
 
       <SectionSeparator />
 
@@ -46,11 +60,16 @@ const Home = () => {
 
       <SectionSeparator />
 
-      <Benefits featuresList={benefits} />
+      <Capabilities />
 
       <SectionSeparator />
 
+      <Benefits featuresList={benefits} />
+
+      {/* Testimonials — commented out while UNCASE is in development
+      <SectionSeparator />
       <Testimonials testimonials={testimonials} />
+      */}
 
       <SectionSeparator />
 

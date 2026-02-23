@@ -1,15 +1,26 @@
 'use client'
 
-import { SendIcon } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowUpRightIcon, BookOpenIcon, SendIcon } from 'lucide-react'
+
+import { cn } from '@/lib/utils'
 
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
+import { NumberTicker } from '@/components/ui/number-ticker'
 
-import { PrimaryFlowButton } from '@/components/ui/flow-button'
+import { PrimaryFlowButton, SecondaryFlowButton } from '@/components/ui/flow-button'
 import { MotionPreset } from '@/components/ui/motion-preset'
 
 import LogoVector from '@/assets/svg/logo-vector'
 import DottedSheet from '@/assets/svg/dotted-sheet'
+
+const stats = [
+  { value: 0, suffix: '%', description: 'Zero PII tolerance', decimalPlaces: 0 },
+  { value: 15, suffix: '-$45', description: 'USD per adapter', decimalPlaces: 0 },
+  { value: 99.5, suffix: '%', description: 'vs 28GB base model', decimalPlaces: 1 },
+  { value: 6, suffix: '+', description: 'Supported domains', decimalPlaces: 0 }
+] as const
 
 const CTASection = () => {
   return (
@@ -33,6 +44,41 @@ const CTASection = () => {
                 Join the UNCASE community. Contribute to the framework, extend domain namespaces, or deploy your own
                 specialized LoRA adapters.
               </p>
+
+              {/* Stats row */}
+              <div className='mt-4 flex flex-wrap items-center justify-center gap-6 sm:gap-8 lg:gap-12'>
+                {stats.map((stat, index) => (
+                  <div
+                    key={index}
+                    className={cn(
+                      'flex flex-col items-center gap-1',
+                      index !== 0 && 'lg:border-l lg:border-white/20 lg:pl-12 dark:lg:border-muted-foreground/20'
+                    )}
+                  >
+                    <span className='dark:text-foreground text-3xl font-bold text-white md:text-4xl'>
+                      <NumberTicker value={stat.value} decimalPlaces={stat.decimalPlaces} />
+                      {stat.suffix}
+                    </span>
+                    <span className='dark:text-muted-foreground text-sm text-white/80'>{stat.description}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Dual CTA buttons */}
+              <div className='mt-6 flex flex-wrap items-center justify-center gap-4'>
+                <PrimaryFlowButton size='lg' asChild>
+                  <Link href='https://github.com/marianomoralesr/UNCASE' target='_blank' rel='noopener noreferrer'>
+                    View on GitHub
+                    <ArrowUpRightIcon className='ml-2 size-4' />
+                  </Link>
+                </PrimaryFlowButton>
+                <SecondaryFlowButton size='lg' asChild>
+                  <Link href='#'>
+                    Read the Whitepaper
+                    <BookOpenIcon className='ml-2 size-4' />
+                  </Link>
+                </SecondaryFlowButton>
+              </div>
             </MotionPreset>
             <MotionPreset
               className='absolute bottom-0 left-0 text-[#F4F4F5]/10'

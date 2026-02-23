@@ -13,74 +13,74 @@ import StatCard from '@/components/blocks/features//stat-card'
 
 const chartData = [
   {
-    time: '09:00',
+    time: 'B1',
+    uv: 72,
+    pv: 68
+  },
+  {
+    time: 'B2',
+    uv: 75,
+    pv: 70
+  },
+  {
+    time: 'B3',
+    uv: 80,
+    pv: 74
+  },
+  {
+    time: 'B4',
+    uv: 78,
+    pv: 72
+  },
+  {
+    time: 'B5',
+    uv: 85,
+    pv: 76
+  },
+  {
+    time: 'B6',
+    uv: 82,
+    pv: 75
+  },
+  {
+    time: 'B7',
     uv: 88,
+    pv: 78
+  },
+  {
+    time: 'B8',
+    uv: 90,
+    pv: 80
+  },
+  {
+    time: 'B9',
+    uv: 91,
+    pv: 82
+  },
+  {
+    time: 'B10',
+    uv: 93,
+    pv: 85
+  },
+  {
+    time: 'B11',
+    uv: 94,
     pv: 88
   },
   {
-    time: '10:00',
-    uv: 88,
-    pv: 88
-  },
-  {
-    time: '11:00',
-    uv: 144,
-    pv: 144
-  },
-  {
-    time: '12:00',
-    uv: 144,
-    pv: 144
-  },
-  {
-    time: '13:00',
-    uv: 109,
-    pv: 109
-  },
-  {
-    time: '14:00',
-    uv: 102,
-    pv: 109
-  },
-  {
-    time: '15:00',
-    uv: 62,
-    pv: 62
-  },
-  {
-    time: '16:00',
-    uv: 62,
-    pv: 62
-  },
-  {
-    time: '17:00',
-    uv: 128,
-    pv: 144
-  },
-  {
-    time: '18:00',
-    uv: 144,
-    pv: 144
-  },
-  {
-    time: '19:00',
-    uv: 183,
-    pv: 200
-  },
-  {
-    time: '20:00',
-    uv: 200,
-    pv: 200
+    time: 'B12',
+    uv: 96,
+    pv: 92
   }
 ]
 
 const totalEarningChartConfig = {
   uv: {
-    label: 'Online Store',
+    label: 'Factual Fidelity',
     color: 'color-mix(in oklab, var(--primary) 20%, var(--background))'
   },
   pv: {
-    label: 'Offline Store',
+    label: 'ROUGE-L',
     color: 'var(--primary)'
   }
 } satisfies ChartConfig
@@ -98,9 +98,9 @@ const SalesGrowthCard = () => {
         >
           <StatCard
             avatarIcon={<TrendingUpIcon className='size-4' />}
-            title='Total sales'
-            statNumber='$2,150.00'
-            percentage={5}
+            title='Composite Score'
+            statNumber='0.92'
+            percentage={12}
             className='w-full p-6 shadow-lg'
           />
         </MotionPreset>
@@ -116,21 +116,21 @@ const SalesGrowthCard = () => {
             <div className='flex items-center justify-between gap-2 py-2'>
               <div className='flex items-center gap-2'>
                 <GlobeIcon className='size-4' />
-                <span>Online store</span>
+                <span>Factual Fidelity</span>
               </div>
               <div className='flex items-center justify-between gap-2 py-2'>
-                <span className='font-medium'>$120k</span>
-                <span className='text-card-foreground'>+12.6%</span>
+                <span className='font-medium'>0.94</span>
+                <span className='text-card-foreground'>&ge;0.90</span>
               </div>
             </div>
             <div className='flex items-center justify-between gap-2'>
               <div className='flex items-center gap-2'>
                 <StoreIcon className='size-4' />
-                <span>Offline store</span>
+                <span>ROUGE-L</span>
               </div>
               <div className='flex items-center justify-between gap-2'>
-                <span className='font-medium'>$20k</span>
-                <span className='text-card-foreground'>-4.2%</span>
+                <span className='font-medium'>0.72</span>
+                <span className='text-card-foreground'>&ge;0.65</span>
               </div>
             </div>
           </div>
@@ -167,7 +167,7 @@ const SalesGrowthCard = () => {
           transition={{ duration: 0.5 }}
           className='text-2xl font-semibold'
         >
-          Sales & Growth
+          Generation Quality
         </MotionPreset>
         <MotionPreset
           component='p'
@@ -178,7 +178,7 @@ const SalesGrowthCard = () => {
           transition={{ duration: 0.5 }}
           className='text-muted-foreground'
         >
-          Monitor product performance across stores orders, revenue and average order value in one place.
+          Track quality metrics across synthetic conversation batches — composite scores must pass all six hard gates.
         </MotionPreset>
       </CardContent>
     </Card>
