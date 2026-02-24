@@ -39,7 +39,7 @@ if [[ ! "$ENVIRONMENT" =~ ^(production|development|preview)$ ]]; then
 fi
 
 # === Configuración por entorno ===
-LANDING_DIR="shadcn-nextjs-flow-landing-page-1.0.0"
+LANDING_DIR="frontend"
 FRAMEWORK_DIR="uncase"
 MAIN_BRANCH="main"
 
@@ -258,24 +258,24 @@ if [ "$ENVIRONMENT" = "production" ]; then
         echo -e "  ${BLUE}Ejecutando validaciones de la landing page...${NC}"
 
         echo -n "    TypeScript check... "
-        if (cd "$LANDING_DIR" && npm run check-types --silent 2>/dev/null); then
+        if (cd "$LANDING_DIR" && pnpm run check-types --silent 2>/dev/null); then
             ok "OK"
         else
-            fail "\n  ✗ Errores de TypeScript. Ejecuta: cd ${LANDING_DIR} && npm run check-types"
+            fail "\n  ✗ Errores de TypeScript. Ejecuta: cd ${LANDING_DIR} && pnpm run check-types"
         fi
 
         echo -n "    ESLint... "
-        if (cd "$LANDING_DIR" && npm run lint --silent 2>/dev/null); then
+        if (cd "$LANDING_DIR" && pnpm run lint --silent 2>/dev/null); then
             ok "OK"
         else
-            fail "\n  ✗ Errores de ESLint. Ejecuta: cd ${LANDING_DIR} && npm run lint:fix"
+            fail "\n  ✗ Errores de ESLint. Ejecuta: cd ${LANDING_DIR} && pnpm run lint:fix"
         fi
 
         echo -n "    Build... "
-        if (cd "$LANDING_DIR" && npm run build --silent 2>/dev/null); then
+        if (cd "$LANDING_DIR" && pnpm run build --silent 2>/dev/null); then
             ok "OK"
         else
-            fail "\n  ✗ Build falló. Ejecuta: cd ${LANDING_DIR} && npm run build"
+            fail "\n  ✗ Build falló. Ejecuta: cd ${LANDING_DIR} && pnpm run build"
         fi
     fi
 fi
@@ -338,7 +338,7 @@ if [ -d "$LANDING_DIR" ]; then
     echo -e "  ${BLUE}━━━ Landing Page (Vercel) ━━━${NC}"
 
     if ! command -v vercel > /dev/null 2>&1; then
-        warn "  ⚠ CLI de Vercel no instalado. Instálalo con: npm i -g vercel"
+        warn "  ⚠ CLI de Vercel no instalado. Instálalo con: pnpm add -g vercel"
         warn "  Saltando deploy de landing page."
     else
         case "$ENVIRONMENT" in
@@ -362,7 +362,7 @@ if [ -d "$LANDING_DIR" ]; then
                 ;;
             development)
                 echo "  Entorno de desarrollo — sin deploy remoto."
-                echo "  Para desarrollo local: cd ${LANDING_DIR} && npm run dev"
+                echo "  Para desarrollo local: cd ${LANDING_DIR} && pnpm run dev"
                 ok "  ✓ Listo para desarrollo local"
                 ;;
         esac

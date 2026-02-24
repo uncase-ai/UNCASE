@@ -69,6 +69,11 @@ const Footer = () => {
                   FAQ
                 </Link>
               </li>
+              <li>
+                <Link href='/#roadmap' className='hover:text-foreground transition-colors duration-300'>
+                  Roadmap
+                </Link>
+              </li>
             </ul>
           </div>
           <div className='flex flex-col gap-5'>

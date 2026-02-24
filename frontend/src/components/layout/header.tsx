@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-import { ExternalLinkIcon } from 'lucide-react'
+import { BookOpenIcon, ExternalLinkIcon, TerminalIcon } from 'lucide-react'
 
 import Link from 'next/link'
 
@@ -66,36 +66,42 @@ const Header = ({ navigationData, className }: HeaderProps) => {
         <div className='flex gap-4 sm:gap-6'>
           <ModeToggle />
 
-          <SecondaryFlowButton size='lg' className='max-sm:hidden' asChild>
-            <Link href='https://github.com/marianomoralesr/UNCASE'>GitHub</Link>
+          <SecondaryFlowButton size='lg' className='max-lg:hidden' asChild>
+            <Link href='/docs'>
+              <BookOpenIcon />
+              Leer el Whitepaper
+            </Link>
           </SecondaryFlowButton>
 
-          <PrimaryFlowButton size='lg' className='max-sm:hidden' asChild>
-            <Link href='/#features'>Explore</Link>
+          <PrimaryFlowButton size='lg' className='max-lg:hidden' asChild>
+            <Link href='https://github.com/marianomoralesr/UNCASE'>
+              <TerminalIcon />
+              Instalación
+            </Link>
           </PrimaryFlowButton>
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <SecondaryFlowButton size='icon-lg' className='sm:hidden' asChild>
-                <Link href='https://github.com/marianomoralesr/UNCASE'>
-                  <ExternalLinkIcon />
-                  <span className='sr-only'>GitHub</span>
+              <SecondaryFlowButton size='icon-lg' className='lg:hidden max-sm:hidden' asChild>
+                <Link href='/docs'>
+                  <BookOpenIcon />
+                  <span className='sr-only'>Leer el Whitepaper</span>
                 </Link>
               </SecondaryFlowButton>
             </TooltipTrigger>
-            <TooltipContent>GitHub</TooltipContent>
+            <TooltipContent>Leer el Whitepaper</TooltipContent>
           </Tooltip>
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <PrimaryFlowButton size='icon-lg' className='sm:hidden' asChild>
-                <Link href='/#features'>
+              <PrimaryFlowButton size='icon-lg' className='lg:hidden max-sm:hidden' asChild>
+                <Link href='https://github.com/marianomoralesr/UNCASE'>
                   <ExternalLinkIcon />
-                  <span className='sr-only'>Explore</span>
+                  <span className='sr-only'>Instalación</span>
                 </Link>
               </PrimaryFlowButton>
             </TooltipTrigger>
-            <TooltipContent>Explore</TooltipContent>
+            <TooltipContent>Instalación</TooltipContent>
           </Tooltip>
 
           <HeaderNavigationSmallScreen navigationData={navigationData} />

@@ -1,4 +1,4 @@
-import Hero from '@/components/blocks/hero-section/hero-section'
+import HeroSection40 from '@/components/shadcn-studio/blocks/hero-section-40/hero-section-40'
 import Features from '@/components/blocks/features/features'
 import Benefits from '@/components/blocks/benefits/benefits'
 import Pricing from '@/components/blocks/pricing/pricing'
@@ -7,12 +7,15 @@ import CTA from '@/components/blocks/cta/cta'
 import PipelineTimeline from '@/components/blocks/pipeline/pipeline-timeline'
 import PipelineDataFlow from '@/components/blocks/pipeline/pipeline-data-flow'
 import Capabilities from '@/components/blocks/capabilities/capabilities'
+import Roadmap from '@/components/blocks/roadmap/roadmap'
 
-// TrustedBrands and Testimonials commented out while UNCASE is in development
-// import TrustedBrands from '@/components/blocks/trusted-brands/trusted-brands'
-// import Testimonials from '@/components/blocks/testimonials/testimonials'
-// import { logos } from '@/assets/data/trusted-brands'
-// import { testimonials } from '@/assets/data/testimonials'
+/*
+ * TrustedBrands and Testimonials commented out while UNCASE is in development
+ * import TrustedBrands from '@/components/blocks/trusted-brands/trusted-brands'
+ * import Testimonials from '@/components/blocks/testimonials/testimonials'
+ * import { logos } from '@/assets/data/trusted-brands'
+ * import { testimonials } from '@/assets/data/testimonials'
+ */
 
 import { plans } from '@/assets/data/pricing'
 import { faqItems } from '@/assets/data/faqs'
@@ -39,14 +42,15 @@ const jsonLd = {
 const Home = () => {
   return (
     <>
-      <Hero />
+      <HeroSection40 />
 
       <SectionSeparator />
 
-      {/* TrustedBrands — commented out while UNCASE is in development
-      <TrustedBrands brandLogos={logos} />
-      <SectionSeparator />
-      */}
+      {/*
+       * TrustedBrands — commented out while UNCASE is in development
+       * <TrustedBrands brandLogos={logos} />
+       * <SectionSeparator />
+       */}
 
       <PipelineTimeline />
 
@@ -66,10 +70,11 @@ const Home = () => {
 
       <Benefits featuresList={benefits} />
 
-      {/* Testimonials — commented out while UNCASE is in development
-      <SectionSeparator />
-      <Testimonials testimonials={testimonials} />
-      */}
+      {/*
+       * Testimonials — commented out while UNCASE is in development
+       * <SectionSeparator />
+       * <Testimonials testimonials={testimonials} />
+       */}
 
       <SectionSeparator />
 
@@ -79,9 +84,14 @@ const Home = () => {
 
       <FAQ faqItems={faqItems} />
 
+      <SectionSeparator />
+
+      <Roadmap />
+
+      <SectionSeparator />
+
       <CTA />
 
-      {/* Add JSON-LD to your page */}
       <script
         type='application/ld+json'
         dangerouslySetInnerHTML={{
