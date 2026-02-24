@@ -1,7 +1,7 @@
 {
-  "name": "Flow - SaaS Landing page",
-  "short_name": "Flow",
-  "description": "Grow your product faster with an all-in-one sales and analytics platform. Track performance, automate follow-ups, and make smarter decisions easily.",
+  "name": "UNCASE — Synthetic Data Framework",
+  "short_name": "UNCASE",
+  "description": "Open-source framework for generating high-quality synthetic conversational data for LoRA fine-tuning in regulated industries — without exposing real data.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -9,12 +9,11 @@
   "theme_color": "#000000",
   "orientation": "portrait-primary",
   "categories": [
-    "sales",
-    "analytics",
-    "productivity",
-    "business intelligence",
-    "growth",
-    "saas"
+    "synthetic data",
+    "privacy AI",
+    "LoRA fine-tuning",
+    "regulated industries",
+    "open source"
   ],
   "icons": [
     {
@@ -53,22 +52,22 @@
   ],
   "shortcuts": [
     {
-      "name": "Home",
-      "short_name": "Home",
-      "description": "Go to homepage",
-      "url": "/"
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Open the UNCASE dashboard",
+      "url": "/dashboard"
+    },
+    {
+      "name": "Documentation",
+      "short_name": "Docs",
+      "description": "Read the documentation",
+      "url": "/docs"
     },
     {
       "name": "Blog",
       "short_name": "Blog",
       "description": "Explore blog posts",
       "url": "/blog"
-    },
-    {
-      "name": "Pricing",
-      "short_name": "Pricing",
-      "description": "Explore pricing options",
-      "url": "/pricing"
     }
   ]
 }

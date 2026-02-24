@@ -16,7 +16,7 @@ import {
 
 import type { ImportResult } from '@/types/api'
 import { cn } from '@/lib/utils'
-import { detectFormat, importCsv, importJsonl } from '@/lib/api/imports'
+import { detectFormat, importCsv, importJsonl, parseJsonlLocally } from '@/lib/api/imports'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -91,19 +91,34 @@ export function ImportPage() {
     setUploadState('uploading')
     setUploadError(null)
 
+    // Try the API first
     const apiResult = format === 'csv' ? await importCsv(file) : await importJsonl(file)
-
-    if (apiResult.error) {
-      setUploadState('error')
-      setUploadError(apiResult.error.message)
-
-      return
-    }
 
     if (apiResult.data) {
       setResult(apiResult.data)
       setUploadState('done')
+
+      return
     }
+
+    // Fallback: parse JSONL locally when the API is unreachable
+    if (format === 'jsonl') {
+      try {
+        const localResult = await parseJsonlLocally(file)
+
+        if (localResult.conversations.length > 0 || localResult.errors.length > 0) {
+          setResult(localResult)
+          setUploadState('done')
+
+          return
+        }
+      } catch {
+        // Fall through to error
+      }
+    }
+
+    setUploadState('error')
+    setUploadError(apiResult.error?.message ?? 'Import failed')
   }
 
   function handleDragOver(e: React.DragEvent) {

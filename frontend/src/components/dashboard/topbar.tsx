@@ -49,6 +49,7 @@ export function Topbar({ sidebarCollapsed, onToggleSidebar, onOpenMobile }: Topb
       </Button>
 
       {/* Logo */}
+      <img src="/images/logo/icon.png" alt="UNCASE" className="size-5 dark:invert" />
       <span className="text-sm font-bold tracking-tight">UNCASE</span>
 
       {/* Breadcrumbs */}
@@ -66,7 +67,7 @@ export function Topbar({ sidebarCollapsed, onToggleSidebar, onOpenMobile }: Topb
               className={cn(
                 'size-2 rounded-full',
                 apiConnected === null && 'bg-muted-foreground animate-pulse',
-                apiConnected === true && 'bg-emerald-500',
+                apiConnected === true && 'bg-foreground',
                 apiConnected === false && 'bg-destructive'
               )}
             />

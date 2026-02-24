@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="frontend/public/logo.svg" alt="UNCASE Logo" width="120" height="120" />
+  <img src="frontend/public/images/logo/logo-horizontal.png" alt="UNCASE Logo" height="80" />
 </p>
-
-<h1 align="center">UNCASE</h1>
 
 <p align="center">
   <strong>Unbiased Neutral Convention for Agnostic Seed Engineering</strong>

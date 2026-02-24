@@ -362,7 +362,7 @@ export function GeneratePage() {
           description="Create seeds in the Seed Library first, then come back to generate synthetic conversations."
           action={
             <Button asChild variant="outline">
-              <Link href="/dashboard/seeds">
+              <Link href="/dashboard/pipeline/seeds">
                 <Sparkles className="mr-1.5 size-4" /> Go to Seed Library
               </Link>
             </Button>
