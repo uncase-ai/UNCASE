@@ -107,6 +107,7 @@ export interface Conversation {
   es_sintetica: boolean
   created_at: string
   metadata: Record<string, unknown>
+  status?: 'valid' | 'invalid'
 }
 
 // ─── Templates ───

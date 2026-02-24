@@ -1,15 +1,39 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import Link from 'next/link'
-import { MessageSquare } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import {
+  Ban,
+  CheckCircle2,
+  MessageSquare,
+  MoreHorizontal,
+  Pencil,
+  Trash2
+} from 'lucide-react'
 
 import type { Conversation } from '@/types/api'
 import { SUPPORTED_DOMAINS } from '@/types/api'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 import type { Column } from '../data-table'
@@ -56,10 +80,45 @@ const DOMAIN_COLORS: Record<string, string> = {
 }
 
 export function ConversationsPage() {
-  const [conversations] = useState<Conversation[]>(() => loadConversations())
+  const router = useRouter()
+  const [conversations, setConversations] = useState<Conversation[]>(() => loadConversations())
   const [search, setSearch] = useState('')
   const [domainFilter, setDomainFilter] = useState<string>('all')
   const [syntheticFilter, setSyntheticFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [deleteTarget, setDeleteTarget] = useState<Conversation | null>(null)
+
+  const persist = useCallback(
+    (updated: Conversation[]) => {
+      setConversations(updated)
+      saveConversations(updated)
+    },
+    []
+  )
+
+  const handleToggleStatus = useCallback(
+    (id: string) => {
+      const updated = conversations.map(c => {
+        if (c.conversation_id !== id) return c
+        const current = c.status ?? 'valid'
+
+        return { ...c, status: current === 'valid' ? 'invalid' as const : 'valid' as const }
+      })
+
+      persist(updated)
+    },
+    [conversations, persist]
+  )
+
+  const handleDelete = useCallback(
+    (id: string) => {
+      const updated = conversations.filter(c => c.conversation_id !== id)
+
+      persist(updated)
+      setDeleteTarget(null)
+    },
+    [conversations, persist]
+  )
 
   const filtered = useMemo(() => {
     let result = conversations
@@ -83,8 +142,17 @@ export function ConversationsPage() {
       result = result.filter(c => (syntheticFilter === 'synthetic' ? c.es_sintetica : !c.es_sintetica))
     }
 
+    if (statusFilter !== 'all') {
+      result = result.filter(c => (c.status ?? 'valid') === statusFilter)
+    }
+
     return result
-  }, [conversations, search, domainFilter, syntheticFilter])
+  }, [conversations, search, domainFilter, syntheticFilter, statusFilter])
+
+  const invalidCount = useMemo(
+    () => conversations.filter(c => c.status === 'invalid').length,
+    [conversations]
+  )
 
   const columns: Column<Conversation>[] = [
     {
@@ -125,6 +193,19 @@ export function ConversationsPage() {
       )
     },
     {
+      key: 'status',
+      header: 'Status',
+      cell: row => {
+        const status = row.status ?? 'valid'
+
+        return (
+          <StatusBadge variant={status === 'valid' ? 'success' : 'warning'} dot={false}>
+            {status === 'valid' ? 'Valid' : 'Invalid'}
+          </StatusBadge>
+        )
+      }
+    },
+    {
       key: 'date',
       header: 'Created',
       cell: row => (
@@ -132,6 +213,48 @@ export function ConversationsPage() {
           {new Date(row.created_at).toLocaleDateString()}
         </span>
       )
+    },
+    {
+      key: 'actions',
+      header: '',
+      className: 'w-10',
+      cell: row => {
+        const status = row.status ?? 'valid'
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="size-8 p-0">
+                <MoreHorizontal className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => router.push(`/dashboard/conversations/${row.conversation_id}`)}>
+                <Pencil className="size-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleToggleStatus(row.conversation_id)}>
+                {status === 'valid' ? (
+                  <>
+                    <Ban className="size-4" />
+                    Mark as Invalid
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="size-4" />
+                    Mark as Valid
+                  </>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive" onClick={() => setDeleteTarget(row)}>
+                <Trash2 className="size-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      }
     }
   ]
 
@@ -155,7 +278,10 @@ export function ConversationsPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Conversations" description={`${conversations.length} conversations in local store`} />
+      <PageHeader
+        title="Conversations"
+        description={`${conversations.length} conversations${invalidCount > 0 ? ` (${invalidCount} invalid)` : ''}`}
+      />
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
@@ -183,10 +309,42 @@ export function ConversationsPage() {
             <SelectItem value="synthetic">Synthetic</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="valid">Valid</SelectItem>
+            <SelectItem value="invalid">Invalid</SelectItem>
+          </SelectContent>
+        </Select>
         <span className="ml-auto text-xs text-muted-foreground">{filtered.length} results</span>
       </div>
 
       <DataTable columns={columns} data={filtered} rowKey={r => r.conversation_id} />
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={!!deleteTarget} onOpenChange={open => { if (!open) setDeleteTarget(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Conversation</DialogTitle>
+            <DialogDescription>
+              This will permanently remove conversation{' '}
+              <span className="font-mono">{deleteTarget?.conversation_id.slice(0, 12)}...</span>{' '}
+              from your local store. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button variant="destructive" onClick={() => deleteTarget && handleDelete(deleteTarget.conversation_id)}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
