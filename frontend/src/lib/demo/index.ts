@@ -1,10 +1,3 @@
-import { DEMO_SEEDS } from './seeds'
-import { DEMO_CONVERSATIONS } from './conversations'
-import { DEMO_EVALUATIONS } from './evaluations'
-import { DEMO_PIPELINE_JOBS, DEMO_RUNNING_JOB_ID } from './pipeline-jobs'
-import { DEMO_ACTIVITY } from './activity'
-import { DEMO_EXPORTS } from './exports'
-
 const DEMO_MODE_KEY = 'uncase-demo-mode'
 
 const STORAGE_KEYS = [
@@ -16,34 +9,53 @@ const STORAGE_KEYS = [
   'uncase-exports'
 ] as const
 
+export const DEMO_RUNNING_JOB_ID = 'demo-job-003'
+
 function dispatchStorageEvent(key: string) {
   window.dispatchEvent(new StorageEvent('storage', { key }))
 }
 
-export function populateDemoData(): void {
-  const entries: [string, unknown][] = [
+async function loadDemoData() {
+  const [{ DEMO_SEEDS }, { DEMO_CONVERSATIONS }, { DEMO_EVALUATIONS }, { DEMO_PIPELINE_JOBS }, { DEMO_ACTIVITY }, { DEMO_EXPORTS }] =
+    await Promise.all([
+      import('./seeds'),
+      import('./conversations'),
+      import('./evaluations'),
+      import('./pipeline-jobs'),
+      import('./activity'),
+      import('./exports')
+    ])
+
+  return [
     ['uncase-seeds', DEMO_SEEDS],
     ['uncase-conversations', DEMO_CONVERSATIONS],
     ['uncase-evaluations', DEMO_EVALUATIONS],
     ['uncase-pipeline-jobs', DEMO_PIPELINE_JOBS],
     ['uncase-activity', DEMO_ACTIVITY],
     ['uncase-exports', DEMO_EXPORTS]
-  ]
+  ] as [string, unknown][]
+}
 
+function writeAndDispatch(entries: [string, unknown][]) {
   for (const [key, data] of entries) {
     localStorage.setItem(key, JSON.stringify(data))
   }
 
-  // Dispatch after all writes so listeners react
   for (const [key] of entries) {
     dispatchStorageEvent(key)
   }
 }
 
-export function activateDemo(): void {
+export async function populateDemoData(): Promise<void> {
+  const entries = await loadDemoData()
+
+  writeAndDispatch(entries)
+}
+
+export async function activateDemo(): Promise<void> {
   localStorage.setItem(DEMO_MODE_KEY, 'true')
   dispatchStorageEvent(DEMO_MODE_KEY)
-  populateDemoData()
+  await populateDemoData()
 }
 
 export function deactivateDemo(): void {
@@ -60,8 +72,8 @@ export function deactivateDemo(): void {
   }
 }
 
-export function resetDemoData(): void {
-  populateDemoData()
+export async function resetDemoData(): Promise<void> {
+  await populateDemoData()
 }
 
 export function isDemoMode(): boolean {
@@ -69,5 +81,3 @@ export function isDemoMode(): boolean {
 
   return localStorage.getItem(DEMO_MODE_KEY) === 'true'
 }
-
-export { DEMO_RUNNING_JOB_ID }

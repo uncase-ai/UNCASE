@@ -130,8 +130,8 @@ const HeroSection40 = () => {
               </SecondaryFlowButton>
               <SecondaryFlowButton
                 size='lg'
-                onClick={() => {
-                  activateDemo()
+                onClick={async () => {
+                  await activateDemo()
                   router.push('/dashboard')
                 }}
               >

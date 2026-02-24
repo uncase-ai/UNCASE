@@ -9,8 +9,8 @@ import { SecondaryFlowButton } from '@/components/ui/flow-button'
 export default function DemoQuickButton() {
   const router = useRouter()
 
-  const handleDemo = () => {
-    activateDemo()
+  const handleDemo = async () => {
+    await activateDemo()
     router.push('/dashboard')
   }
 

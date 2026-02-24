@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 
 export function DemoBanner() {
   const { active, exit, reset } = useDemoMode()
-  const { updateJob, jobs } = useJobQueue()
+  const { updateJob } = useJobQueue()
   const router = useRouter()
 
   // Live simulation: increment running job progress
@@ -20,18 +20,27 @@ export function DemoBanner() {
     if (!active) return
 
     const interval = setInterval(() => {
-      const runningJob = jobs.find((j) => j.id === DEMO_RUNNING_JOB_ID)
+      try {
+        const stored = localStorage.getItem('uncase-pipeline-jobs')
 
-      if (!runningJob || runningJob.status !== 'running' || runningJob.progress >= 99) return
+        if (!stored) return
 
-      const increment = Math.random() < 0.5 ? 1 : 2
-      const next = Math.min(runningJob.progress + increment, 99)
+        const jobs = JSON.parse(stored) as { id: string; status: string; progress: number }[]
+        const runningJob = jobs.find((j) => j.id === DEMO_RUNNING_JOB_ID)
 
-      updateJob(DEMO_RUNNING_JOB_ID, { progress: next })
+        if (!runningJob || runningJob.status !== 'running' || runningJob.progress >= 99) return
+
+        const increment = Math.random() < 0.5 ? 1 : 2
+        const next = Math.min(runningJob.progress + increment, 99)
+
+        updateJob(DEMO_RUNNING_JOB_ID, { progress: next })
+      } catch {
+        // ignore parse errors
+      }
     }, 2000)
 
     return () => clearInterval(interval)
-  }, [active, jobs, updateJob])
+  }, [active, updateJob])
 
   if (!active) return null
 
@@ -50,7 +59,7 @@ export function DemoBanner() {
         </span>
       </div>
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="sm" onClick={reset} className="h-7 gap-1.5 text-xs text-amber-700 hover:bg-amber-100 hover:text-amber-900 dark:text-amber-300 dark:hover:bg-amber-900/30 dark:hover:text-amber-100">
+        <Button variant="ghost" size="sm" onClick={() => reset()} className="h-7 gap-1.5 text-xs text-amber-700 hover:bg-amber-100 hover:text-amber-900 dark:text-amber-300 dark:hover:bg-amber-900/30 dark:hover:text-amber-100">
           <RotateCcw className="size-3.5" />
           <span className="hidden sm:inline">Reset Data</span>
         </Button>

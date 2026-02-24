@@ -15,16 +15,16 @@ export function useDemoMode() {
     () => false
   )
 
-  const enter = useCallback(() => {
-    activateDemo()
+  const enter = useCallback(async () => {
+    await activateDemo()
   }, [])
 
   const exit = useCallback(() => {
     deactivateDemo()
   }, [])
 
-  const reset = useCallback(() => {
-    resetDemoData()
+  const reset = useCallback(async () => {
+    await resetDemoData()
   }, [])
 
   return { active, enter, exit, reset }
