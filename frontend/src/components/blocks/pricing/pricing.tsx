@@ -15,7 +15,8 @@ import { cn } from '@/lib/utils'
 import { NumberTicker } from '@/components/ui/number-ticker'
 import { MotionPreset } from '@/components/ui/motion-preset'
 import { PrimaryFlowButton } from '@/components/ui/flow-button'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
+// import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export type Plans = {
   icon: ReactNode

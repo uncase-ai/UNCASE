@@ -1,0 +1,179 @@
+'use client'
+
+import { useState } from 'react'
+
+import {
+  Activity,
+  ArrowDownToLine,
+  BarChart3,
+  BookOpen,
+  Clock,
+  Key,
+  PackageOpen,
+  Puzzle,
+  Rocket,
+  Sprout,
+  Trash2
+} from 'lucide-react'
+
+import type { ActivityEvent, ActivityType } from '@/types/dashboard'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+
+import { EmptyState } from '../empty-state'
+import { PageHeader } from '../page-header'
+
+const STORE_KEY = 'uncase-activity'
+
+const ACTIVITY_ICONS: Record<ActivityType, typeof Activity> = {
+  seed_created: Sprout,
+  conversation_imported: ArrowDownToLine,
+  conversation_generated: Rocket,
+  evaluation_completed: BarChart3,
+  dataset_exported: PackageOpen,
+  tool_registered: Puzzle,
+  api_key_created: Key,
+  template_rendered: BookOpen
+}
+
+const ACTIVITY_COLORS: Record<ActivityType, string> = {
+  seed_created: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950',
+  conversation_imported: 'text-blue-500 bg-blue-50 dark:bg-blue-950',
+  conversation_generated: 'text-violet-500 bg-violet-50 dark:bg-violet-950',
+  evaluation_completed: 'text-amber-500 bg-amber-50 dark:bg-amber-950',
+  dataset_exported: 'text-rose-500 bg-rose-50 dark:bg-rose-950',
+  tool_registered: 'text-cyan-500 bg-cyan-50 dark:bg-cyan-950',
+  api_key_created: 'text-orange-500 bg-orange-50 dark:bg-orange-950',
+  template_rendered: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-950'
+}
+
+export function loadActivity(): ActivityEvent[] {
+  if (typeof window === 'undefined') return []
+
+  try {
+    const raw = localStorage.getItem(STORE_KEY)
+
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+export function logActivity(event: Omit<ActivityEvent, 'id' | 'timestamp'>) {
+  const events = loadActivity()
+
+  const newEvent: ActivityEvent = {
+    ...event,
+    id: crypto.randomUUID(),
+    timestamp: new Date().toISOString()
+  }
+
+  const updated = [newEvent, ...events].slice(0, 200)
+
+  localStorage.setItem(STORE_KEY, JSON.stringify(updated))
+
+  return newEvent
+}
+
+function timeAgo(date: string): string {
+  const now = Date.now()
+  const then = new Date(date).getTime()
+  const diff = now - then
+  const minutes = Math.floor(diff / 60000)
+
+  if (minutes < 1) return 'just now'
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+
+  if (days < 7) return `${days}d ago`
+
+  return new Date(date).toLocaleDateString()
+}
+
+export function ActivityPage() {
+  const [events, setEvents] = useState<ActivityEvent[]>(() => loadActivity())
+
+  const clearHistory = () => {
+    localStorage.removeItem(STORE_KEY)
+    setEvents([])
+  }
+
+  if (events.length === 0) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Activity" description="Recent operations and pipeline events" />
+        <EmptyState
+          icon={Activity}
+          title="No activity yet"
+          description="Activity events will appear here as you use the pipeline — importing data, generating conversations, running evaluations, and exporting datasets."
+        />
+      </div>
+    )
+  }
+
+  // Group by date
+  const grouped: Record<string, ActivityEvent[]> = {}
+
+  for (const event of events) {
+    const date = new Date(event.timestamp).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+
+    if (!grouped[date]) grouped[date] = []
+    grouped[date].push(event)
+  }
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Activity"
+        description={`${events.length} events recorded`}
+        actions={
+          <Button variant="outline" size="sm" onClick={clearHistory}>
+            <Trash2 className="mr-1 size-3" />
+            Clear History
+          </Button>
+        }
+      />
+
+      {Object.entries(grouped).map(([date, dayEvents]) => (
+        <div key={date}>
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{date}</h3>
+          <Card>
+            <CardContent className="divide-y p-0">
+              {dayEvents.map(event => {
+                const Icon = ACTIVITY_ICONS[event.type] ?? Activity
+                const color = ACTIVITY_COLORS[event.type] ?? 'text-muted-foreground bg-muted'
+
+                return (
+                  <div key={event.id} className="flex items-start gap-3 px-4 py-3">
+                    <div className={cn('mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full', color)}>
+                      <Icon className="size-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium">{event.title}</p>
+                      {event.description && (
+                        <p className="text-xs text-muted-foreground">{event.description}</p>
+                      )}
+                    </div>
+                    <span className="flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
+                      <Clock className="size-3" />
+                      {timeAgo(event.timestamp)}
+                    </span>
+                  </div>
+                )
+              })}
+            </CardContent>
+          </Card>
+        </div>
+      ))}
+    </div>
+  )
+}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+
 import {
   Search,
   ChevronRight,
@@ -38,13 +39,16 @@ function t(obj: { en: string; es: string }, locale: Locale): string {
 
 function groupByCategory(articles: DocArticle[]): Record<string, DocArticle[]> {
   const grouped: Record<string, DocArticle[]> = {}
+
   for (const article of articles) {
     if (!grouped[article.category]) grouped[article.category] = []
     grouped[article.category].push(article)
   }
+
   for (const key of Object.keys(grouped)) {
     grouped[key].sort((a, b) => a.order - b.order)
   }
+
   return grouped
 }
 
@@ -133,6 +137,7 @@ function DocsSidebar({
       <div className="flex-1 overflow-y-auto px-1">
         {sortedCategories.map(cat => {
           const articles = groupedArticles[cat.id] || []
+
           if (articles.length === 0 && searchQuery) return null
           const isOpen = openCategories.has(cat.id)
           const Icon = cat.icon
@@ -231,6 +236,7 @@ function CategoryCardsView({
         {sortedCategories.map(cat => {
           const articles = groupedArticles[cat.id] || []
           const Icon = cat.icon
+
           return (
             <button
               key={cat.id}
@@ -386,12 +392,15 @@ export default function DocsPage() {
   useEffect(() => {
     const handleHash = () => {
       const hash = window.location.hash.slice(1)
+
       if (hash.startsWith('cat-')) {
         const catId = hash.replace('cat-', '')
+
         setSelectedCategory(catId)
         setSelectedArticleId(null)
       } else if (hash) {
         const article = ARTICLES.find(a => a.id === hash)
+
         if (article) {
           setSelectedArticleId(hash)
           setSelectedCategory(article.category)
@@ -402,8 +411,10 @@ export default function DocsPage() {
         setSelectedCategory(null)
       }
     }
+
     handleHash()
     window.addEventListener('popstate', handleHash)
+
     return () => window.removeEventListener('popstate', handleHash)
   }, [])
 
@@ -411,6 +422,7 @@ export default function DocsPage() {
   const filteredArticles = useMemo(() => {
     if (!searchQuery.trim()) return ARTICLES
     const q = searchQuery.toLowerCase()
+
     return ARTICLES.filter(
       a =>
         t(a.title, locale).toLowerCase().includes(q) ||
@@ -453,8 +465,10 @@ export default function DocsPage() {
   const handleToggleCategory = useCallback((cat: string) => {
     setOpenCategories(prev => {
       const next = new Set(prev)
+
       if (next.has(cat)) next.delete(cat)
       else next.add(cat)
+
       return next
     })
   }, [])
