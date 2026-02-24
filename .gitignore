@@ -49,9 +49,9 @@ mlruns/
 mlartifacts/
 
 # ── Datos ────────────────────────────────────────────────────
-data/
-datasets/
-exports/
+/data/
+/datasets/
+/exports/
 *.parquet
 *.csv
 *.jsonl
