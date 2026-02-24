@@ -344,7 +344,7 @@ if [ -d "$LANDING_DIR" ]; then
         case "$ENVIRONMENT" in
             production)
                 echo "  Desplegando a producción..."
-                if (cd "$LANDING_DIR" && vercel --prod --yes 2>&1 | sed 's/^/    /'); then
+                if (vercel --prod --yes --archive=tgz 2>&1 | sed 's/^/    /'); then
                     ok "  ✓ Landing page desplegada a producción"
                 else
                     echo -e "${RED}  ✗ Falló el deploy de la landing page${NC}"
@@ -353,7 +353,7 @@ if [ -d "$LANDING_DIR" ]; then
                 ;;
             preview)
                 echo "  Desplegando preview..."
-                if (cd "$LANDING_DIR" && vercel --yes 2>&1 | sed 's/^/    /'); then
+                if (vercel --yes --archive=tgz 2>&1 | sed 's/^/    /'); then
                     ok "  ✓ Landing page desplegada como preview"
                 else
                     echo -e "${RED}  ✗ Falló el deploy preview de la landing page${NC}"
@@ -362,7 +362,7 @@ if [ -d "$LANDING_DIR" ]; then
                 ;;
             development)
                 echo "  Entorno de desarrollo — sin deploy remoto."
-                echo "  Para desarrollo local: cd ${LANDING_DIR} && pnpm run dev"
+                echo "  Para desarrollo local: cd ${LANDING_DIR} && npm run dev"
                 ok "  ✓ Listo para desarrollo local"
                 ;;
         esac
