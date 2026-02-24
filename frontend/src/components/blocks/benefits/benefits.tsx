@@ -102,12 +102,7 @@ const ImageItem = ({
       <img
         src={feature.image}
         alt={feature.title}
-        className='h-full w-full max-w-110 object-contain md:max-h-95 dark:hidden'
-      />
-      <img
-        src={`${feature.image.replace('.webp', '-dark.webp')}`}
-        alt={feature.title}
-        className='hidden h-full w-full max-w-110 object-contain md:max-h-95 dark:inline-block'
+        className='h-full w-full max-w-110 object-contain dark:invert md:max-h-95'
       />
     </motion.div>
   )
@@ -224,12 +219,7 @@ const Benefits = ({ featuresList }: { featuresList: Features }) => {
                       <img
                         src={feature.image}
                         alt={feature.title}
-                        className='size-full max-h-70 max-w-96 object-contain max-sm:max-w-70 dark:hidden'
-                      />
-                      <img
-                        src={`${feature.image.replace('.webp', '-dark.webp')}`}
-                        alt={feature.title}
-                        className='hidden size-full max-h-70 max-w-96 object-contain max-sm:max-w-70 dark:inline-block'
+                        className='size-full max-h-70 max-w-96 object-contain dark:invert max-sm:max-w-70'
                       />
                     </div>
                     {['top-4.5 left-4.5', 'top-4.5 right-4.5', 'bottom-4.5 left-4.5', 'bottom-4.5 right-4.5'].map(

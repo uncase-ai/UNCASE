@@ -67,9 +67,9 @@ const Header = ({ navigationData, className }: HeaderProps) => {
           <ModeToggle />
 
           <SecondaryFlowButton size='lg' className='max-lg:hidden' asChild>
-            <Link href='/docs'>
+            <Link href='https://github.com/uncase-ai/UNCASE/tree/main/docs' target='_blank' rel='noopener noreferrer'>
               <BookOpenIcon />
-              Leer el Whitepaper
+              Read Whitepapers
             </Link>
           </SecondaryFlowButton>
 
@@ -83,13 +83,13 @@ const Header = ({ navigationData, className }: HeaderProps) => {
           <Tooltip>
             <TooltipTrigger asChild>
               <SecondaryFlowButton size='icon-lg' className='lg:hidden max-sm:hidden' asChild>
-                <Link href='/docs'>
+                <Link href='https://github.com/uncase-ai/UNCASE/tree/main/docs' target='_blank' rel='noopener noreferrer'>
                   <BookOpenIcon />
-                  <span className='sr-only'>Leer el Whitepaper</span>
+                  <span className='sr-only'>Read Whitepapers</span>
                 </Link>
               </SecondaryFlowButton>
             </TooltipTrigger>
-            <TooltipContent>Leer el Whitepaper</TooltipContent>
+            <TooltipContent>Read Whitepapers</TooltipContent>
           </Tooltip>
 
           <Tooltip>
