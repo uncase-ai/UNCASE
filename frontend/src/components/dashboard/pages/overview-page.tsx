@@ -17,10 +17,10 @@ import {
   FlaskConical,
   HelpCircle,
   Key,
+  Library,
   MessageSquare,
   PackageOpen,
   Play,
-
   Puzzle,
   Rocket,
   Server,
@@ -50,6 +50,7 @@ const ORG_ID_KEY = 'uncase-org-id'
 
 const PIPELINE_STEPS = [
   { label: 'Seeds', href: '/dashboard/pipeline/seeds', icon: Sprout, description: 'Define knowledge structures' },
+  { label: 'Knowledge', href: '/dashboard/knowledge', icon: Library, description: 'Upload domain literature' },
   { label: 'Import', href: '/dashboard/pipeline/import', icon: ArrowDownToLine, description: 'Ingest conversation data' },
   { label: 'Evaluate', href: '/dashboard/pipeline/evaluate', icon: FlaskConical, description: 'Run quality gates' },
   { label: 'Generate', href: '/dashboard/pipeline/generate', icon: Rocket, description: 'Synthesize conversations' },
@@ -255,11 +256,11 @@ export function OverviewPage() {
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-medium">Pipeline</CardTitle>
-            <span className="text-[11px] text-muted-foreground">5 stages</span>
+            <span className="text-[11px] text-muted-foreground">6 stages</span>
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="grid grid-cols-5 gap-0">
+          <div className="grid grid-cols-6 gap-0">
             {PIPELINE_STEPS.map((step, i) => (
               <Link
                 key={step.label}

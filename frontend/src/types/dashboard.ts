@@ -47,6 +47,7 @@ export type ActivityType =
   | 'tool_registered'
   | 'api_key_created'
   | 'template_rendered'
+  | 'knowledge_uploaded'
 
 export interface ActivityEvent {
   id: string

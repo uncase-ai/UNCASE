@@ -26,6 +26,7 @@ const LABEL_MAP: Record<string, string> = {
   templates: 'Templates',
   tools: 'Tools',
   evaluations: 'Evaluations',
+  knowledge: 'Knowledge Base',
   activity: 'Activity',
   settings: 'Settings'
 }

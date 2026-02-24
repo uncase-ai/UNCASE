@@ -8,6 +8,7 @@ import {
   ArrowRight,
   CheckCircle2,
   FlaskConical,
+  Library,
   Lock,
   PackageOpen,
   Rocket,
@@ -57,6 +58,19 @@ const STAGES: StageConfig[] = [
       'Define domain (automotive, medical, legal...)',
       'Set roles and turn structure',
       'Configure factual parameters'
+    ],
+    isReady: () => true
+  },
+  {
+    id: 'knowledge',
+    label: 'Knowledge Base',
+    description: 'Upload domain literature, manuals, and procedures to ground generation in real facts.',
+    icon: Library,
+    href: '/dashboard/knowledge',
+    details: [
+      'Product catalogs, SOPs, glossaries',
+      'Auto-chunking with overlap',
+      'Feeds into seed enrichment and generation'
     ],
     isReady: () => true
   },

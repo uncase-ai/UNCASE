@@ -323,3 +323,28 @@ export const SUPPORTED_DOMAINS = [
 ] as const
 
 export type SupportedDomain = (typeof SUPPORTED_DOMAINS)[number]
+
+// ─── Knowledge Base ───
+export type KnowledgeType = 'facts' | 'procedures' | 'terminology' | 'reference'
+
+export interface KnowledgeChunk {
+  id: string
+  document_id: string
+  content: string
+  type: KnowledgeType
+  domain: string
+  tags: string[]
+  source: string
+  order: number
+}
+
+export interface KnowledgeDocument {
+  id: string
+  filename: string
+  domain: string
+  type: KnowledgeType
+  chunk_count: number
+  chunks: KnowledgeChunk[]
+  uploaded_at: string
+  metadata: Record<string, unknown>
+}

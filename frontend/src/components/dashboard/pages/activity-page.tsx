@@ -34,7 +34,8 @@ const ACTIVITY_ICONS: Record<ActivityType, typeof Activity> = {
   dataset_exported: PackageOpen,
   tool_registered: Puzzle,
   api_key_created: Key,
-  template_rendered: BookOpen
+  template_rendered: BookOpen,
+  knowledge_uploaded: BookOpen
 }
 
 const ACTIVITY_COLORS: Record<ActivityType, string> = {
@@ -45,7 +46,8 @@ const ACTIVITY_COLORS: Record<ActivityType, string> = {
   dataset_exported: 'text-muted-foreground bg-muted',
   tool_registered: 'text-muted-foreground bg-muted',
   api_key_created: 'text-muted-foreground bg-muted',
-  template_rendered: 'text-muted-foreground bg-muted'
+  template_rendered: 'text-muted-foreground bg-muted',
+  knowledge_uploaded: 'text-muted-foreground bg-muted'
 }
 
 export function loadActivity(): ActivityEvent[] {

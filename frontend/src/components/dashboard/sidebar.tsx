@@ -8,6 +8,7 @@ import {
   FlaskConical,
   GitBranch,
   LayoutDashboard,
+  Library,
   MessageSquare,
   PackageOpen,
   Puzzle,
@@ -32,6 +33,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Pipeline', href: '/dashboard/pipeline', icon: GitBranch },
       { label: 'Seeds', href: '/dashboard/pipeline/seeds', icon: Sprout },
+      { label: 'Knowledge', href: '/dashboard/knowledge', icon: Library },
       { label: 'Import', href: '/dashboard/pipeline/import', icon: ArrowDownToLine },
       { label: 'Evaluate', href: '/dashboard/pipeline/evaluate', icon: FlaskConical },
       { label: 'Generate', href: '/dashboard/pipeline/generate', icon: Rocket },
