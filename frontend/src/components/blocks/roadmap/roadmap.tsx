@@ -1,15 +1,6 @@
 'use client'
 
-import {
-  BookOpenIcon,
-  BrainCircuitIcon,
-  BuildingIcon,
-  CpuIcon,
-  GlobeIcon,
-  RocketIcon,
-  ShieldCheckIcon,
-  UsersIcon
-} from 'lucide-react'
+import { BuildingIcon, CheckCircle2Icon, GlobeIcon, NetworkIcon, UsersIcon } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -23,8 +14,11 @@ const roadmapData = [
     content: (
       <Card className='max-w-sm shadow-none'>
         <CardContent className='space-y-3'>
-          <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg'>
-            <BookOpenIcon className='size-5' />
+          <div className='flex items-center gap-2'>
+            <div className='bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 flex size-10 items-center justify-center rounded-lg'>
+              <CheckCircle2Icon className='size-5' />
+            </div>
+            <Badge className='bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'>Completed</Badge>
           </div>
           <h3 className='text-lg font-semibold'>Project Foundation</h3>
           <p className='text-muted-foreground text-sm leading-relaxed'>
@@ -51,8 +45,11 @@ const roadmapData = [
     content: (
       <Card className='max-w-sm shadow-none'>
         <CardContent className='space-y-3'>
-          <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg'>
-            <BrainCircuitIcon className='size-5' />
+          <div className='flex items-center gap-2'>
+            <div className='bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 flex size-10 items-center justify-center rounded-lg'>
+              <CheckCircle2Icon className='size-5' />
+            </div>
+            <Badge className='bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'>Completed</Badge>
           </div>
           <h3 className='text-lg font-semibold'>Layers 0-1: Seed Engine & Parser</h3>
           <p className='text-muted-foreground text-sm leading-relaxed'>
@@ -79,8 +76,11 @@ const roadmapData = [
     content: (
       <Card className='max-w-sm shadow-none'>
         <CardContent className='space-y-3'>
-          <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg'>
-            <ShieldCheckIcon className='size-5' />
+          <div className='flex items-center gap-2'>
+            <div className='bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 flex size-10 items-center justify-center rounded-lg'>
+              <CheckCircle2Icon className='size-5' />
+            </div>
+            <Badge className='bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'>Completed</Badge>
           </div>
           <h3 className='text-lg font-semibold'>Layers 2-3: Evaluator & Generator</h3>
           <p className='text-muted-foreground text-sm leading-relaxed'>
@@ -103,27 +103,30 @@ const roadmapData = [
     )
   },
   {
-    title: 'Q4 2025 — LoRA Pipeline',
+    title: 'Q4 2025 — LoRA Pipeline & API',
     content: (
       <Card className='max-w-sm shadow-none'>
         <CardContent className='space-y-3'>
-          <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg'>
-            <CpuIcon className='size-5' />
+          <div className='flex items-center gap-2'>
+            <div className='bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 flex size-10 items-center justify-center rounded-lg'>
+              <CheckCircle2Icon className='size-5' />
+            </div>
+            <Badge className='bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'>Completed</Badge>
           </div>
-          <h3 className='text-lg font-semibold'>Layer 4: Training Pipeline</h3>
+          <h3 className='text-lg font-semibold'>Layer 4 + Full REST API</h3>
           <p className='text-muted-foreground text-sm leading-relaxed'>
-            LoRA/QLoRA fine-tuning with DP-SGD privacy guarantees. 10 chat format exports (ChatML, Alpaca, LLaMA,
-            Mistral, Qwen, and more). MLflow experiment tracking.
+            LoRA/QLoRA fine-tuning with DP-SGD privacy guarantees. 47 REST API endpoints covering the complete
+            pipeline. Docker Compose deployment with PostgreSQL and MLflow.
           </p>
           <div className='flex flex-wrap gap-1.5'>
             <Badge variant='outline' className='text-xs'>
               DP-SGD
             </Badge>
             <Badge variant='outline' className='text-xs'>
-              10 formats
+              47 endpoints
             </Badge>
             <Badge variant='outline' className='text-xs'>
-              MLflow
+              Docker
             </Badge>
           </div>
         </CardContent>
@@ -131,27 +134,30 @@ const roadmapData = [
     )
   },
   {
-    title: 'Q1 2026 — Platform Launch',
+    title: 'Q1 2026 — Gateway & Connectors',
     content: (
-      <Card className='max-w-sm shadow-none'>
+      <Card className='max-w-sm border-primary/30 shadow-none'>
         <CardContent className='space-y-3'>
-          <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg'>
-            <RocketIcon className='size-5' />
+          <div className='flex items-center gap-2'>
+            <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg'>
+              <NetworkIcon className='size-5' />
+            </div>
+            <Badge className='bg-primary/10 text-primary'>Current</Badge>
           </div>
-          <h3 className='text-lg font-semibold'>API, Docker & Documentation</h3>
+          <h3 className='text-lg font-semibold'>LLM Gateway & Connector Hub</h3>
           <p className='text-muted-foreground text-sm leading-relaxed'>
-            REST API with versioned endpoints. Docker Compose deployment (API + PostgreSQL + MLflow). Bilingual
-            documentation (EN/ES) with Haiku doc-agent for auto-translation.
+            Universal LLM Gateway with privacy interception on all traffic. Provider Registry with Fernet-encrypted
+            API keys. WhatsApp and webhook connectors. Privacy Interceptor with audit/warn/block modes. Dashboard UI.
           </p>
           <div className='flex flex-wrap gap-1.5'>
             <Badge variant='outline' className='text-xs'>
-              REST API
+              LLM Gateway
             </Badge>
             <Badge variant='outline' className='text-xs'>
-              Docker
+              Connectors
             </Badge>
             <Badge variant='outline' className='text-xs'>
-              Bilingual docs
+              Privacy Interceptor
             </Badge>
           </div>
         </CardContent>
@@ -166,20 +172,20 @@ const roadmapData = [
           <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg'>
             <GlobeIcon className='size-5' />
           </div>
-          <h3 className='text-lg font-semibold'>6 Industry Namespaces</h3>
+          <h3 className='text-lg font-semibold'>Domain Templates & MCP Server</h3>
           <p className='text-muted-foreground text-sm leading-relaxed'>
-            Full support for automotive, medical, legal, finance, industrial, and education domains. WhatsApp chat
-            parser. Domain-specific quality thresholds and seed templates.
+            Domain-specific seed templates for all 6 industries. MCP (Model Context Protocol) server for IDE
+            integration. Advanced WhatsApp parser improvements and CRM connector.
           </p>
           <div className='flex flex-wrap gap-1.5'>
             <Badge variant='outline' className='text-xs'>
-              6 domains
-            </Badge>
-            <Badge variant='outline' className='text-xs'>
-              WhatsApp parser
-            </Badge>
-            <Badge variant='outline' className='text-xs'>
               Seed templates
+            </Badge>
+            <Badge variant='outline' className='text-xs'>
+              MCP server
+            </Badge>
+            <Badge variant='outline' className='text-xs'>
+              CRM connector
             </Badge>
           </div>
         </CardContent>
@@ -194,7 +200,7 @@ const roadmapData = [
           <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg'>
             <UsersIcon className='size-5' />
           </div>
-          <h3 className='text-lg font-semibold'>PyPI, Plugins & Community</h3>
+          <h3 className='text-lg font-semibold'>PyPI, Plugins & Marketplace</h3>
           <p className='text-muted-foreground text-sm leading-relaxed'>
             PyPI package distribution with optional extras (ml, privacy, all). Plugin system for custom evaluators and
             generators. Community seed marketplace for shared domain templates.

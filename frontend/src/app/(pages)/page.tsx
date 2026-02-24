@@ -32,9 +32,9 @@ const jsonLd = {
       '@id': `${process.env.NEXT_PUBLIC_APP_URL}#website`,
       name: 'UNCASE',
       description:
-        'Open source framework for generating high-quality synthetic conversational data for LoRA fine-tuning in privacy-sensitive industries.',
+        'Open-source framework for turning sensitive conversations into trained AI models with zero PII exposure. LLM Gateway, Privacy Interceptor, and LoRA pipeline for regulated industries.',
       url: `${process.env.NEXT_PUBLIC_APP_URL}`,
-      inLanguage: 'es'
+      inLanguage: 'en'
     }
   ]
 }

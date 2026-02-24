@@ -48,10 +48,11 @@ const Capabilities = () => {
         >
           <p className='text-primary text-sm font-medium uppercase'>Capabilities</p>
 
-          <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>Built for Regulated Industries</h2>
+          <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>Everything You Need to Ship Compliant AI</h2>
 
           <p className='text-muted-foreground mx-auto max-w-3xl text-xl'>
-            Every capability is designed with privacy, compliance, and auditability as first-class requirements.
+            LLM Gateway, Privacy Interceptor, Connector Hub, and 47 API endpoints — all built with privacy,
+            compliance, and auditability as non-negotiable requirements.
           </p>
         </MotionPreset>
 

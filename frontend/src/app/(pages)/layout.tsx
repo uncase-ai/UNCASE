@@ -78,15 +78,7 @@ const navigationData: Navigation[] = [
     href: '/#pipeline'
   },
   {
-    title: 'Open Source',
-    href: '/#pricing'
-  },
-  {
-    title: 'Roadmap',
-    href: '/#roadmap'
-  },
-  {
-    title: 'Dashboard',
+    title: 'App',
     href: '/dashboard'
   },
   {

@@ -21,8 +21,8 @@ const Footer = () => {
             <Logo />
           </Link>
           <p className='text-muted-foreground'>
-            UNCASE — Open source framework for generating high-quality synthetic conversational data for LoRA fine-tuning
-            in privacy-sensitive industries.
+            UNCASE — Open-source framework for turning sensitive conversations into trained AI models with zero PII
+            exposure. LLM Gateway, Privacy Interceptor, and LoRA pipeline for regulated industries.
           </p>
           <Separator className='w-35!' />
           <div className='flex items-center gap-4'>
@@ -60,18 +60,13 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link href='/#pricing' className='hover:text-foreground transition-colors duration-300'>
-                  Open Source
+                <Link href='/#capabilities' className='hover:text-foreground transition-colors duration-300'>
+                  Capabilities
                 </Link>
               </li>
               <li>
                 <Link href='/#faq' className='hover:text-foreground transition-colors duration-300'>
                   FAQ
-                </Link>
-              </li>
-              <li>
-                <Link href='/#roadmap' className='hover:text-foreground transition-colors duration-300'>
-                  Roadmap
                 </Link>
               </li>
             </ul>
@@ -133,7 +128,7 @@ const Footer = () => {
           <Link className='text-foreground font-medium hover:underline' href='/#home'>
             UNCASE
           </Link>{' '}
-          — Open Source Framework for Privacy-Sensitive Synthetic Data Generation.
+          — Privacy-First AI Infrastructure for Regulated Industries.
         </p>
       </div>
     </footer>

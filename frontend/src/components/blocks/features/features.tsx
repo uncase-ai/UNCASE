@@ -66,10 +66,11 @@ const Features = () => {
         >
           <p className='text-primary text-sm font-medium uppercase'>Architecture</p>
 
-          <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>5-Layer Pipeline, Zero Real Data</h2>
+          <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>5-Layer Pipeline. Zero Real Data. Full Control.</h2>
 
           <p className='text-muted-foreground text-xl'>
-            From expert knowledge to trained LoRA adapters — every layer delivers value independently.
+            From expert knowledge to production-ready LoRA adapters — each layer operates independently,
+            every step is auditable, and no real data ever touches the pipeline.
           </p>
         </MotionPreset>
 

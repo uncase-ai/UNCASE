@@ -16,10 +16,10 @@ import LogoVector from '@/assets/svg/logo-vector'
 import DottedSheet from '@/assets/svg/dotted-sheet'
 
 const stats = [
-  { value: 0, suffix: '%', description: 'Zero PII tolerance', decimalPlaces: 0 },
-  { value: 15, suffix: '-$45', description: 'USD per adapter', decimalPlaces: 0 },
-  { value: 99.5, suffix: '%', description: 'vs 28GB base model', decimalPlaces: 1 },
-  { value: 6, suffix: '+', description: 'Supported domains', decimalPlaces: 0 }
+  { value: 0, suffix: '%', description: 'PII in final output', decimalPlaces: 0 },
+  { value: 47, suffix: '', description: 'API endpoints', decimalPlaces: 0 },
+  { value: 6, suffix: '', description: 'Regulated industries', decimalPlaces: 0 },
+  { value: 309, suffix: '', description: 'Tests passing', decimalPlaces: 0 }
 ] as const
 
 const CTASection = () => {
@@ -37,12 +37,12 @@ const CTASection = () => {
               className='flex flex-col items-center justify-center gap-4'
             >
               <h2 className='dark:text-foreground text-2xl font-semibold text-white md:text-3xl lg:text-4xl'>
-                Build the Future of Privacy-First AI
+                Start Building Privacy-First AI Today
               </h2>
 
               <p className='dark:text-muted-foreground w-full text-xl text-white/80 lg:max-w-2xl'>
-                Join the UNCASE community. Contribute to the framework, extend domain namespaces, or deploy your own
-                specialized LoRA adapters.
+                Deploy the full pipeline, connect your data sources, route through any LLM provider, and produce
+                compliant LoRA adapters — all without exposing a single data point.
               </p>
 
               {/* Stats row */}

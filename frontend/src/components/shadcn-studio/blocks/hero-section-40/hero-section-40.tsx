@@ -66,10 +66,10 @@ const tabs = [
 ]
 
 const stats = [
-  { value: 0, suffix: '%', label: 'PII in final data', decimalPlaces: 0 },
-  { value: 6, suffix: '+', label: 'Industry domains', decimalPlaces: 0 },
-  { value: 99.5, suffix: '%', label: 'Size reduction vs base model', decimalPlaces: 1 },
-  { value: 10, suffix: '+', label: 'Chat formats', decimalPlaces: 0 }
+  { value: 0, suffix: '%', label: 'PII in final output', decimalPlaces: 0 },
+  { value: 47, suffix: '', label: 'API endpoints', decimalPlaces: 0 },
+  { value: 6, suffix: '', label: 'Regulated industries', decimalPlaces: 0 },
+  { value: 5, suffix: '', label: 'Privacy layers', decimalPlaces: 0 }
 ]
 
 const HeroSection40 = () => {
@@ -96,23 +96,24 @@ const HeroSection40 = () => {
           <div className='flex flex-col items-center gap-4 text-center'>
             <Badge variant='outline' className='bg-muted relative gap-2.5 px-1.5 py-1'>
               <span className='bg-primary text-primary-foreground flex h-5.5 items-center rounded-full px-2 py-0.5'>
-                Open Source
+                Production Ready
               </span>
               <span className='text-muted-foreground text-sm font-normal text-wrap'>
-                Privacy-First Synthetic Data Framework
+                Privacy-First AI Infrastructure for Regulated Industries
               </span>
               <BorderBeam colorFrom='var(--primary)' colorTo='var(--primary)' size={35} />
             </Badge>
 
             <h1 className='text-2xl font-semibold sm:text-3xl lg:text-5xl lg:leading-[1.29167]'>
-              Fine-tune AI for regulated industries
+              Turn sensitive conversations into
               <br />
-              without exposing a single real data point
+              trained AI models — without the risk
             </h1>
 
             <p className='text-muted-foreground max-w-3xl text-xl'>
-              UNCASE transforms expert knowledge into privacy-safe synthetic conversational data for LoRA fine-tuning.
-              Zero PII. Full traceability. Domain-agnostic. Open source.
+              UNCASE is an open-source framework that transforms expert knowledge into privacy-safe synthetic data,
+              routes it through any LLM provider, and produces LoRA-ready adapters — all with zero PII exposure,
+              full traceability, and built-in compliance.
             </p>
 
             <div className='flex flex-wrap items-center justify-center gap-4 sm:gap-6 lg:gap-8'>
@@ -122,12 +123,6 @@ const HeroSection40 = () => {
                   View on GitHub
                 </Link>
               </PrimaryFlowButton>
-              <SecondaryFlowButton size='lg' asChild>
-                <Link href='/docs'>
-                  <BookOpenIcon />
-                  Read the Whitepaper
-                </Link>
-              </SecondaryFlowButton>
               <SecondaryFlowButton
                 size='lg'
                 onClick={async () => {
@@ -136,7 +131,13 @@ const HeroSection40 = () => {
                 }}
               >
                 <PlayIcon />
-                Try Demo
+                Try the App
+              </SecondaryFlowButton>
+              <SecondaryFlowButton size='lg' asChild>
+                <Link href='/docs'>
+                  <BookOpenIcon />
+                  Documentation
+                </Link>
               </SecondaryFlowButton>
             </div>
           </div>
