@@ -74,7 +74,7 @@ const Header = ({ navigationData, className }: HeaderProps) => {
           </SecondaryFlowButton>
 
           <PrimaryFlowButton size='lg' className='max-lg:hidden' asChild>
-            <Link href='https://github.com/marianomoralesr/UNCASE'>
+            <Link href='https://github.com/uncase-ai/UNCASE'>
               <TerminalIcon />
               Instalación
             </Link>
@@ -95,7 +95,7 @@ const Header = ({ navigationData, className }: HeaderProps) => {
           <Tooltip>
             <TooltipTrigger asChild>
               <PrimaryFlowButton size='icon-lg' className='lg:hidden max-sm:hidden' asChild>
-                <Link href='https://github.com/marianomoralesr/UNCASE'>
+                <Link href='https://github.com/uncase-ai/UNCASE'>
                   <ExternalLinkIcon />
                   <span className='sr-only'>Instalación</span>
                 </Link>

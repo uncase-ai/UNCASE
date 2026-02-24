@@ -67,7 +67,7 @@ const CTASection = () => {
               {/* Dual CTA buttons */}
               <div className='mt-6 flex flex-wrap items-center justify-center gap-4'>
                 <PrimaryFlowButton size='lg' asChild>
-                  <Link href='https://github.com/marianomoralesr/UNCASE' target='_blank' rel='noopener noreferrer'>
+                  <Link href='https://github.com/uncase-ai/UNCASE' target='_blank' rel='noopener noreferrer'>
                     View on GitHub
                     <ArrowUpRightIcon className='ml-2 size-4' />
                   </Link>

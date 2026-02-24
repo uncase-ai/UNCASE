@@ -118,7 +118,7 @@ const HeroSection40 = () => {
 
             <div className='flex flex-wrap items-center justify-center gap-4 sm:gap-6 lg:gap-8'>
               <PrimaryFlowButton size='lg' asChild>
-                <Link href='https://github.com/marianomoralesr/UNCASE'>
+                <Link href='https://github.com/uncase-ai/UNCASE'>
                   <ArrowUpRightIcon />
                   View on GitHub
                 </Link>

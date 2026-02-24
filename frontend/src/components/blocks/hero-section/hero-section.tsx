@@ -87,7 +87,7 @@ const HeroSection = () => {
             className='z-10'
           >
             <PrimaryFlowButton size='lg' asChild>
-              <Link href='https://github.com/marianomoralesr/UNCASE'>
+              <Link href='https://github.com/uncase-ai/UNCASE'>
                 View on GitHub
                 <ArrowUpRightIcon />
               </Link>

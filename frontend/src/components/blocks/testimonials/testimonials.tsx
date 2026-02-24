@@ -48,7 +48,7 @@ const Testimonials = ({ testimonials }: { testimonials: TestimonialItem[] }) => 
             <p className='text-muted-foreground text-sm font-medium'>Stars out of 5</p>
           </div>
           <PrimaryFlowButton size='lg' asChild>
-            <Link href='https://github.com/marianomoralesr/UNCASE'>
+            <Link href='https://github.com/uncase-ai/UNCASE'>
               Read the whitepaper
               <ExternalLinkIcon />
             </Link>

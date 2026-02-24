@@ -26,7 +26,7 @@ const Footer = () => {
           </p>
           <Separator className='w-35!' />
           <div className='flex items-center gap-4'>
-            <Link href='https://github.com/marianomoralesr/UNCASE' aria-label='Github Link'>
+            <Link href='https://github.com/uncase-ai/UNCASE' aria-label='Github Link'>
               <GithubIcon className='text-muted-foreground hover:text-foreground size-5' />
             </Link>
             <Link href='#' aria-label='Instagram Link'>
@@ -75,12 +75,12 @@ const Footer = () => {
             <div className='text-lg font-medium'>Resources</div>
             <ul className='text-muted-foreground space-y-3'>
               <li>
-                <Link href='https://github.com/marianomoralesr/UNCASE' className='hover:text-foreground transition-colors duration-300'>
+                <Link href='https://github.com/uncase-ai/UNCASE' className='hover:text-foreground transition-colors duration-300'>
                   GitHub Repository
                 </Link>
               </li>
               <li>
-                <Link href='https://github.com/marianomoralesr/UNCASE/issues' className='hover:text-foreground transition-colors duration-300'>
+                <Link href='https://github.com/uncase-ai/UNCASE/issues' className='hover:text-foreground transition-colors duration-300'>
                   Report Issues
                 </Link>
               </li>
