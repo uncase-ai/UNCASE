@@ -258,21 +258,21 @@ if [ "$ENVIRONMENT" = "production" ]; then
         echo -e "  ${BLUE}Ejecutando validaciones de la landing page...${NC}"
 
         echo -n "    TypeScript check... "
-        if (cd "$LANDING_DIR" && pnpm run check-types --silent 2>/dev/null); then
+        if (cd "$LANDING_DIR" && pnpm run check-types 2>/dev/null); then
             ok "OK"
         else
             fail "\n  ✗ Errores de TypeScript. Ejecuta: cd ${LANDING_DIR} && pnpm run check-types"
         fi
 
         echo -n "    ESLint... "
-        if (cd "$LANDING_DIR" && pnpm run lint --silent 2>/dev/null); then
+        if (cd "$LANDING_DIR" && pnpm run lint 2>/dev/null); then
             ok "OK"
         else
             fail "\n  ✗ Errores de ESLint. Ejecuta: cd ${LANDING_DIR} && pnpm run lint:fix"
         fi
 
         echo -n "    Build... "
-        if (cd "$LANDING_DIR" && pnpm run build --silent 2>/dev/null); then
+        if (cd "$LANDING_DIR" && pnpm run build 2>/dev/null); then
             ok "OK"
         else
             fail "\n  ✗ Build falló. Ejecuta: cd ${LANDING_DIR} && pnpm run build"
