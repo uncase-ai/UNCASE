@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import structlog
-from fastapi import APIRouter, HTTPException, UploadFile
+from fastapi import APIRouter, UploadFile
 
 from uncase.core.parser.csv_parser import CSVConversationParser
 from uncase.core.parser.jsonl_parser import JSONLConversationParser
-from uncase.exceptions import ImportFormatError, ImportParsingError
 from uncase.schemas.import_result import ImportErrorDetail, ImportResult
 
 router = APIRouter(prefix="/api/v1/import", tags=["import"])
@@ -24,10 +23,8 @@ async def import_csv(file: UploadFile) -> ImportResult:
     parser = CSVConversationParser()
     errors: list[ImportErrorDetail] = []
 
-    try:
-        conversations = await parser.parse(raw)
-    except (ImportParsingError, ImportFormatError) as exc:
-        raise HTTPException(status_code=422, detail=exc.detail) from exc
+    # Let ImportParsingError / ImportFormatError bubble to middleware handler
+    conversations = await parser.parse(raw)
 
     logger.info(
         "csv_imported",
@@ -52,10 +49,8 @@ async def import_jsonl(file: UploadFile, source_format: str = "auto") -> ImportR
     parser = JSONLConversationParser()
     errors: list[ImportErrorDetail] = []
 
-    try:
-        conversations = await parser.parse(raw, format=source_format)
-    except (ImportParsingError, ImportFormatError) as exc:
-        raise HTTPException(status_code=422, detail=exc.detail) from exc
+    # Let ImportParsingError / ImportFormatError bubble to middleware handler
+    conversations = await parser.parse(raw, format=source_format)
 
     logger.info(
         "jsonl_imported",

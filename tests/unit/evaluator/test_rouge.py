@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from tests.factories import make_conversation, make_seed
 from uncase.core.evaluator.metrics.rouge import ROUGELMetric, _lcs_length, rouge_l_score
 from uncase.schemas.conversation import ConversationTurn
@@ -79,8 +77,8 @@ class TestROUGELMetric:
         conversation = make_conversation(
             seed_id=seed.seed_id,
             turnos=[
-                ConversationTurn(turno=1, rol="vendedor", contenido="Buenos dias, bienvenido al concesionario ficticio"),
-                ConversationTurn(turno=2, rol="cliente", contenido="Consulta sobre vehiculos disponibles de prueba"),
+                ConversationTurn(turno=1, rol="vendedor", contenido="Buenos dias, bienvenido al concesionario"),
+                ConversationTurn(turno=2, rol="cliente", contenido="Consulta sobre vehiculos disponibles"),
             ],
         )
         metric = ROUGELMetric()

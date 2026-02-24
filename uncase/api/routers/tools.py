@@ -5,9 +5,8 @@ from __future__ import annotations
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, status
 
-from uncase.exceptions import DuplicateError, ToolNotFoundError
 from uncase.tools import get_registry, get_tool, list_tools
 from uncase.tools.executor import SimulatedToolExecutor
 from uncase.tools.schemas import ToolCall, ToolDefinition, ToolResult
@@ -39,25 +38,18 @@ async def list_tool_definitions(
 @router.get("/{tool_name}", response_model=ToolDefinition)
 async def get_tool_definition(tool_name: str) -> ToolDefinition:
     """Get a single tool definition by name."""
-    try:
-        tool = get_tool(tool_name)
-    except ToolNotFoundError as exc:
-        raise HTTPException(status_code=404, detail=exc.detail) from exc
-
+    # Let ToolNotFoundError bubble to middleware handler
+    tool = get_tool(tool_name)
     logger.info("tool_retrieved", tool_name=tool_name)
     return tool
 
 
-@router.post("", response_model=ToolDefinition, status_code=201)
+@router.post("", response_model=ToolDefinition, status_code=status.HTTP_201_CREATED)
 async def register_tool(tool: ToolDefinition) -> ToolDefinition:
     """Register a custom tool definition."""
     registry = get_registry()
-
-    try:
-        registry.register(tool)
-    except DuplicateError as exc:
-        raise HTTPException(status_code=409, detail=exc.detail) from exc
-
+    # Let DuplicateError bubble to middleware handler
+    registry.register(tool)
     logger.info("tool_registered", tool_name=tool.name)
     return tool
 
@@ -65,10 +57,8 @@ async def register_tool(tool: ToolDefinition) -> ToolDefinition:
 @router.post("/{tool_name}/simulate", response_model=ToolResult)
 async def simulate_tool(tool_name: str, arguments: dict[str, Any]) -> ToolResult:
     """Simulate tool execution and return a mock result."""
-    try:
-        get_tool(tool_name)
-    except ToolNotFoundError as exc:
-        raise HTTPException(status_code=404, detail=exc.detail) from exc
+    # Let ToolNotFoundError bubble to middleware handler
+    get_tool(tool_name)
 
     tool_call = ToolCall(tool_name=tool_name, arguments=arguments)
     executor = SimulatedToolExecutor()

@@ -7,8 +7,11 @@ from typing import TYPE_CHECKING
 import structlog
 
 from uncase.core.evaluator.evaluator import ConversationEvaluator
+from uncase.db.models.evaluation import EvaluationReportModel
 
 if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
     from uncase.schemas.conversation import Conversation
     from uncase.schemas.quality import QualityReport
     from uncase.schemas.seed import SeedSchema
@@ -19,24 +22,67 @@ logger = structlog.get_logger(__name__)
 class EvaluatorService:
     """Service layer for quality evaluation operations.
 
-    Wraps the ConversationEvaluator with additional business logic:
-    batch statistics, summary reports, and threshold customization.
+    Wraps the ConversationEvaluator with DB persistence, batch statistics,
+    and summary reports.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, session: AsyncSession | None = None) -> None:
         self._evaluator = ConversationEvaluator()
+        self._session = session
+
+    async def _persist_report(self, report: QualityReport, dominio: str | None = None) -> None:
+        """Persist a quality report to the database if a session is available."""
+        if self._session is None:
+            return
+
+        model = EvaluationReportModel(
+            conversation_id=report.conversation_id,
+            seed_id=report.seed_id,
+            rouge_l=report.metrics.rouge_l,
+            fidelidad_factual=report.metrics.fidelidad_factual,
+            diversidad_lexica=report.metrics.diversidad_lexica,
+            coherencia_dialogica=report.metrics.coherencia_dialogica,
+            privacy_score=report.metrics.privacy_score,
+            memorizacion=report.metrics.memorizacion,
+            composite_score=report.composite_score,
+            passed=report.passed,
+            failures=report.failures,
+            dominio=dominio,
+        )
+        self._session.add(model)
+        await self._session.flush()
+
+        logger.info(
+            "evaluation_persisted",
+            report_id=model.id,
+            conversation_id=report.conversation_id,
+            passed=report.passed,
+        )
 
     async def evaluate_single(
         self, conversation: Conversation, seed: SeedSchema
     ) -> QualityReport:
         """Evaluate a single conversation against its origin seed."""
-        return await self._evaluator.evaluate(conversation, seed)
+        report = await self._evaluator.evaluate(conversation, seed)
+        await self._persist_report(report, dominio=conversation.dominio)
+
+        if self._session is not None:
+            await self._session.commit()
+
+        return report
 
     async def evaluate_batch(
         self, conversations: list[Conversation], seeds: list[SeedSchema]
     ) -> BatchEvaluationResult:
         """Evaluate a batch and return summary statistics."""
         reports = await self._evaluator.evaluate_batch(conversations, seeds)
+
+        # Persist all reports
+        for report, conv in zip(reports, conversations, strict=True):
+            await self._persist_report(report, dominio=conv.dominio)
+
+        if self._session is not None:
+            await self._session.commit()
 
         passed = [r for r in reports if r.passed]
         failed = [r for r in reports if not r.passed]

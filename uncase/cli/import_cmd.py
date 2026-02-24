@@ -8,6 +8,7 @@ from pathlib import Path
 
 import typer
 from rich.console import Console
+from rich.panel import Panel
 
 from uncase.core.parser import CSVConversationParser, JSONLConversationParser
 
@@ -36,7 +37,7 @@ def csv(
     try:
         conversations = asyncio.run(parser.parse_file(file))
     except Exception as e:
-        console.print(f"[red]Parse error: {e}[/red]")
+        console.print(f"[red]CSV parse error: {e}[/red]")
         raise typer.Exit(code=1) from None
 
     # Apply optional overrides.
@@ -58,7 +59,13 @@ def csv(
     else:
         console.print(result)
 
-    console.print(f"\n[bold]Summary:[/bold] {len(conversations)} conversation(s) imported.")
+    console.print(
+        Panel(
+            f"Conversations imported: [bold]{len(conversations)}[/bold]  |  "
+            f"Source: [cyan]{file.name}[/cyan]",
+            title="Import Summary",
+        )
+    )
 
 
 @import_app.command()
@@ -76,7 +83,7 @@ def jsonl(
     try:
         conversations = asyncio.run(parser.parse_file(file, source_format=format))
     except Exception as e:
-        console.print(f"[red]Parse error: {e}[/red]")
+        console.print(f"[red]JSONL parse error: {e}[/red]")
         raise typer.Exit(code=1) from None
 
     result = json.dumps(
@@ -91,4 +98,11 @@ def jsonl(
     else:
         console.print(result)
 
-    console.print(f"\n[bold]Summary:[/bold] {len(conversations)} conversation(s) imported.")
+    console.print(
+        Panel(
+            f"Conversations imported: [bold]{len(conversations)}[/bold]  |  "
+            f"Source: [cyan]{file.name}[/cyan]  |  "
+            f"Format: [cyan]{format}[/cyan]",
+            title="Import Summary",
+        )
+    )

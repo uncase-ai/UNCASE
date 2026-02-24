@@ -1,5 +1,7 @@
 """CLI subcommand for quality evaluation operations."""
 
+from __future__ import annotations
+
 import asyncio
 import json
 from pathlib import Path
@@ -11,7 +13,7 @@ from rich.table import Table
 
 from uncase.core.evaluator.evaluator import ConversationEvaluator
 from uncase.schemas.conversation import Conversation
-from uncase.schemas.quality import QualityReport
+from uncase.schemas.quality import QUALITY_THRESHOLDS, QualityReport
 from uncase.schemas.seed import SeedSchema
 
 evaluate_app = typer.Typer(
@@ -21,11 +23,6 @@ evaluate_app = typer.Typer(
 )
 
 console = Console()
-
-
-def _run_async(coro: object) -> object:
-    """Run an async coroutine from sync CLI context."""
-    return asyncio.get_event_loop().run_until_complete(coro)  # type: ignore[arg-type]
 
 
 def _render_report(report: QualityReport) -> None:
@@ -38,22 +35,13 @@ def _render_report(report: QualityReport) -> None:
     table.add_column("Threshold", justify="right")
     table.add_column("Status", justify="center")
 
-    thresholds = {
-        "rouge_l": 0.65,
-        "fidelidad_factual": 0.90,
-        "diversidad_lexica": 0.55,
-        "coherencia_dialogica": 0.85,
-        "privacy_score": 0.0,
-        "memorizacion": 0.01,
-    }
-
-    for field_name, threshold in thresholds.items():
+    for field_name, (threshold, operator, _desc) in QUALITY_THRESHOLDS.items():
         value = getattr(report.metrics, field_name)
 
-        if field_name == "privacy_score":
-            ok = value == 0.0
-            threshold_str = "= 0.00"
-        elif field_name == "memorizacion":
+        if operator == "=":
+            ok = value == threshold
+            threshold_str = f"= {threshold:.2f}"
+        elif operator == "<":
             ok = value < threshold
             threshold_str = f"< {threshold:.2f}"
         else:
@@ -97,8 +85,12 @@ def run(
         console.print(f"[red]File not found: {seeds_file}[/red]")
         raise typer.Exit(code=1)
 
-    conv_data = json.loads(conversations_file.read_text(encoding="utf-8"))
-    seed_data = json.loads(seeds_file.read_text(encoding="utf-8"))
+    try:
+        conv_data = json.loads(conversations_file.read_text(encoding="utf-8"))
+        seed_data = json.loads(seeds_file.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        console.print(f"[red]JSON parse error: {e}[/red]")
+        raise typer.Exit(code=1) from None
 
     conv_list = conv_data if isinstance(conv_data, list) else [conv_data]
     seed_list = seed_data if isinstance(seed_data, list) else [seed_data]
@@ -113,11 +105,15 @@ def run(
         )
         raise typer.Exit(code=1)
 
-    conversations = [Conversation.model_validate(c) for c in conv_list]
-    seeds = [SeedSchema.model_validate(s) for s in seed_list]
+    try:
+        conversations = [Conversation.model_validate(c) for c in conv_list]
+        seeds = [SeedSchema.model_validate(s) for s in seed_list]
+    except Exception as e:
+        console.print(f"[red]Validation error: {e}[/red]")
+        raise typer.Exit(code=1) from None
 
     evaluator = ConversationEvaluator()
-    reports: list[QualityReport] = _run_async(evaluator.evaluate_batch(conversations, seeds))  # type: ignore[assignment]
+    reports: list[QualityReport] = asyncio.run(evaluator.evaluate_batch(conversations, seeds))
 
     for report in reports:
         _render_report(report)
@@ -160,17 +156,8 @@ def thresholds() -> None:
     table.add_column("Threshold", justify="right")
     table.add_column("Description")
 
-    rows = [
-        ("rouge_l", ">= 0.65", "ROUGE-L structural coherence with seed"),
-        ("fidelidad_factual", ">= 0.90", "Factual fidelity (domain constraint adherence)"),
-        ("diversidad_lexica", ">= 0.55", "Type-Token Ratio (lexical diversity)"),
-        ("coherencia_dialogica", ">= 0.85", "Inter-turn dialog coherence"),
-        ("privacy_score", "= 0.00", "PII residual (MUST be zero)"),
-        ("memorizacion", "< 0.01", "Extraction attack success rate"),
-    ]
-
-    for name, threshold, desc in rows:
-        table.add_row(name, threshold, desc)
+    for name, (value, operator, desc) in QUALITY_THRESHOLDS.items():
+        table.add_row(name, f"{operator} {value:.2f}", desc)
 
     console.print(table)
     console.print()

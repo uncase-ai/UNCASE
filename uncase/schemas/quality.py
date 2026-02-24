@@ -3,8 +3,21 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Final
 
 from pydantic import BaseModel, Field
+
+# Canonical threshold definitions — single source of truth.
+# Referenced by compute_composite_score(), CLI, API, and docs.
+QUALITY_THRESHOLDS: Final[dict[str, tuple[float, str, str]]] = {
+    # name: (threshold, operator, description)
+    "rouge_l": (0.65, ">=", "ROUGE-L structural coherence with seed"),
+    "fidelidad_factual": (0.90, ">=", "Factual fidelity (domain constraint adherence)"),
+    "diversidad_lexica": (0.55, ">=", "Type-Token Ratio (lexical diversity)"),
+    "coherencia_dialogica": (0.85, ">=", "Inter-turn dialog coherence"),
+    "privacy_score": (0.0, "=", "PII residual (MUST be zero)"),
+    "memorizacion": (0.01, "<", "Extraction attack success rate"),
+}
 
 
 class QualityMetrics(BaseModel):
@@ -45,16 +58,23 @@ def compute_composite_score(metrics: QualityMetrics) -> tuple[float, bool, list[
     """
     failures: list[str] = []
 
-    # Privacy gate (non-negotiable)
-    if metrics.privacy_score != 0.0:
-        failures.append(f"privacy_score={metrics.privacy_score} (must be 0.0)")
+    # Check all thresholds using canonical definitions
+    gate_metrics = {"privacy_score", "memorizacion"}
+    for name, (threshold, operator, _desc) in QUALITY_THRESHOLDS.items():
+        value = getattr(metrics, name)
+        if operator == ">=" and value < threshold:
+            failures.append(f"{name}={value} (min {threshold})")
+        elif operator == "<" and value >= threshold:
+            failures.append(f"{name}={value} (must be < {threshold})")
+        elif operator == "=" and value != threshold:
+            failures.append(f"{name}={value} (must be {threshold})")
 
-    # Memorization gate (non-negotiable)
-    if metrics.memorizacion >= 0.01:
-        failures.append(f"memorizacion={metrics.memorizacion} (must be < 0.01)")
+    # Gate metrics kill the composite score entirely
+    gate_failed = any(
+        f.startswith(name) for f in failures for name in gate_metrics
+    )
 
-    # If either gate fails, score is zero
-    if failures:
+    if gate_failed:
         return 0.0, False, failures
 
     # Composite = min of all quality dimensions
@@ -64,18 +84,6 @@ def compute_composite_score(metrics: QualityMetrics) -> tuple[float, bool, list[
         metrics.diversidad_lexica,
         metrics.coherencia_dialogica,
     )
-
-    # Check individual thresholds
-    thresholds = {
-        "rouge_l": (metrics.rouge_l, 0.65),
-        "fidelidad_factual": (metrics.fidelidad_factual, 0.90),
-        "diversidad_lexica": (metrics.diversidad_lexica, 0.55),
-        "coherencia_dialogica": (metrics.coherencia_dialogica, 0.85),
-    }
-
-    for name, (value, threshold) in thresholds.items():
-        if value < threshold:
-            failures.append(f"{name}={value} (min {threshold})")
 
     passed = len(failures) == 0
     return score, passed, failures

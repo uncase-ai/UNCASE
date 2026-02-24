@@ -42,7 +42,7 @@ def list_cmd(
     names = list_tools()
     if not names:
         console.print("[yellow]No tools registered.[/yellow]")
-        raise typer.Exit
+        raise typer.Exit(code=1)
 
     tools: list[ToolDefinition] = []
     if domain:
@@ -54,7 +54,7 @@ def list_cmd(
 
     if not tools:
         console.print("[yellow]No tools match the given filters.[/yellow]")
-        raise typer.Exit
+        raise typer.Exit(code=1)
 
     table = Table(title="Registered Tools")
     table.add_column("Name", style="cyan")
@@ -81,7 +81,7 @@ def show(
     try:
         tool = get_tool(name)
     except Exception as e:
-        console.print(f"[red]Error: {e}[/red]")
+        console.print(f"[red]Tool not found: {e}[/red]")
         raise typer.Exit(code=1) from None
 
     console.print(Panel(f"[bold cyan]{tool.name}[/bold cyan] (v{tool.version})", title="Tool Definition"))

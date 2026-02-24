@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import structlog
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from fastapi.responses import Response
 
-from uncase.exceptions import TemplateNotFoundError
 from uncase.schemas.template import RenderRequest, RenderResponse, TemplateInfo
 from uncase.templates import get_template_registry, register_all_templates
 from uncase.templates.base import ToolCallMode
@@ -44,10 +43,8 @@ async def render_conversations(body: RenderRequest) -> RenderResponse:
     register_all_templates()
     registry = get_template_registry()
 
-    try:
-        template = registry.get(body.template_name)
-    except TemplateNotFoundError as exc:
-        raise HTTPException(status_code=404, detail=exc.detail) from exc
+    # Let TemplateNotFoundError bubble to middleware handler
+    template = registry.get(body.template_name)
 
     tool_mode = ToolCallMode(body.tool_call_mode)
     rendered = template.render_batch(
@@ -74,10 +71,8 @@ async def export_conversations(body: RenderRequest) -> Response:
     register_all_templates()
     registry = get_template_registry()
 
-    try:
-        template = registry.get(body.template_name)
-    except TemplateNotFoundError as exc:
-        raise HTTPException(status_code=404, detail=exc.detail) from exc
+    # Let TemplateNotFoundError bubble to middleware handler
+    template = registry.get(body.template_name)
 
     tool_mode = ToolCallMode(body.tool_call_mode)
     rendered = template.render_batch(

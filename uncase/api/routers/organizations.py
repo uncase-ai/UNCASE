@@ -2,6 +2,7 @@
 
 from typing import Annotated
 
+import structlog
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,6 +22,8 @@ from uncase.services.organization import OrganizationService
 # guards (require_scopes("admin")) will be added in Phase 1.
 router = APIRouter(prefix="/api/v1/organizations", tags=["organizations"])
 
+logger = structlog.get_logger(__name__)
+
 
 def _get_service(session: AsyncSession) -> OrganizationService:
     return OrganizationService(session)
@@ -36,7 +39,9 @@ async def create_organization(
 ) -> OrganizationResponse:
     """Create a new organization."""
     service = _get_service(session)
-    return await service.create_organization(data)
+    result = await service.create_organization(data)
+    logger.info("organization_created", org_id=result.id, name=result.name)
+    return result
 
 
 @router.get("/{org_id}", response_model=OrganizationResponse)
@@ -57,7 +62,9 @@ async def update_organization(
 ) -> OrganizationResponse:
     """Update an organization."""
     service = _get_service(session)
-    return await service.update_organization(org_id, data)
+    result = await service.update_organization(org_id, data)
+    logger.info("organization_updated", org_id=org_id)
+    return result
 
 
 # -- API Key Management --
@@ -78,7 +85,9 @@ async def create_api_key(
     The full key is returned exactly once in the response.
     """
     service = _get_service(session)
-    return await service.create_api_key(org_id, data)
+    result = await service.create_api_key(org_id, data)
+    logger.info("api_key_created", org_id=org_id, key_name=data.name)
+    return result
 
 
 @router.get("/{org_id}/api-keys", response_model=list[APIKeyResponse])
@@ -100,6 +109,7 @@ async def revoke_api_key(
     """Revoke an API key."""
     service = _get_service(session)
     await service.revoke_api_key(org_id, key_id)
+    logger.info("api_key_revoked", org_id=org_id, key_id=key_id)
 
 
 @router.post("/{org_id}/api-keys/{key_id}/rotate", response_model=APIKeyCreatedResponse)
@@ -110,4 +120,6 @@ async def rotate_api_key(
 ) -> APIKeyCreatedResponse:
     """Rotate an API key: revoke old and issue new with same name/scopes."""
     service = _get_service(session)
-    return await service.rotate_api_key(org_id, key_id)
+    result = await service.rotate_api_key(org_id, key_id)
+    logger.info("api_key_rotated", org_id=org_id, old_key_id=key_id)
+    return result
