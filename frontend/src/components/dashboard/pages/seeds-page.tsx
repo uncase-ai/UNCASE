@@ -6,26 +6,31 @@ import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
+  ArrowUpDown,
+  BarChart3,
   Check,
   Cloud,
   CloudOff,
   HelpCircle,
   Info,
+  Play,
   Plus,
   RefreshCw,
   Sprout,
+  Star,
   Trash2,
+  Wrench,
   X
 } from 'lucide-react'
 
-import type { SeedSchema } from '@/types/api'
+import type { Conversation, QualityReport, SeedSchema } from '@/types/api'
 import { SUPPORTED_DOMAINS } from '@/types/api'
 import { checkApiHealth } from '@/lib/api/client'
 import { createEmptySeed, createSeedApi, deleteSeedApi, fetchSeeds, validateSeed } from '@/lib/api/seeds'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -35,6 +40,12 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -67,20 +78,81 @@ function saveSeeds(seeds: SeedSchema[]) {
   localStorage.setItem(STORE_KEY, JSON.stringify(seeds))
 }
 
-// ─── Domain Colors — neutral palette ───
-const DOMAIN_COLORS: Record<string, string> = {
-  'automotive.sales': '',
-  'medical.consultation': '',
-  'legal.advisory': '',
-  'finance.advisory': '',
-  'industrial.support': '',
-  'education.tutoring': ''
-}
-
 const TONES = ['profesional', 'informal', 'tecnico', 'empatico'] as const
 const LANGUAGES = ['es', 'en'] as const
 const ANONYMIZATION_METHODS = ['presidio', 'regex', 'spacy', 'manual', 'none'] as const
 const TOTAL_STEPS = 6
+
+const DOMAIN_LABELS: Record<string, string> = {
+  'automotive.sales': 'Automotive',
+  'medical.consultation': 'Medical',
+  'legal.advisory': 'Legal',
+  'finance.advisory': 'Finance',
+  'industrial.support': 'Industrial',
+  'education.tutoring': 'Education'
+}
+
+const FAVORITES_KEY = 'uncase-seed-favorites'
+
+function loadFavorites(): Set<string> {
+  if (typeof window === 'undefined') return new Set()
+
+  try {
+    const raw = localStorage.getItem(FAVORITES_KEY)
+
+    return raw ? new Set(JSON.parse(raw)) : new Set()
+  } catch {
+    return new Set()
+  }
+}
+
+function saveFavorites(ids: Set<string>) {
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify([...ids]))
+}
+
+function loadConversationsForStats(): Conversation[] {
+  if (typeof window === 'undefined') return []
+
+  try {
+    const raw = localStorage.getItem('uncase-conversations')
+
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+function loadEvaluationsForStats(): QualityReport[] {
+  if (typeof window === 'undefined') return []
+
+  try {
+    const raw = localStorage.getItem('uncase-evaluations')
+
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+type SortOption = 'newest' | 'oldest' | 'name' | 'runs' | 'quality' | 'favorites'
+
+function timeAgo(date: string): string {
+  const diff = Date.now() - new Date(date).getTime()
+  const minutes = Math.floor(diff / 60000)
+
+  if (minutes < 1) return 'just now'
+  if (minutes < 60) return `${minutes}m ago`
+
+  const hours = Math.floor(minutes / 60)
+
+  if (hours < 24) return `${hours}h ago`
+
+  const days = Math.floor(hours / 24)
+
+  if (days < 30) return `${days}d ago`
+
+  return new Date(date).toLocaleDateString()
+}
 
 // ─── Tooltip helper ───
 function FieldTooltip({ text }: { text: string }) {
@@ -102,6 +174,8 @@ export function SeedsPage() {
   const [seeds, setSeeds] = useState<SeedSchema[]>(() => loadSeeds())
   const [search, setSearch] = useState('')
   const [domainFilter, setDomainFilter] = useState<string>('all')
+  const [sortBy, setSortBy] = useState<SortOption>('newest')
+  const [favorites, setFavorites] = useState<Set<string>>(() => loadFavorites())
 
   // API connectivity state
   const [apiAvailable, setApiAvailable] = useState(false)
@@ -117,6 +191,46 @@ export function SeedsPage() {
   // Detail dialog
   const [selectedSeed, setSelectedSeed] = useState<SeedSchema | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
+
+  // Computed stats from localStorage
+  const seedStats = useMemo(() => {
+    const conversations = loadConversationsForStats()
+    const evaluations = loadEvaluationsForStats()
+
+    const runCounts: Record<string, number> = {}
+    const qualityScores: Record<string, number[]> = {}
+
+    for (const conv of conversations) {
+      runCounts[conv.seed_id] = (runCounts[conv.seed_id] || 0) + 1
+    }
+
+    for (const ev of evaluations) {
+      if (!qualityScores[ev.seed_id]) qualityScores[ev.seed_id] = []
+      qualityScores[ev.seed_id].push(ev.composite_score)
+    }
+
+    const avgQuality: Record<string, number> = {}
+
+    for (const [id, scores] of Object.entries(qualityScores)) {
+      avgQuality[id] = scores.reduce((a, b) => a + b, 0) / scores.length
+    }
+
+    return { runCounts, avgQuality }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seeds.length])
+
+  // Toggle favorite
+  function toggleFavorite(e: React.MouseEvent, seedId: string) {
+    e.stopPropagation()
+
+    const next = new Set(favorites)
+
+    if (next.has(seedId)) next.delete(seedId)
+    else next.add(seedId)
+
+    setFavorites(next)
+    saveFavorites(next)
+  }
 
   // ─── API Integration ───
   const loadFromApi = useCallback(async () => {
@@ -186,7 +300,7 @@ export function SeedsPage() {
     return () => { cancelled = true }
   }, [loadFromApi])
 
-  // ─── Filtering ───
+  // ─── Filtering & sorting ───
   const filtered = useMemo(() => {
     let result = seeds
 
@@ -207,8 +321,31 @@ export function SeedsPage() {
       result = result.filter(s => s.dominio === domainFilter)
     }
 
-    return result
-  }, [seeds, search, domainFilter])
+    const sorted = [...result]
+
+    switch (sortBy) {
+      case 'newest':
+        sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        break
+      case 'oldest':
+        sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        break
+      case 'name':
+        sorted.sort((a, b) => a.seed_id.localeCompare(b.seed_id))
+        break
+      case 'runs':
+        sorted.sort((a, b) => (seedStats.runCounts[b.seed_id] || 0) - (seedStats.runCounts[a.seed_id] || 0))
+        break
+      case 'quality':
+        sorted.sort((a, b) => (seedStats.avgQuality[b.seed_id] || 0) - (seedStats.avgQuality[a.seed_id] || 0))
+        break
+      case 'favorites':
+        sorted.sort((a, b) => (favorites.has(b.seed_id) ? 1 : 0) - (favorites.has(a.seed_id) ? 1 : 0))
+        break
+    }
+
+    return sorted
+  }, [seeds, search, domainFilter, sortBy, seedStats, favorites])
 
   // ─── Create seed ───
   function resetCreate() {
@@ -1001,6 +1138,34 @@ export function SeedsPage() {
             ))}
           </SelectContent>
         </Select>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1.5">
+              <ArrowUpDown className="size-3" />
+              Sort
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onClick={() => setSortBy('newest')}>
+              {sortBy === 'newest' && <Check className="size-3" />} Newest first
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy('oldest')}>
+              {sortBy === 'oldest' && <Check className="size-3" />} Oldest first
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy('name')}>
+              {sortBy === 'name' && <Check className="size-3" />} Name
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy('runs')}>
+              {sortBy === 'runs' && <Check className="size-3" />} Most runs
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy('quality')}>
+              {sortBy === 'quality' && <Check className="size-3" />} Highest quality
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy('favorites')}>
+              {sortBy === 'favorites' && <Check className="size-3" />} Favorites first
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <span className="ml-auto text-xs text-muted-foreground">{filtered.length} results</span>
       </div>
 
@@ -1018,63 +1183,98 @@ export function SeedsPage() {
         />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map(seed => (
-            <Card
-              key={seed.seed_id}
-              className="cursor-pointer transition-colors hover:bg-muted/50"
-              onClick={() => { setSelectedSeed(seed); setDetailOpen(true) }}
-            >
-              <CardHeader className="pb-2">
-                <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-sm font-medium">
-                    {seed.seed_id.slice(0, 16)}...
-                  </CardTitle>
-                  <Badge
-                    variant="secondary"
-                    className={cn('shrink-0 text-[10px]', DOMAIN_COLORS[seed.dominio])}
-                  >
-                    {seed.dominio.split('.').pop()}
-                  </Badge>
-                </div>
-                <CardDescription className="line-clamp-2 text-xs">
-                  {seed.objetivo.length > 80 ? seed.objetivo.slice(0, 80) + '...' : seed.objetivo}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {/* Roles */}
-                <div className="flex flex-wrap gap-1">
-                  {seed.roles.map(role => (
-                    <Badge key={role} variant="outline" className="text-[10px]">
-                      {role}
-                    </Badge>
-                  ))}
-                </div>
+          {filtered.map(seed => {
+            const runs = seedStats.runCounts[seed.seed_id] || 0
+            const avgQ = seedStats.avgQuality[seed.seed_id]
+            const isFav = favorites.has(seed.seed_id)
+            const author = (seed.parametros_factuales?.metadata?.author as string) || 'UNCASE'
+            const tools = seed.parametros_factuales?.herramientas || []
 
-                {/* Tags */}
-                {seed.etiquetas.length > 0 && (
+            return (
+              <Card
+                key={seed.seed_id}
+                className="cursor-pointer transition-colors hover:bg-muted/50"
+                onClick={() => { setSelectedSeed(seed); setDetailOpen(true) }}
+              >
+                <CardContent className="space-y-2.5 p-4">
+                  {/* Row 1: Favorite + ID + Domain badge */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={e => toggleFavorite(e, seed.seed_id)}
+                      className="shrink-0 text-muted-foreground/40 transition-colors hover:text-foreground"
+                    >
+                      <Star className={cn('size-3.5', isFav && 'fill-foreground text-foreground')} />
+                    </button>
+                    <span className="min-w-0 truncate font-mono text-xs font-semibold">
+                      {seed.seed_id}
+                    </span>
+                    <Badge variant="secondary" className="ml-auto shrink-0 text-[10px]">
+                      {DOMAIN_LABELS[seed.dominio] || seed.dominio.split('.').pop()}
+                    </Badge>
+                  </div>
+
+                  {/* Row 2: Objective */}
+                  <p className="line-clamp-2 text-[12px] leading-snug text-muted-foreground">
+                    {seed.objetivo}
+                  </p>
+
+                  {/* Row 3: Roles + Tags compact */}
                   <div className="flex flex-wrap gap-1">
-                    {seed.etiquetas.slice(0, 4).map(tag => (
+                    {seed.roles.map(role => (
+                      <Badge key={role} variant="outline" className="font-mono text-[9px]">
+                        {role}
+                      </Badge>
+                    ))}
+                    {seed.etiquetas.slice(0, 3).map(tag => (
                       <Badge key={tag} variant="secondary" className="text-[9px] font-normal">
                         {tag}
                       </Badge>
                     ))}
-                    {seed.etiquetas.length > 4 && (
-                      <span className="text-[9px] text-muted-foreground">+{seed.etiquetas.length - 4}</span>
+                    {seed.etiquetas.length > 3 && (
+                      <span className="text-[9px] text-muted-foreground">+{seed.etiquetas.length - 3}</span>
                     )}
                   </div>
-                )}
 
-                {/* Footer info */}
-                <div className="flex items-center justify-between pt-1 text-[10px] text-muted-foreground">
-                  <span>
-                    {seed.pasos_turnos.turnos_min}-{seed.pasos_turnos.turnos_max} turns
-                  </span>
-                  <Badge variant="secondary" className="text-[9px]">{seed.idioma}</Badge>
-                  <span>{new Date(seed.created_at).toLocaleDateString()}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  {/* Row 4: Technical specs */}
+                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                    <span>{seed.pasos_turnos.turnos_min}-{seed.pasos_turnos.turnos_max} turns</span>
+                    <span className="text-muted-foreground/30">|</span>
+                    <span>{seed.tono}</span>
+                    <span className="text-muted-foreground/30">|</span>
+                    <span className="uppercase">{seed.idioma}</span>
+                    {tools.length > 0 && (
+                      <>
+                        <span className="text-muted-foreground/30">|</span>
+                        <span className="flex items-center gap-0.5">
+                          <Wrench className="size-2.5" /> {tools.length}
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Row 5: Stats footer */}
+                  <div className="flex items-center gap-3 border-t pt-2 text-[10px] text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Play className="size-2.5" />
+                      <span className="font-medium text-foreground">{runs}</span> runs
+                    </span>
+                    {avgQ !== undefined && (
+                      <span className="flex items-center gap-1">
+                        <BarChart3 className="size-2.5" />
+                        Avg <span className="font-mono font-medium text-foreground">{avgQ.toFixed(2)}</span>
+                      </span>
+                    )}
+                    <span className="ml-auto">by <span className="font-medium">{author}</span></span>
+                  </div>
+
+                  {/* Row 6: Date */}
+                  <div className="text-[10px] text-muted-foreground">
+                    Created {timeAgo(seed.created_at)}
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
       )}
 
