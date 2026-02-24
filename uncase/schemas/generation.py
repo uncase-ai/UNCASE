@@ -16,6 +16,7 @@ class GenerateRequest(BaseModel):
     count: int = Field(default=1, ge=1, le=50, description="Number of conversations to generate")
     temperature: float = Field(default=0.7, ge=0.0, le=2.0, description="LLM sampling temperature")
     model: str | None = Field(default=None, description="Override default LLM model")
+    provider_id: str | None = Field(default=None, description="Provider ID to use. Falls back to env-based API key.")
     language_override: str | None = Field(default=None, description="Override seed language (ISO 639-1)")
     evaluate_after: bool = Field(default=True, description="Run quality evaluation on generated conversations")
 

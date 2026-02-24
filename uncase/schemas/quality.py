@@ -70,9 +70,7 @@ def compute_composite_score(metrics: QualityMetrics) -> tuple[float, bool, list[
             failures.append(f"{name}={value} (must be {threshold})")
 
     # Gate metrics kill the composite score entirely
-    gate_failed = any(
-        f.startswith(name) for f in failures for name in gate_metrics
-    )
+    gate_failed = any(f.startswith(name) for f in failures for name in gate_metrics)
 
     if gate_failed:
         return 0.0, False, failures

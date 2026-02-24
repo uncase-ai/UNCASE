@@ -74,11 +74,7 @@ class LexicalDiversityMetric(BaseMetric):
         """Compute lexical diversity of the conversation content."""
         # Concatenate all turn content (excluding tool results which are
         # structured data, not natural language)
-        text_parts = [
-            t.contenido
-            for t in conversation.turnos
-            if t.rol != "herramienta"
-        ]
+        text_parts = [t.contenido for t in conversation.turnos if t.rol != "herramienta"]
 
         full_text = " ".join(text_parts)
         tokens = _extract_tokens(full_text)

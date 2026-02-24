@@ -141,7 +141,7 @@ class DialogCoherenceMetric(BaseMetric):
         else:
             length_score = 1.0
 
-        return (uniqueness * 0.6 + length_score * 0.4)
+        return uniqueness * 0.6 + length_score * 0.4
 
     def _referential_consistency(self, turns: list[ConversationTurn]) -> float:
         """Check that later turns reference content from earlier turns."""

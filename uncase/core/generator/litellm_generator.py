@@ -37,6 +37,7 @@ class GenerationConfig:
     language_override: str | None = None
     max_retries: int = 2
     temperature_variation: float = 0.05
+    api_base: str | None = None
 
 
 # -- Prompt templates --
@@ -394,16 +395,24 @@ class LiteLLMGenerator(BaseGenerator):
         conversations = await generator.generate(seed, count=5)
     """
 
-    def __init__(self, *, config: GenerationConfig | None = None, api_key: str | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        config: GenerationConfig | None = None,
+        api_key: str | None = None,
+        api_base: str | None = None,
+    ) -> None:
         """Initialize the generator.
 
         Args:
             config: Generation configuration. Uses defaults if None.
             api_key: API key for the LLM provider. If None, LiteLLM will
                      use environment variables.
+            api_base: Base URL for the LLM provider API. Overrides config.api_base.
         """
         self._config = config or GenerationConfig()
         self._api_key = api_key
+        self._api_base = api_base or self._config.api_base
 
     async def _call_llm(
         self,
@@ -442,6 +451,10 @@ class LiteLLMGenerator(BaseGenerator):
         # Set API key if provided
         if self._api_key:
             kwargs["api_key"] = self._api_key
+
+        # Set api_base if provided (e.g. for local/custom providers)
+        if self._api_base:
+            kwargs["api_base"] = self._api_base
 
         # Request JSON output format when supported
         # Some models support response_format, some don't — catch and retry without it

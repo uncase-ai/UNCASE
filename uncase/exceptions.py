@@ -82,6 +82,13 @@ class ToolNotFoundError(UNCASEError):
     detail = "Tool not found"
 
 
+class ProviderNotFoundError(UNCASEError):
+    """Requested LLM provider does not exist."""
+
+    status_code = 404
+    detail = "Provider not found"
+
+
 # -- Validation --
 
 

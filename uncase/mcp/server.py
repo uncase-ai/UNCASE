@@ -229,9 +229,7 @@ def create_mcp_server() -> FastMCP:
             import concurrent.futures
 
             with concurrent.futures.ThreadPoolExecutor() as pool:
-                report = pool.submit(
-                    asyncio.run, evaluator.evaluate(conversation, seed)
-                ).result()
+                report = pool.submit(asyncio.run, evaluator.evaluate(conversation, seed)).result()
 
         return report.model_dump(mode="json")
 

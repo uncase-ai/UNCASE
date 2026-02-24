@@ -117,11 +117,7 @@ class FactualFidelityMetric(BaseMetric):
 
         # Extract meaningful words (>3 chars) from context and constraints
         reference_text = context + " " + " ".join(constraints)
-        keywords = {
-            w.lower()
-            for w in re.findall(r"\b\w+\b", reference_text)
-            if len(w) > 3
-        }
+        keywords = {w.lower() for w in re.findall(r"\b\w+\b", reference_text) if len(w) > 3}
 
         if not keywords:
             return 1.0

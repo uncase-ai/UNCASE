@@ -108,19 +108,14 @@ class ConversationEvaluator(BaseEvaluator):
 
         return report
 
-    async def evaluate_batch(
-        self, conversations: list[Conversation], seeds: list[SeedSchema]
-    ) -> list[QualityReport]:
+    async def evaluate_batch(self, conversations: list[Conversation], seeds: list[SeedSchema]) -> list[QualityReport]:
         """Evaluate a batch of conversations against their seeds.
 
         Each conversation is paired with the seed at the same index.
         If lengths differ, raises ValueError.
         """
         if len(conversations) != len(seeds):
-            msg = (
-                f"Mismatched batch sizes: {len(conversations)} conversations "
-                f"vs {len(seeds)} seeds"
-            )
+            msg = f"Mismatched batch sizes: {len(conversations)} conversations vs {len(seeds)} seeds"
             raise ValueError(msg)
 
         logger.info("evaluating_batch", batch_size=len(conversations))

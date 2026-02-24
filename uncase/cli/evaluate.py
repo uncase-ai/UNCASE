@@ -54,8 +54,7 @@ def _render_report(report: QualityReport) -> None:
     console.print(table)
     console.print(
         Panel(
-            f"Composite Score: [bold]{report.composite_score:.4f}[/bold]  |  "
-            f"Result: {status}",
+            f"Composite Score: [bold]{report.composite_score:.4f}[/bold]  |  Result: {status}",
             title="Summary",
         )
     )
@@ -100,9 +99,7 @@ def run(
         seed_list = seed_list * len(conv_list)
 
     if len(conv_list) != len(seed_list):
-        console.print(
-            f"[red]Mismatched counts: {len(conv_list)} conversations vs {len(seed_list)} seeds.[/red]"
-        )
+        console.print(f"[red]Mismatched counts: {len(conv_list)} conversations vs {len(seed_list)} seeds.[/red]")
         raise typer.Exit(code=1)
 
     try:

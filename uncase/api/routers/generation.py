@@ -49,6 +49,7 @@ async def generate_conversations(
         count=request.count,
         temperature=request.temperature,
         model=request.model,
+        provider_id=request.provider_id,
         language_override=request.language_override,
         evaluate_after=request.evaluate_after,
     )

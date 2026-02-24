@@ -61,18 +61,39 @@ class GeneratorService:
             return self._settings.anthropic_api_key
         return None
 
+    async def _resolve_from_provider(
+        self,
+        provider_id: str,
+    ) -> tuple[str | None, str | None, str | None]:
+        """Resolve API key, model, and api_base from a registered provider.
+
+        Returns:
+            Tuple of (api_key, model, api_base).
+        """
+        if self._session is None:
+            return None, None, None
+
+        from uncase.services.provider import ProviderService
+
+        provider_service = ProviderService(session=self._session, settings=self._settings)
+        provider = await provider_service._get_or_raise(provider_id)
+        api_key = provider_service.decrypt_provider_key(provider)
+        return api_key, provider.default_model, provider.api_base
+
     def _build_config(
         self,
         *,
         model: str | None = None,
         temperature: float = 0.7,
         language_override: str | None = None,
+        api_base: str | None = None,
     ) -> GenerationConfig:
         """Build a GenerationConfig from request parameters."""
         return GenerationConfig(
             model=model or "claude-sonnet-4-20250514",
             temperature=temperature,
             language_override=language_override,
+            api_base=api_base,
         )
 
     async def generate(
@@ -82,6 +103,7 @@ class GeneratorService:
         count: int = 1,
         temperature: float = 0.7,
         model: str | None = None,
+        provider_id: str | None = None,
         language_override: str | None = None,
         evaluate_after: bool = True,
     ) -> GenerateResponse:
@@ -92,6 +114,7 @@ class GeneratorService:
             count: Number of conversations to generate.
             temperature: LLM sampling temperature.
             model: Override default LLM model.
+            provider_id: Provider ID to resolve key/model/api_base from DB.
             language_override: Override seed language.
             evaluate_after: Whether to run quality evaluation.
 
@@ -107,23 +130,35 @@ class GeneratorService:
             seed_id=seed.seed_id,
             domain=seed.dominio,
             count=count,
+            provider_id=provider_id,
             evaluate_after=evaluate_after,
         )
 
         start_time = time.monotonic()
 
+        # Resolve provider overrides if provider_id is given
+        api_key: str | None = None
+        api_base: str | None = None
+        provider_model: str | None = None
+
+        if provider_id:
+            api_key, provider_model, api_base = await self._resolve_from_provider(provider_id)
+        else:
+            api_key = self._resolve_api_key()
+
+        # Explicit model parameter overrides provider default
+        effective_model = model or provider_model
+
         # Build generator config
         config = self._build_config(
-            model=model,
+            model=effective_model,
             temperature=temperature,
             language_override=language_override,
+            api_base=api_base,
         )
 
-        # Resolve API key
-        api_key = self._resolve_api_key()
-
         # Create generator
-        generator = LiteLLMGenerator(config=config, api_key=api_key)
+        generator = LiteLLMGenerator(config=config, api_key=api_key, api_base=api_base)
 
         # Generate conversations
         try:

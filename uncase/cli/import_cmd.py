@@ -61,8 +61,7 @@ def csv(
 
     console.print(
         Panel(
-            f"Conversations imported: [bold]{len(conversations)}[/bold]  |  "
-            f"Source: [cyan]{file.name}[/cyan]",
+            f"Conversations imported: [bold]{len(conversations)}[/bold]  |  Source: [cyan]{file.name}[/cyan]",
             title="Import Summary",
         )
     )

@@ -59,9 +59,7 @@ class EvaluatorService:
             passed=report.passed,
         )
 
-    async def evaluate_single(
-        self, conversation: Conversation, seed: SeedSchema
-    ) -> QualityReport:
+    async def evaluate_single(self, conversation: Conversation, seed: SeedSchema) -> QualityReport:
         """Evaluate a single conversation against its origin seed."""
         report = await self._evaluator.evaluate(conversation, seed)
         await self._persist_report(report, dominio=conversation.dominio)
@@ -71,9 +69,7 @@ class EvaluatorService:
 
         return report
 
-    async def evaluate_batch(
-        self, conversations: list[Conversation], seeds: list[SeedSchema]
-    ) -> BatchEvaluationResult:
+    async def evaluate_batch(self, conversations: list[Conversation], seeds: list[SeedSchema]) -> BatchEvaluationResult:
         """Evaluate a batch and return summary statistics."""
         reports = await self._evaluator.evaluate_batch(conversations, seeds)
 
@@ -87,9 +83,7 @@ class EvaluatorService:
         passed = [r for r in reports if r.passed]
         failed = [r for r in reports if not r.passed]
 
-        avg_composite = (
-            sum(r.composite_score for r in reports) / len(reports) if reports else 0.0
-        )
+        avg_composite = sum(r.composite_score for r in reports) / len(reports) if reports else 0.0
 
         # Aggregate metric averages
         metric_avgs: dict[str, float] = {}

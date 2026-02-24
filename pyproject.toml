@@ -39,6 +39,7 @@ dependencies = [
     "tenacity>=9.0.0",
     "python-dotenv>=1.0.0",
     "argon2-cffi>=23.1.0",
+    "cryptography>=43.0.0",
     "fastmcp>=2.0.0",
 ]
 
@@ -132,6 +133,7 @@ ignore = [
 "uncase/api/deps.py" = ["TC001", "TC002", "TC003"]
 "uncase/api/routers/*.py" = ["TC001", "TC002", "TC003"]
 "uncase/schemas/organization.py" = ["TC003"]
+"uncase/schemas/provider.py" = ["TC003"]
 
 [tool.ruff.format]
 quote-style = "double"
