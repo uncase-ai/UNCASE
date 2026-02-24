@@ -51,7 +51,7 @@ const Header = ({ navigationData, className }: HeaderProps) => {
           <img
             src='/images/logo/logo-horizontal.png'
             alt='UNCASE'
-            className='h-8 w-auto dark:invert'
+            className='-my-4 h-14 w-auto dark:invert'
           />
         </Link>
 
