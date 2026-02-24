@@ -30,7 +30,7 @@ _PII_PATTERNS: dict[str, re.Pattern[str]] = {
 class PIIMatch:
     """Represents a detected PII entity in text."""
 
-    __slots__ = ("category", "value", "start", "end")
+    __slots__ = ("category", "end", "start", "value")
 
     def __init__(self, category: str, value: str, start: int, end: int) -> None:
         self.category = category

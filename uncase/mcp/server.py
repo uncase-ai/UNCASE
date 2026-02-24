@@ -186,6 +186,55 @@ def create_mcp_server() -> FastMCP:
             "count": len(rendered),
         }
 
+    # -- Evaluation tools ---------------------------------------------------
+
+    @mcp.tool()
+    def evaluate_conversation(conversation_json: str, seed_json: str) -> dict[str, Any]:
+        """Evaluate a conversation's quality against its origin seed.
+
+        Computes all 6 quality metrics (ROUGE-L, fidelity, diversity,
+        coherence, privacy, memorization) and the composite score.
+
+        Args:
+            conversation_json: JSON string representing a Conversation.
+            seed_json: JSON string representing the origin SeedSchema.
+
+        Returns:
+            Quality report with metrics, composite score, and pass/fail.
+        """
+        import asyncio
+        import json
+
+        from uncase.core.evaluator.evaluator import ConversationEvaluator
+        from uncase.schemas.conversation import Conversation
+        from uncase.schemas.seed import SeedSchema
+
+        try:
+            conv_data = json.loads(conversation_json)
+            seed_data = json.loads(seed_json)
+        except json.JSONDecodeError as e:
+            return {"error": f"Invalid JSON: {e}"}
+
+        try:
+            conversation = Conversation.model_validate(conv_data)
+            seed = SeedSchema.model_validate(seed_data)
+        except Exception as e:
+            return {"error": f"Validation failed: {e}"}
+
+        evaluator = ConversationEvaluator()
+
+        try:
+            report = asyncio.run(evaluator.evaluate(conversation, seed))
+        except RuntimeError:
+            import concurrent.futures
+
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                report = pool.submit(
+                    asyncio.run, evaluator.evaluate(conversation, seed)
+                ).result()
+
+        return report.model_dump(mode="json")
+
     # -- Tool framework tools -----------------------------------------------
 
     @mcp.tool()

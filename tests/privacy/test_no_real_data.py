@@ -25,6 +25,8 @@ SCAN_DIRS = ["tests", "examples"]
 # Files/patterns to exclude from scanning
 EXCLUDE_PATTERNS = [
     "test_no_real_data.py",  # This file itself
+    "test_privacy.py",  # PII detection tests use intentional synthetic PII patterns
+    "test_evaluator.py",  # Evaluator tests reference synthetic PII for privacy gate checks
     "__pycache__",
     ".pyc",
 ]

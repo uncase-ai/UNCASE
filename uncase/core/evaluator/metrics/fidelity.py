@@ -80,12 +80,12 @@ class FactualFidelityMetric(BaseMetric):
 
         # Check for each expected flow step whether it appears in conversation
         # or whether semantically similar content exists
-        matched = 0
+        matched: float = 0
         for step in expected_flow:
             step_lower = step.lower()
             # Direct keyword match
             if step_lower in conv_text:
-                matched += 1
+                matched += 1.0
                 continue
             # Check individual words from the step (partial match)
             step_words = step_lower.split()
@@ -117,11 +117,11 @@ class FactualFidelityMetric(BaseMetric):
 
         # Extract meaningful words (>3 chars) from context and constraints
         reference_text = context + " " + " ".join(constraints)
-        keywords = set(
+        keywords = {
             w.lower()
             for w in re.findall(r"\b\w+\b", reference_text)
             if len(w) > 3
-        )
+        }
 
         if not keywords:
             return 1.0
