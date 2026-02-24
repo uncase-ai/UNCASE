@@ -13,18 +13,20 @@ function readSidebarState(): boolean {
   return localStorage.getItem(SIDEBAR_KEY) === 'true'
 }
 
-export function useSidebar() {
-  const collapsed = useSyncExternalStore(
-    cb => {
-      window.addEventListener('storage', cb)
+function subscribeStorage(cb: () => void) {
+  if (typeof window === 'undefined') return () => {}
 
-      return () => window.removeEventListener('storage', cb)
-    },
-    () => readSidebarState(),
-    () => false
-  )
+  window.addEventListener('storage', cb)
+
+  return () => window.removeEventListener('storage', cb)
+}
+
+export function useSidebar() {
+  const collapsed = useSyncExternalStore(subscribeStorage, () => readSidebarState(), () => false)
 
   const toggle = useCallback(() => {
+    if (typeof window === 'undefined') return
+
     const next = !readSidebarState()
 
     localStorage.setItem(SIDEBAR_KEY, String(next))
@@ -32,6 +34,8 @@ export function useSidebar() {
   }, [])
 
   const setCollapsed = useCallback((value: boolean) => {
+    if (typeof window === 'undefined') return
+
     localStorage.setItem(SIDEBAR_KEY, String(value))
     window.dispatchEvent(new StorageEvent('storage', { key: SIDEBAR_KEY }))
   }, [])
@@ -52,19 +56,13 @@ function readJobs(): PipelineJob[] {
 }
 
 function dispatchJobsUpdate() {
-  window.dispatchEvent(new StorageEvent('storage', { key: JOBS_KEY }))
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new StorageEvent('storage', { key: JOBS_KEY }))
+  }
 }
 
 export function useJobQueue() {
-  const jobs = useSyncExternalStore(
-    cb => {
-      window.addEventListener('storage', cb)
-
-      return () => window.removeEventListener('storage', cb)
-    },
-    () => readJobs(),
-    () => [] as PipelineJob[]
-  )
+  const jobs = useSyncExternalStore(subscribeStorage, () => readJobs(), () => [] as PipelineJob[])
 
   const persist = useCallback((nextJobs: PipelineJob[]) => {
     localStorage.setItem(JOBS_KEY, JSON.stringify(nextJobs))

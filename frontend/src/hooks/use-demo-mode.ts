@@ -4,16 +4,16 @@ import { useCallback, useSyncExternalStore } from 'react'
 
 import { activateDemo, deactivateDemo, isDemoMode, resetDemoData } from '@/lib/demo'
 
-export function useDemoMode() {
-  const active = useSyncExternalStore(
-    (cb) => {
-      window.addEventListener('storage', cb)
+function subscribeStorage(cb: () => void) {
+  if (typeof window === 'undefined') return () => {}
 
-      return () => window.removeEventListener('storage', cb)
-    },
-    () => isDemoMode(),
-    () => false
-  )
+  window.addEventListener('storage', cb)
+
+  return () => window.removeEventListener('storage', cb)
+}
+
+export function useDemoMode() {
+  const active = useSyncExternalStore(subscribeStorage, () => isDemoMode(), () => false)
 
   const enter = useCallback(async () => {
     await activateDemo()

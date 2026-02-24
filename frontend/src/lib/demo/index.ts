@@ -12,6 +12,8 @@ const STORAGE_KEYS = [
 export const DEMO_RUNNING_JOB_ID = 'demo-job-003'
 
 function dispatchStorageEvent(key: string) {
+  if (typeof window === 'undefined') return
+
   window.dispatchEvent(new StorageEvent('storage', { key }))
 }
 
