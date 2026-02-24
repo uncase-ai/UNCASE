@@ -5,6 +5,7 @@ import { useState } from 'react'
 
 import { useSidebar } from '@/hooks/use-dashboard'
 
+import { DemoBanner } from './demo-banner'
 import { MobileSidebar } from './mobile-sidebar'
 import { Sidebar } from './sidebar'
 import { Topbar } from './topbar'
@@ -25,6 +26,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
       {/* Main area */}
       <div className="flex flex-1 flex-col overflow-hidden">
+        <DemoBanner />
         <Topbar sidebarCollapsed={collapsed} onToggleSidebar={toggle} onOpenMobile={() => setMobileOpen(true)} />
         <main className="flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">{children}</div>

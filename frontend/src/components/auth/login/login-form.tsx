@@ -20,7 +20,7 @@ const LoginForm = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    router.push('/')
+    router.push('/dashboard')
   }
 
   return (

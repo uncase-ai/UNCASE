@@ -86,6 +86,10 @@ const navigationData: Navigation[] = [
     href: '/#roadmap'
   },
   {
+    title: 'Dashboard',
+    href: '/dashboard'
+  },
+  {
     title: 'Docs',
     href: '/docs'
   }

@@ -8,11 +8,15 @@ import {
   BrainCircuitIcon,
   CpuIcon,
   GaugeIcon,
+  PlayIcon,
   ScaleIcon,
   SparklesIcon
 } from 'lucide-react'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+
+import { activateDemo } from '@/lib/demo'
 
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
@@ -69,6 +73,7 @@ const stats = [
 ]
 
 const HeroSection40 = () => {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState(tabs[0]?.value || 'compliance-problem')
 
   useEffect(() => {
@@ -122,6 +127,16 @@ const HeroSection40 = () => {
                   <BookOpenIcon />
                   Read the Whitepaper
                 </Link>
+              </SecondaryFlowButton>
+              <SecondaryFlowButton
+                size='lg'
+                onClick={() => {
+                  activateDemo()
+                  router.push('/dashboard')
+                }}
+              >
+                <PlayIcon />
+                Try Demo
               </SecondaryFlowButton>
             </div>
           </div>

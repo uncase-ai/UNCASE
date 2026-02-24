@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import Link from 'next/link'
 import {
@@ -57,6 +57,19 @@ export function OverviewPage() {
   const templates = useApi<TemplateInfo[]>(templatesFetcher)
   const tools = useApi<ToolDefinition[]>(toolsFetcher)
 
+  const [localCounts] = useState(() => {
+    if (typeof window === 'undefined') return { conversations: 0, evaluations: 0 }
+
+    try {
+      const convs = JSON.parse(localStorage.getItem('uncase-conversations') ?? '[]')
+      const evals = JSON.parse(localStorage.getItem('uncase-evaluations') ?? '[]')
+
+      return { conversations: convs.length, evaluations: evals.length }
+    } catch {
+      return { conversations: 0, evaluations: 0 }
+    }
+  })
+
   const stats = useMemo(
     () => ({
       templates: templates.data?.length ?? null,
@@ -76,8 +89,8 @@ export function OverviewPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard title="Templates" value={stats.templates} icon={BookOpen} description="Chat formats available" />
         <StatsCard title="Tools" value={stats.tools} icon={Puzzle} description="Registered tool definitions" />
-        <StatsCard title="Conversations" value={0} icon={MessageSquare} description="In local store" />
-        <StatsCard title="Evaluations" value={0} icon={BarChart3} description="Quality reports" />
+        <StatsCard title="Conversations" value={localCounts.conversations} icon={MessageSquare} description="In local store" />
+        <StatsCard title="Evaluations" value={localCounts.evaluations} icon={BarChart3} description="Quality reports" />
       </div>
 
       {/* Pipeline Visual */}

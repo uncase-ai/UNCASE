@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator'
 
 import Logo from '@/components/logo'
 import LoginForm from '@/components/auth/login/login-form'
+import DemoQuickButton from '@/components/auth/login/demo-quick-button'
 
 const Login = () => {
   return (
@@ -37,6 +38,14 @@ const Login = () => {
       <div className='space-y-6'>
         {/* Form */}
         <LoginForm />
+
+        <div className='flex items-center gap-4'>
+          <Separator className='flex-1' />
+          <p className='text-xs text-muted-foreground whitespace-nowrap'>or explore without signing in</p>
+          <Separator className='flex-1' />
+        </div>
+
+        <DemoQuickButton />
 
         <p className='text-muted-foreground text-center'>
           Don&apos;t have an account yet?{' '}
