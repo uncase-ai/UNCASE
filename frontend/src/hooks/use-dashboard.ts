@@ -7,6 +7,9 @@ import type { PipelineJob } from '@/types/dashboard'
 const SIDEBAR_KEY = 'uncase-sidebar-collapsed'
 const JOBS_KEY = 'uncase-pipeline-jobs'
 
+const EMPTY_JOBS: PipelineJob[] = []
+const noop = () => {}
+
 function readSidebarState(): boolean {
   if (typeof window === 'undefined') return false
 
@@ -14,7 +17,7 @@ function readSidebarState(): boolean {
 }
 
 function subscribeStorage(cb: () => void) {
-  if (typeof window === 'undefined') return () => {}
+  if (typeof window === 'undefined') return noop
 
   window.addEventListener('storage', cb)
 
@@ -22,7 +25,7 @@ function subscribeStorage(cb: () => void) {
 }
 
 export function useSidebar() {
-  const collapsed = useSyncExternalStore(subscribeStorage, () => readSidebarState(), () => false)
+  const collapsed = useSyncExternalStore(subscribeStorage, readSidebarState, () => false)
 
   const toggle = useCallback(() => {
     if (typeof window === 'undefined') return
@@ -44,14 +47,14 @@ export function useSidebar() {
 }
 
 function readJobs(): PipelineJob[] {
-  if (typeof window === 'undefined') return []
+  if (typeof window === 'undefined') return EMPTY_JOBS
 
   try {
     const stored = localStorage.getItem(JOBS_KEY)
 
-    return stored ? JSON.parse(stored) : []
+    return stored ? JSON.parse(stored) : EMPTY_JOBS
   } catch {
-    return []
+    return EMPTY_JOBS
   }
 }
 
@@ -62,7 +65,7 @@ function dispatchJobsUpdate() {
 }
 
 export function useJobQueue() {
-  const jobs = useSyncExternalStore(subscribeStorage, () => readJobs(), () => [] as PipelineJob[])
+  const jobs = useSyncExternalStore(subscribeStorage, readJobs, () => EMPTY_JOBS)
 
   const persist = useCallback((nextJobs: PipelineJob[]) => {
     localStorage.setItem(JOBS_KEY, JSON.stringify(nextJobs))
