@@ -1,12 +1,18 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import {
+  AlertTriangle,
   ArrowLeft,
   ArrowRight,
   Check,
+  Cloud,
+  CloudOff,
+  HelpCircle,
+  Info,
   Plus,
+  RefreshCw,
   Sprout,
   Trash2,
   X
@@ -14,7 +20,8 @@ import {
 
 import type { SeedSchema } from '@/types/api'
 import { SUPPORTED_DOMAINS } from '@/types/api'
-import { createEmptySeed, validateSeed } from '@/lib/api/seeds'
+import { checkApiHealth } from '@/lib/api/client'
+import { createEmptySeed, createSeedApi, deleteSeedApi, fetchSeeds, validateSeed } from '@/lib/api/seeds'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -34,6 +41,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 import { EmptyState } from '../empty-state'
 import { JsonViewer } from '../json-viewer'
@@ -74,10 +82,31 @@ const LANGUAGES = ['es', 'en'] as const
 const ANONYMIZATION_METHODS = ['presidio', 'regex', 'spacy', 'manual', 'none'] as const
 const TOTAL_STEPS = 6
 
+// ─── Tooltip helper ───
+function FieldTooltip({ text }: { text: string }) {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <HelpCircle className="size-3 text-muted-foreground" />
+        </TooltipTrigger>
+        <TooltipContent side="right" className="max-w-xs text-xs">
+          {text}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )
+}
+
 export function SeedsPage() {
   const [seeds, setSeeds] = useState<SeedSchema[]>(() => loadSeeds())
   const [search, setSearch] = useState('')
   const [domainFilter, setDomainFilter] = useState<string>('all')
+
+  // API connectivity state
+  const [apiAvailable, setApiAvailable] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [syncError, setSyncError] = useState<string | null>(null)
 
   // Create dialog
   const [createOpen, setCreateOpen] = useState(false)
@@ -88,6 +117,74 @@ export function SeedsPage() {
   // Detail dialog
   const [selectedSeed, setSelectedSeed] = useState<SeedSchema | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
+
+  // ─── API Integration ───
+  const loadFromApi = useCallback(async () => {
+    setSyncing(true)
+    setSyncError(null)
+    const { data, error } = await fetchSeeds({ page_size: 100 })
+
+    if (error) {
+      setSyncError(error.message)
+      setSyncing(false)
+
+      return
+    }
+
+    if (data) {
+      // Convert SeedResponse to SeedSchema format for compatibility
+      const apiSeeds: SeedSchema[] = data.items.map(item => ({
+        seed_id: item.id,
+        version: item.version as '1.0',
+        dominio: item.dominio,
+        idioma: item.idioma,
+        etiquetas: item.etiquetas,
+        roles: item.roles,
+        descripcion_roles: item.descripcion_roles,
+        objetivo: item.objetivo,
+        tono: item.tono,
+        pasos_turnos: item.pasos_turnos,
+        parametros_factuales: item.parametros_factuales,
+        privacidad: item.privacidad,
+        metricas_calidad: item.metricas_calidad,
+        organization_id: item.organization_id ?? undefined,
+        created_at: item.created_at,
+        updated_at: item.updated_at
+      }))
+
+
+      // Merge: API seeds take precedence, add local-only seeds
+      const localSeeds = loadSeeds()
+      const apiIds = new Set(apiSeeds.map(s => s.seed_id))
+      const localOnly = localSeeds.filter(s => !apiIds.has(s.seed_id))
+      const merged = [...apiSeeds, ...localOnly]
+
+      setSeeds(merged)
+      saveSeeds(merged)
+    }
+
+    setSyncing(false)
+  }, [])
+
+  // Check API health on mount and load seeds if available
+  useEffect(() => {
+    let cancelled = false
+
+    async function init() {
+      const healthy = await checkApiHealth()
+
+      if (cancelled) return
+      setApiAvailable(healthy)
+
+      if (healthy) {
+        await loadFromApi()
+      }
+    }
+
+    init()
+
+    return () => { cancelled = true }
+  }, [loadFromApi])
 
   // ─── Filtering ───
   const filtered = useMemo(() => {
@@ -128,7 +225,7 @@ export function SeedsPage() {
     return errors.length === 0
   }
 
-  function handleCreate() {
+  async function handleCreate() {
     if (!handleValidate()) return
 
     const now = new Date().toISOString()
@@ -140,6 +237,31 @@ export function SeedsPage() {
       updated_at: now
     }
 
+    // Try backend first
+    if (apiAvailable) {
+      const { data, error } = await createSeedApi({
+        dominio: newSeed.dominio,
+        idioma: newSeed.idioma,
+        version: newSeed.version,
+        etiquetas: newSeed.etiquetas,
+        objetivo: newSeed.objetivo,
+        tono: newSeed.tono,
+        roles: newSeed.roles,
+        descripcion_roles: newSeed.descripcion_roles,
+        pasos_turnos: newSeed.pasos_turnos,
+        parametros_factuales: newSeed.parametros_factuales,
+        privacidad: newSeed.privacidad,
+        metricas_calidad: newSeed.metricas_calidad
+      })
+
+      if (data) {
+        // Use server-assigned ID
+        newSeed.seed_id = data.id
+      } else if (error) {
+        setSyncError(`Failed to save to server: ${error.message}`)
+      }
+    }
+
     const updated = [newSeed, ...seeds]
 
     setSeeds(updated)
@@ -149,7 +271,15 @@ export function SeedsPage() {
   }
 
   // ─── Delete seed ───
-  function handleDelete(seedId: string) {
+  async function handleDelete(seedId: string) {
+    if (apiAvailable) {
+      const { error } = await deleteSeedApi(seedId)
+
+      if (error) {
+        setSyncError(`Failed to delete from server: ${error.message}`)
+      }
+    }
+
     const updated = seeds.filter(s => s.seed_id !== seedId)
 
     setSeeds(updated)
@@ -281,15 +411,122 @@ export function SeedsPage() {
     updateDraft({ etiquetas: tags })
   }
 
+  // ─── Connection status indicator ───
+  function renderSyncStatus() {
+    return (
+      <div className="flex items-center gap-1.5">
+        {apiAvailable ? (
+          <Badge variant="outline" className="gap-1 text-[10px] text-emerald-600 dark:text-emerald-400">
+            <Cloud className="size-3" /> API Connected
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="gap-1 text-[10px] text-amber-600 dark:text-amber-400">
+            <CloudOff className="size-3" /> Local Only
+          </Badge>
+        )}
+        {syncing && <RefreshCw className="size-3 animate-spin text-muted-foreground" />}
+      </div>
+    )
+  }
+
+  // ─── Info banner ───
+  function renderInfoBanner() {
+    return (
+      <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30">
+        <CardContent className="flex items-start gap-3 p-4">
+          <Info className="mt-0.5 size-4 shrink-0 text-blue-600 dark:text-blue-400" />
+          <div className="space-y-1 text-xs text-blue-800 dark:text-blue-300">
+            <p className="font-medium">What are Seeds?</p>
+            <p>
+              Seeds are structured templates that define the parameters for synthetic conversation generation.
+              Each seed specifies the domain, roles, conversation flow, factual constraints, and privacy settings.
+              Seeds are the foundation of the SCSF pipeline — they ensure generated conversations are diverse,
+              domain-accurate, and privacy-compliant.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // ─── Sync error alert ───
+  function renderSyncError() {
+    if (!syncError) return null
+
+    return (
+      <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/30">
+        <CardContent className="flex items-center gap-3 p-3">
+          <AlertTriangle className="size-4 shrink-0 text-amber-600" />
+          <p className="text-xs text-amber-800 dark:text-amber-300">{syncError}</p>
+          <Button variant="ghost" size="sm" className="ml-auto h-6 text-xs" onClick={() => setSyncError(null)}>
+            Dismiss
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // ─── Create dialog content (shared between empty and normal states) ───
+  function renderCreateDialog() {
+    return (
+      <Dialog open={createOpen} onOpenChange={open => { setCreateOpen(open); if (!open) resetCreate() }}>
+        <DialogTrigger asChild>
+          <Button size="sm">
+            <Plus className="mr-1.5 size-4" /> Create Seed
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Create Seed</DialogTitle>
+            <DialogDescription>
+              Step {step} of {TOTAL_STEPS} — Build a new seed schema for synthetic conversation generation.
+            </DialogDescription>
+          </DialogHeader>
+          {renderStep()}
+          <DialogFooter className="flex-row justify-between sm:justify-between">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={step === 1}
+              onClick={() => setStep(s => s - 1)}
+            >
+              <ArrowLeft className="mr-1.5 size-4" /> Back
+            </Button>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{step}/{TOTAL_STEPS}</span>
+              {step < TOTAL_STEPS ? (
+                <Button size="sm" onClick={() => setStep(s => s + 1)}>
+                  Next <ArrowRight className="ml-1.5 size-4" />
+                </Button>
+              ) : (
+                <Button size="sm" onClick={handleCreate} disabled={validationErrors.length > 0}>
+                  Create Seed
+                </Button>
+              )}
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
   // ─── Step content renderer ───
   function renderStep() {
     switch (step) {
       case 1:
         return (
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold">Step 1: Basic Information</h3>
+            <div>
+              <h3 className="text-sm font-semibold">Step 1: Basic Information</h3>
+              <p className="text-xs text-muted-foreground">
+                Choose the industry domain, define the conversation&apos;s objective, and set language/tone preferences.
+              </p>
+            </div>
             <div className="space-y-2">
-              <Label>Domain</Label>
+              <Label className="flex items-center gap-1">
+                Domain
+                <FieldTooltip text="The industry vertical this seed targets. Each domain has specific terminology, compliance requirements, and conversation patterns." />
+              </Label>
               <Select value={draft.dominio || ''} onValueChange={v => updateDraft({ dominio: v })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select domain" />
@@ -302,7 +539,10 @@ export function SeedsPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Objective</Label>
+              <Label className="flex items-center gap-1">
+                Objective
+                <FieldTooltip text="A clear description of what the conversation should achieve. This guides the LLM during generation." />
+              </Label>
               <Input
                 value={draft.objetivo || ''}
                 onChange={e => updateDraft({ objetivo: e.target.value })}
@@ -311,7 +551,10 @@ export function SeedsPage() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Language</Label>
+                <Label className="flex items-center gap-1">
+                  Language
+                  <FieldTooltip text="The primary language for generated conversations. ISO 639-1 code." />
+                </Label>
                 <Select value={draft.idioma || 'es'} onValueChange={v => updateDraft({ idioma: v })}>
                   <SelectTrigger>
                     <SelectValue />
@@ -324,7 +567,10 @@ export function SeedsPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Tone</Label>
+                <Label className="flex items-center gap-1">
+                  Tone
+                  <FieldTooltip text="Sets the formality and communication style. Professional for regulated industries, informal for customer support." />
+                </Label>
                 <Select value={draft.tono || 'profesional'} onValueChange={v => updateDraft({ tono: v })}>
                   <SelectTrigger>
                     <SelectValue />
@@ -367,8 +613,12 @@ export function SeedsPage() {
       case 2:
         return (
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold">Step 2: Roles</h3>
-            <p className="text-xs text-muted-foreground">Define at least 2 roles for the conversation.</p>
+            <div>
+              <h3 className="text-sm font-semibold">Step 2: Roles</h3>
+              <p className="text-xs text-muted-foreground">
+                Define at least 2 participants. Common patterns: user/assistant, patient/doctor, client/advisor.
+              </p>
+            </div>
             {(draft.roles || []).map((role, i) => (
               <div key={i} className="space-y-2 rounded-md border p-3">
                 <div className="flex items-center gap-2">
@@ -410,7 +660,12 @@ export function SeedsPage() {
       case 3:
         return (
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold">Step 3: Turn Structure</h3>
+            <div>
+              <h3 className="text-sm font-semibold">Step 3: Turn Structure</h3>
+              <p className="text-xs text-muted-foreground">
+                Controls conversation length and flow. Min/max turns define the range, and expected flow provides step-by-step guidance to the generator.
+              </p>
+            </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Min Turns</Label>
@@ -432,7 +687,10 @@ export function SeedsPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Expected Flow</Label>
+              <Label className="flex items-center gap-1">
+                Expected Flow
+                <FieldTooltip text="Ordered steps the conversation should follow. The generator uses these as structural guidelines." />
+              </Label>
               <p className="text-xs text-muted-foreground">Define the expected sequence of conversation steps.</p>
               {(draft.pasos_turnos?.flujo_esperado || []).map((item, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -464,7 +722,12 @@ export function SeedsPage() {
       case 4:
         return (
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold">Step 4: Factual Parameters</h3>
+            <div>
+              <h3 className="text-sm font-semibold">Step 4: Factual Parameters</h3>
+              <p className="text-xs text-muted-foreground">
+                Domain-specific context, constraints, and available tools. This ensures generated conversations stay factually accurate.
+              </p>
+            </div>
             <div className="space-y-2">
               <Label>Context</Label>
               <Textarea
@@ -530,7 +793,12 @@ export function SeedsPage() {
       case 5:
         return (
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold">Step 5: Privacy Settings</h3>
+            <div>
+              <h3 className="text-sm font-semibold">Step 5: Privacy Settings</h3>
+              <p className="text-xs text-muted-foreground">
+                PII detection and anonymization configuration. Privacy score must be 0.0 for generated data to pass quality checks.
+              </p>
+            </div>
             <div className="flex items-center justify-between rounded-md border p-3">
               <div>
                 <Label>PII Removed</Label>
@@ -680,46 +948,14 @@ export function SeedsPage() {
           title="Seed Library"
           description="Create and manage conversation seeds for synthetic data generation"
           actions={
-            <Dialog open={createOpen} onOpenChange={open => { setCreateOpen(open); if (!open) resetCreate() }}>
-              <DialogTrigger asChild>
-                <Button size="sm">
-                  <Plus className="mr-1.5 size-4" /> Create Seed
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>Create Seed</DialogTitle>
-                  <DialogDescription>
-                    Step {step} of {TOTAL_STEPS} — Build a new seed schema for synthetic conversation generation.
-                  </DialogDescription>
-                </DialogHeader>
-                {renderStep()}
-                <DialogFooter className="flex-row justify-between sm:justify-between">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={step === 1}
-                    onClick={() => setStep(s => s - 1)}
-                  >
-                    <ArrowLeft className="mr-1.5 size-4" /> Back
-                  </Button>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{step}/{TOTAL_STEPS}</span>
-                    {step < TOTAL_STEPS ? (
-                      <Button size="sm" onClick={() => setStep(s => s + 1)}>
-                        Next <ArrowRight className="ml-1.5 size-4" />
-                      </Button>
-                    ) : (
-                      <Button size="sm" onClick={handleCreate} disabled={validationErrors.length > 0}>
-                        Create Seed
-                      </Button>
-                    )}
-                  </div>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <div className="flex items-center gap-3">
+              {renderSyncStatus()}
+              {renderCreateDialog()}
+            </div>
           }
         />
+        {renderInfoBanner()}
+        {renderSyncError()}
         <EmptyState
           icon={Sprout}
           title="No seeds yet"
@@ -738,48 +974,20 @@ export function SeedsPage() {
     <div className="space-y-4">
       <PageHeader
         title="Seed Library"
-        description={`${seeds.length} seeds in local store`}
+        description={`${seeds.length} seeds${apiAvailable ? ' (synced with API)' : ' in local store'}`}
         actions={
-          <Dialog open={createOpen} onOpenChange={open => { setCreateOpen(open); if (!open) resetCreate() }}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="mr-1.5 size-4" /> Create Seed
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Create Seed</DialogTitle>
-                <DialogDescription>
-                  Step {step} of {TOTAL_STEPS} — Build a new seed schema for synthetic conversation generation.
-                </DialogDescription>
-              </DialogHeader>
-              {renderStep()}
-              <DialogFooter className="flex-row justify-between sm:justify-between">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={step === 1}
-                  onClick={() => setStep(s => s - 1)}
-                >
-                  <ArrowLeft className="mr-1.5 size-4" /> Back
-                </Button>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">{step}/{TOTAL_STEPS}</span>
-                  {step < TOTAL_STEPS ? (
-                    <Button size="sm" onClick={() => setStep(s => s + 1)}>
-                      Next <ArrowRight className="ml-1.5 size-4" />
-                    </Button>
-                  ) : (
-                    <Button size="sm" onClick={handleCreate} disabled={validationErrors.length > 0}>
-                      Create Seed
-                    </Button>
-                  )}
-                </div>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <div className="flex items-center gap-3">
+            {renderSyncStatus()}
+            {renderCreateDialog()}
+          </div>
         }
       />
+
+      {/* Info banner */}
+      {renderInfoBanner()}
+
+      {/* Sync error alert */}
+      {renderSyncError()}
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">

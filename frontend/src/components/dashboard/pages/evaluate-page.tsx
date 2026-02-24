@@ -1,17 +1,23 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import Link from 'next/link'
 import {
   AlertTriangle,
   ArrowDownToLine,
   CheckCircle2,
+  Cloud,
+  CloudOff,
   FlaskConical,
+  HelpCircle,
+  Info,
   Loader2,
   Play,
   Shield,
-  XCircle
+  StopCircle,
+  XCircle,
+  X as XIcon
 } from 'lucide-react'
 import {
   RadarChart,
@@ -21,14 +27,18 @@ import {
   ResponsiveContainer
 } from 'recharts'
 
-import type { Conversation, QualityMetrics, QualityReport } from '@/types/api'
+import type { Conversation, QualityMetrics, QualityReport, SeedSchema } from '@/types/api'
 import { QUALITY_THRESHOLDS } from '@/types/api'
+import { checkApiHealth } from '@/lib/api/client'
+import { evaluateBatch } from '@/lib/api/evaluations'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
+import { Switch } from '@/components/ui/switch'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 import type { Column } from '../data-table'
 import { DataTable } from '../data-table'
@@ -40,6 +50,7 @@ import { StatusBadge } from '../status-badge'
 // ─── Local Storage Keys ───
 const CONVERSATIONS_KEY = 'uncase-conversations'
 const EVALUATIONS_KEY = 'uncase-evaluations'
+const SEEDS_KEY = 'uncase-seeds'
 
 function loadConversations(): Conversation[] {
   if (typeof window === 'undefined') return []
@@ -67,6 +78,18 @@ function loadEvaluations(): QualityReport[] {
 
 function saveEvaluations(evaluations: QualityReport[]) {
   localStorage.setItem(EVALUATIONS_KEY, JSON.stringify(evaluations))
+}
+
+function loadSeeds(): SeedSchema[] {
+  if (typeof window === 'undefined') return []
+
+  try {
+    const raw = localStorage.getItem(SEEDS_KEY)
+
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
 }
 
 // ─── Mock Evaluation Logic ───
@@ -100,7 +123,7 @@ function computeCompositeScore(metrics: QualityMetrics): number {
   ) / 1000
 }
 
-function evaluateConversation(conversation: Conversation): QualityReport {
+function evaluateConversationMock(conversation: Conversation): QualityReport {
   const metrics = generateMockMetrics()
   const composite_score = computeCompositeScore(metrics)
 
@@ -126,10 +149,34 @@ function evaluateConversation(conversation: Conversation): QualityReport {
 
 // ─── Metric display config ───
 const METRIC_CONFIG = [
-  { key: 'rouge_l' as const, label: 'ROUGE-L', description: 'Structural coherence with seed', threshold: QUALITY_THRESHOLDS.rouge_l },
-  { key: 'fidelidad_factual' as const, label: 'Factual Fidelity', description: 'Domain fact accuracy', threshold: QUALITY_THRESHOLDS.fidelidad_factual },
-  { key: 'diversidad_lexica' as const, label: 'Lexical Diversity', description: 'Type-Token Ratio', threshold: QUALITY_THRESHOLDS.diversidad_lexica },
-  { key: 'coherencia_dialogica' as const, label: 'Dialogic Coherence', description: 'Inter-turn role consistency', threshold: QUALITY_THRESHOLDS.coherencia_dialogica }
+  {
+    key: 'rouge_l' as const,
+    label: 'ROUGE-L',
+    description: 'Structural coherence with seed',
+    threshold: QUALITY_THRESHOLDS.rouge_l,
+    tooltip: 'Measures structural coherence between the generated conversation and its seed. Higher values mean the conversation follows the expected flow more closely.'
+  },
+  {
+    key: 'fidelidad_factual' as const,
+    label: 'Factual Fidelity',
+    description: 'Domain fact accuracy',
+    threshold: QUALITY_THRESHOLDS.fidelidad_factual,
+    tooltip: 'Measures accuracy of domain-specific facts. Checks that entities, procedures, and terminology match the seed\'s factual parameters.'
+  },
+  {
+    key: 'diversidad_lexica' as const,
+    label: 'Lexical Diversity',
+    description: 'Type-Token Ratio',
+    threshold: QUALITY_THRESHOLDS.diversidad_lexica,
+    tooltip: 'Type-Token Ratio (TTR) — measures vocabulary variety. Higher values indicate more diverse, natural-sounding language.'
+  },
+  {
+    key: 'coherencia_dialogica' as const,
+    label: 'Dialogic Coherence',
+    description: 'Inter-turn role consistency',
+    threshold: QUALITY_THRESHOLDS.coherencia_dialogica,
+    tooltip: 'Measures inter-turn consistency of roles and context. Ensures each participant maintains their role and references remain consistent.'
+  }
 ] as const
 
 export function EvaluatePage() {
@@ -138,6 +185,51 @@ export function EvaluatePage() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [running, setRunning] = useState(false)
   const [selectedReport, setSelectedReport] = useState<QualityReport | null>(null)
+
+  // ─── API integration state ───
+  const [apiAvailable, setApiAvailable] = useState(false)
+  const [demoMode, setDemoMode] = useState(false)
+  const [evaluationError, setEvaluationError] = useState<string | null>(null)
+  const [abortController, setAbortController] = useState<AbortController | null>(null)
+
+  const [batchSummary, setBatchSummary] = useState<{
+    total: number
+    passed: number
+    failed: number
+    pass_rate: number
+    avg_composite_score: number
+    metric_averages: Record<string, number>
+    failure_summary: Record<string, number>
+  } | null>(null)
+
+  // ─── Seeds for API pairing ───
+  const [seeds] = useState<SeedSchema[]>(() => loadSeeds())
+
+  const seedMap = useMemo(() => {
+    const map = new Map<string, SeedSchema>()
+
+    for (const s of seeds) map.set(s.seed_id, s)
+
+    return map
+  }, [seeds])
+
+  // ─── API health check on mount ───
+  useEffect(() => {
+    let cancelled = false
+
+    async function init() {
+      const healthy = await checkApiHealth()
+
+      if (!cancelled) {
+        setApiAvailable(healthy)
+        if (!healthy) setDemoMode(true)
+      }
+    }
+
+    init()
+
+    return () => { cancelled = true }
+  }, [])
 
   // ─── Selection ───
   function toggleSelection(id: string) {
@@ -162,6 +254,12 @@ export function EvaluatePage() {
     setSelected(new Set())
   }
 
+  // ─── Cancel handler ───
+  function handleCancel() {
+    abortController?.abort()
+    setAbortController(null)
+  }
+
   // ─── Run evaluation ───
   async function runEvaluation() {
     const targets = selected.size > 0
@@ -171,30 +269,92 @@ export function EvaluatePage() {
     if (targets.length === 0) return
 
     setRunning(true)
+    setEvaluationError(null)
+    setBatchSummary(null)
 
-    // Simulate async processing
-    await new Promise(resolve => setTimeout(resolve, 800))
+    const controller = new AbortController()
 
-    const results = targets.map(c => evaluateConversation(c))
+    setAbortController(controller)
 
-    // Merge with existing evaluations (replace if same conversation_id)
-    const existingMap = new Map(evaluations.map(e => [e.conversation_id, e]))
+    try {
+      if (demoMode) {
+        // Demo: use mock evaluator
+        await new Promise(resolve => setTimeout(resolve, 800))
+        const results = targets.map(c => evaluateConversationMock(c))
+        const existingMap = new Map(evaluations.map(e => [e.conversation_id, e]))
 
-    for (const r of results) {
-      existingMap.set(r.conversation_id, r)
+        for (const r of results) existingMap.set(r.conversation_id, r)
+
+        const updated = Array.from(existingMap.values())
+
+        setEvaluations(updated)
+        saveEvaluations(updated)
+        if (results.length > 0) setSelectedReport(results[0])
+      } else {
+        // Real API: build pairs with seeds
+        const pairs: Array<{ conversation: Conversation; seed: SeedSchema }> = []
+        const unpaired: string[] = []
+
+        for (const conv of targets) {
+          const seed = seedMap.get(conv.seed_id)
+
+          if (seed) {
+            pairs.push({ conversation: conv, seed })
+          } else {
+            unpaired.push(conv.conversation_id.slice(0, 8))
+          }
+        }
+
+        if (unpaired.length > 0) {
+          setEvaluationError(
+            `${unpaired.length} conversation(s) have no matching seed and were skipped: ${unpaired.join(', ')}...`
+          )
+        }
+
+        if (pairs.length === 0) {
+          setRunning(false)
+          setAbortController(null)
+
+          return
+        }
+
+        const { data, error } = await evaluateBatch(pairs, controller.signal)
+
+        if (error) {
+          if (error.status !== 0) {
+            setEvaluationError(`Evaluation failed: ${error.message}`)
+          }
+        } else if (data) {
+          // Merge reports
+          const existingMap = new Map(evaluations.map(e => [e.conversation_id, e]))
+
+          for (const r of data.reports) existingMap.set(r.conversation_id, r)
+
+          const updated = Array.from(existingMap.values())
+
+          setEvaluations(updated)
+          saveEvaluations(updated)
+
+          setBatchSummary({
+            total: data.total,
+            passed: data.passed,
+            failed: data.failed,
+            pass_rate: data.pass_rate,
+            avg_composite_score: data.avg_composite_score,
+            metric_averages: data.metric_averages,
+            failure_summary: data.failure_summary
+          })
+
+          if (data.reports.length > 0) setSelectedReport(data.reports[0])
+        }
+      }
+    } catch {
+      // Cancelled or unexpected — silently handle
     }
 
-    const updated = Array.from(existingMap.values())
-
-    setEvaluations(updated)
-    saveEvaluations(updated)
     setRunning(false)
+    setAbortController(null)
     clearSelection()
-
-    // Select first result for radar display
-    if (results.length > 0) {
-      setSelectedReport(results[0])
-    }
   }
 
   // ─── Derived stats ───
@@ -324,311 +484,447 @@ export function EvaluatePage() {
   }
 
   return (
-    <div className="space-y-4">
-      <PageHeader
-        title="Quality Evaluation"
-        description={`${conversations.length} conversations available for evaluation`}
-        actions={
-          <Button
-            size="sm"
-            onClick={runEvaluation}
-            disabled={running}
-          >
-            {running ? (
-              <Loader2 className="mr-1.5 size-4 animate-spin" />
-            ) : (
-              <Play className="mr-1.5 size-4" />
-            )}
-            {running ? 'Evaluating...' : selected.size > 0 ? `Evaluate (${selected.size})` : 'Evaluate All'}
-          </Button>
-        }
-      />
-
-      {/* Quality Gate Summary */}
-      {evaluations.length > 0 && (
-        <Card className={cn(
-          'border-l-4',
-          passRate >= 80 ? 'border-l-emerald-500' :
-          passRate >= 50 ? 'border-l-amber-500' :
-          'border-l-red-500'
-        )}>
-          <CardContent className="flex items-center gap-4 p-4">
-            {passRate >= 80 ? (
-              <CheckCircle2 className="size-8 text-emerald-500" />
-            ) : passRate >= 50 ? (
-              <AlertTriangle className="size-8 text-amber-500" />
-            ) : (
-              <XCircle className="size-8 text-red-500" />
-            )}
-            <div className="flex-1">
-              <p className="text-sm font-semibold">
-                Quality Gate: {passCount} of {evaluations.length} passed ({passRate}%)
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {passRate >= 80
-                  ? 'Quality thresholds are being met across most conversations.'
-                  : passRate >= 50
-                    ? 'Some conversations are below quality thresholds. Review failures below.'
-                    : 'Most conversations are failing quality checks. Review and adjust seeds or generation parameters.'}
-              </p>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <div className="text-center">
-                <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{passCount}</p>
-                <p className="text-[10px] text-muted-foreground">Passed</p>
-              </div>
-              <div className="text-center">
-                <p className="text-lg font-bold text-red-600 dark:text-red-400">{failCount}</p>
-                <p className="text-[10px] text-muted-foreground">Failed</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Stats row */}
-      {evaluations.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatsCard
-            title="Evaluations"
-            value={evaluations.length}
-            icon={FlaskConical}
-            description="Quality reports generated"
-          />
-          <StatsCard
-            title="Pass Rate"
-            value={passRate}
-            icon={CheckCircle2}
-            description="Percentage passing all checks"
-          />
-          <StatsCard
-            title="Passed"
-            value={passCount}
-            icon={CheckCircle2}
-            description="Conversations meeting thresholds"
-          />
-          <StatsCard
-            title="Failed"
-            value={failCount}
-            icon={XCircle}
-            description="Conversations below thresholds"
-          />
-        </div>
-      )}
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        {/* Conversation selector */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium">Select Conversations</CardTitle>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={selectAll}>
-                  Select All
-                </Button>
-                {selected.size > 0 && (
-                  <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={clearSelection}>
-                    Clear
-                  </Button>
-                )}
-              </div>
-            </div>
-            <CardDescription className="text-xs">
-              Pick conversations to evaluate, or click &ldquo;Evaluate All&rdquo; to run on everything.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="max-h-[300px] space-y-1 overflow-y-auto">
-              {conversations.map(conv => (
-                <label
-                  key={conv.conversation_id}
-                  className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 transition-colors hover:bg-muted"
+    <TooltipProvider>
+      <div className="space-y-4">
+        <PageHeader
+          title="Quality Evaluation"
+          description={`${conversations.length} conversations available for evaluation`}
+          actions={
+            <div className="flex items-center gap-2">
+              {running && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleCancel}
                 >
-                  <Checkbox
-                    checked={selected.has(conv.conversation_id)}
-                    onCheckedChange={() => toggleSelection(conv.conversation_id)}
-                  />
-                  <div className="flex-1 overflow-hidden">
-                    <span className="block truncate font-mono text-xs">
-                      {conv.conversation_id.slice(0, 20)}...
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">
-                      {conv.dominio} | {conv.turnos.length} turns
-                    </span>
-                  </div>
-                  {evaluations.find(e => e.conversation_id === conv.conversation_id) && (
-                    <Badge variant="outline" className="text-[9px]">evaluated</Badge>
-                  )}
-                </label>
-              ))}
+                  <StopCircle className="mr-1.5 size-4" />
+                  Cancel
+                </Button>
+              )}
+              <Button
+                size="sm"
+                onClick={runEvaluation}
+                disabled={running}
+              >
+                {running ? (
+                  <Loader2 className="mr-1.5 size-4 animate-spin" />
+                ) : (
+                  <Play className="mr-1.5 size-4" />
+                )}
+                {running ? 'Evaluating...' : selected.size > 0 ? `Evaluate (${selected.size})` : 'Evaluate All'}
+              </Button>
+            </div>
+          }
+        />
+
+        {/* Info banner */}
+        <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30">
+          <CardContent className="flex items-start gap-3 p-4">
+            <Info className="mt-0.5 size-4 shrink-0 text-blue-600 dark:text-blue-400" />
+            <div className="space-y-1 text-xs text-blue-800 dark:text-blue-300">
+              <p className="font-medium">How Quality Evaluation Works</p>
+              <p>
+                Each conversation is evaluated against its origin seed using 6 quality metrics.
+                The composite score formula is: Q = min(ROUGE-L, Fidelity, TTR, Coherence) if privacy=0.0
+                AND memorization{'<'}0.01, else Q=0. A conversation must pass ALL thresholds to be certified
+                for training use.
+              </p>
             </div>
           </CardContent>
         </Card>
 
-        {/* Radar chart */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Quality Radar</CardTitle>
-            <CardDescription className="text-xs">
-              {selectedReport
-                ? `Metrics for ${selectedReport.conversation_id.slice(0, 16)}...`
-                : 'Run an evaluation and click a result to view the radar chart.'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {selectedReport && radarData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={260}>
-                <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="80%">
-                  <PolarGrid />
-                  <PolarAngleAxis dataKey="metric" tick={{ fontSize: 11 }} />
-                  <Radar
-                    name="Threshold"
-                    dataKey="threshold"
-                    stroke="hsl(var(--muted-foreground))"
-                    fill="transparent"
-                    strokeDasharray="4 4"
-                    strokeWidth={1.5}
-                  />
-                  <Radar
-                    name="Score"
-                    dataKey="value"
-                    stroke="hsl(var(--primary))"
-                    fill="hsl(var(--primary))"
-                    fillOpacity={0.15}
-                    strokeWidth={2}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
+        {/* API status and demo mode toggle */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5 text-[10px]">
+            {apiAvailable ? (
+              <>
+                <Cloud className="size-3 text-emerald-500" />
+                <span className="text-emerald-600 dark:text-emerald-400">API connected</span>
+              </>
             ) : (
-              <div className="flex h-[260px] items-center justify-center text-sm text-muted-foreground">
-                {evaluations.length === 0
-                  ? 'No evaluations yet. Run an evaluation to see results.'
-                  : 'Click a row in the results table to view its radar chart.'}
-              </div>
+              <>
+                <CloudOff className="size-3 text-amber-500" />
+                <span className="text-amber-600 dark:text-amber-400">API unavailable</span>
+              </>
             )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Metric detail cards */}
-      {selectedReport && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {METRIC_CONFIG.map(m => {
-            const value = selectedReport.metrics[m.key]
-            const passed = value >= m.threshold
-            const percentage = Math.min(Math.round((value / 1) * 100), 100)
-
-            return (
-              <Card key={m.key}>
-                <CardContent className="p-4">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-xs font-medium">{m.label}</span>
-                    <span className={cn(
-                      'text-sm font-bold',
-                      passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
-                    )}>
-                      {value.toFixed(3)}
-                    </span>
-                  </div>
-                  <Progress value={percentage} className={cn('h-2', !passed && '[&>div]:bg-red-500')} />
-                  <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
-                    <span>{m.description}</span>
-                    <span>Threshold: {m.threshold}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-
-          {/* Privacy Score card */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-xs font-medium">
-                  <Shield className="size-3.5" /> Privacy Score
-                </span>
-                <span className={cn(
-                  'text-sm font-bold',
-                  selectedReport.metrics.privacy_score === 0.0
-                    ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-red-600 dark:text-red-400'
-                )}>
-                  {selectedReport.metrics.privacy_score.toFixed(3)}
-                </span>
-              </div>
-              <Progress
-                value={selectedReport.metrics.privacy_score === 0.0 ? 100 : 0}
-                className={cn('h-2', selectedReport.metrics.privacy_score !== 0.0 && '[&>div]:bg-red-500')}
-              />
-              <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
-                <span>Zero PII residual required</span>
-                <span>Must be 0.0</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Memorization card */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-xs font-medium">
-                  <Shield className="size-3.5" /> Memorization
-                </span>
-                <span className={cn(
-                  'text-sm font-bold',
-                  selectedReport.metrics.memorizacion < QUALITY_THRESHOLDS.memorizacion
-                    ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-red-600 dark:text-red-400'
-                )}>
-                  {selectedReport.metrics.memorizacion.toFixed(4)}
-                </span>
-              </div>
-              <Progress
-                value={Math.min(Math.round((1 - selectedReport.metrics.memorizacion / 0.05) * 100), 100)}
-                className={cn('h-2', selectedReport.metrics.memorizacion >= QUALITY_THRESHOLDS.memorizacion && '[&>div]:bg-red-500')}
-              />
-              <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
-                <span>Extraction attack success rate</span>
-                <span>Must be {'<'} {QUALITY_THRESHOLDS.memorizacion}</span>
-              </div>
-            </CardContent>
-          </Card>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-muted-foreground">Demo Mode</span>
+            <Switch checked={demoMode} onCheckedChange={setDemoMode} />
+          </div>
         </div>
-      )}
 
-      {/* Prompt to run evaluation */}
-      {evaluations.length === 0 && (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-            <FlaskConical className="mb-3 size-8 text-muted-foreground" />
-            <p className="mb-1 text-sm font-medium">No evaluations run yet</p>
-            <p className="mb-3 text-xs text-muted-foreground">
-              Select conversations and click &ldquo;Evaluate&rdquo; to generate quality reports with mock metrics.
-            </p>
-            <Button size="sm" onClick={runEvaluation} disabled={running}>
-              {running ? (
-                <Loader2 className="mr-1.5 size-4 animate-spin" />
-              ) : (
-                <Play className="mr-1.5 size-4" />
+        {/* Error display */}
+        {evaluationError && (
+          <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/30">
+            <CardContent className="flex items-center gap-3 p-3">
+              <AlertTriangle className="size-4 shrink-0 text-amber-600" />
+              <p className="flex-1 text-xs text-amber-800 dark:text-amber-300">{evaluationError}</p>
+              <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setEvaluationError(null)}>
+                <XIcon className="size-3" />
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Batch summary from API */}
+        {batchSummary && !running && (
+          <Card className="border-l-4 border-l-primary">
+            <CardContent className="p-4">
+              <p className="mb-2 text-sm font-semibold">Batch Evaluation Summary</p>
+              <div className="grid grid-cols-4 gap-4 text-center text-xs">
+                <div>
+                  <p className="text-lg font-bold">{batchSummary.total}</p>
+                  <p className="text-muted-foreground">Total</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{batchSummary.passed}</p>
+                  <p className="text-muted-foreground">Passed</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-red-600 dark:text-red-400">{batchSummary.failed}</p>
+                  <p className="text-muted-foreground">Failed</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold">{batchSummary.avg_composite_score.toFixed(3)}</p>
+                  <p className="text-muted-foreground">Avg Score</p>
+                </div>
+              </div>
+              {Object.keys(batchSummary.failure_summary).length > 0 && (
+                <div className="mt-3 rounded-md bg-muted/50 p-2">
+                  <p className="mb-1 text-[10px] font-medium text-muted-foreground">Failure Breakdown</p>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(batchSummary.failure_summary).map(([metric, count]) => (
+                      <Badge key={metric} variant="outline" className="text-[10px]">
+                        {metric}: {count}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
               )}
-              Evaluate All Conversations
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Results table */}
-      {evaluations.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold">Evaluation Results</h3>
-          <DataTable
-            columns={columns}
-            data={evaluations}
-            rowKey={r => r.conversation_id}
-            onRowClick={r => setSelectedReport(r)}
-          />
+        {/* Quality Gate Summary */}
+        {evaluations.length > 0 && (
+          <Card className={cn(
+            'border-l-4',
+            passRate >= 80 ? 'border-l-emerald-500' :
+            passRate >= 50 ? 'border-l-amber-500' :
+            'border-l-red-500'
+          )}>
+            <CardContent className="flex items-center gap-4 p-4">
+              {passRate >= 80 ? (
+                <CheckCircle2 className="size-8 text-emerald-500" />
+              ) : passRate >= 50 ? (
+                <AlertTriangle className="size-8 text-amber-500" />
+              ) : (
+                <XCircle className="size-8 text-red-500" />
+              )}
+              <div className="flex-1">
+                <p className="text-sm font-semibold">
+                  Quality Gate: {passCount} of {evaluations.length} passed ({passRate}%)
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {passRate >= 80
+                    ? 'Quality thresholds are being met across most conversations.'
+                    : passRate >= 50
+                      ? 'Some conversations are below quality thresholds. Review failures below.'
+                      : 'Most conversations are failing quality checks. Review and adjust seeds or generation parameters.'}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <div className="text-center">
+                  <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{passCount}</p>
+                  <p className="text-[10px] text-muted-foreground">Passed</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold text-red-600 dark:text-red-400">{failCount}</p>
+                  <p className="text-[10px] text-muted-foreground">Failed</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Stats row */}
+        {evaluations.length > 0 && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatsCard
+              title="Evaluations"
+              value={evaluations.length}
+              icon={FlaskConical}
+              description="Quality reports generated"
+            />
+            <StatsCard
+              title="Pass Rate"
+              value={passRate}
+              icon={CheckCircle2}
+              description="Percentage passing all checks"
+            />
+            <StatsCard
+              title="Passed"
+              value={passCount}
+              icon={CheckCircle2}
+              description="Conversations meeting thresholds"
+            />
+            <StatsCard
+              title="Failed"
+              value={failCount}
+              icon={XCircle}
+              description="Conversations below thresholds"
+            />
+          </div>
+        )}
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          {/* Conversation selector */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium">Select Conversations</CardTitle>
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={selectAll}>
+                    Select All
+                  </Button>
+                  {selected.size > 0 && (
+                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={clearSelection}>
+                      Clear
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <CardDescription className="text-xs">
+                Pick conversations to evaluate, or click &ldquo;Evaluate All&rdquo; to run on everything.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="max-h-[300px] space-y-1 overflow-y-auto">
+                {conversations.map(conv => (
+                  <label
+                    key={conv.conversation_id}
+                    className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 transition-colors hover:bg-muted"
+                  >
+                    <Checkbox
+                      checked={selected.has(conv.conversation_id)}
+                      onCheckedChange={() => toggleSelection(conv.conversation_id)}
+                    />
+                    <div className="flex-1 overflow-hidden">
+                      <span className="block truncate font-mono text-xs">
+                        {conv.conversation_id.slice(0, 20)}...
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {conv.dominio} | {conv.turnos.length} turns
+                      </span>
+                    </div>
+                    {!seedMap.has(conv.seed_id) && !demoMode && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <AlertTriangle className="size-3 text-amber-500" />
+                        </TooltipTrigger>
+                        <TooltipContent className="text-xs">No matching seed found — cannot evaluate via API</TooltipContent>
+                      </Tooltip>
+                    )}
+                    {evaluations.find(e => e.conversation_id === conv.conversation_id) && (
+                      <Badge variant="outline" className="text-[9px]">evaluated</Badge>
+                    )}
+                  </label>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Radar chart */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium">Quality Radar</CardTitle>
+              <CardDescription className="text-xs">
+                {selectedReport
+                  ? `Metrics for ${selectedReport.conversation_id.slice(0, 16)}...`
+                  : 'Run an evaluation and click a result to view the radar chart.'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {selectedReport && radarData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={260}>
+                  <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="80%">
+                    <PolarGrid />
+                    <PolarAngleAxis dataKey="metric" tick={{ fontSize: 11 }} />
+                    <Radar
+                      name="Threshold"
+                      dataKey="threshold"
+                      stroke="hsl(var(--muted-foreground))"
+                      fill="transparent"
+                      strokeDasharray="4 4"
+                      strokeWidth={1.5}
+                    />
+                    <Radar
+                      name="Score"
+                      dataKey="value"
+                      stroke="hsl(var(--primary))"
+                      fill="hsl(var(--primary))"
+                      fillOpacity={0.15}
+                      strokeWidth={2}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex h-[260px] items-center justify-center text-sm text-muted-foreground">
+                  {evaluations.length === 0
+                    ? 'No evaluations yet. Run an evaluation to see results.'
+                    : 'Click a row in the results table to view its radar chart.'}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
-      )}
-    </div>
+
+        {/* Metric detail cards */}
+        {selectedReport && (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {METRIC_CONFIG.map(m => {
+              const value = selectedReport.metrics[m.key]
+              const passed = value >= m.threshold
+              const percentage = Math.min(Math.round((value / 1) * 100), 100)
+
+              return (
+                <Card key={m.key}>
+                  <CardContent className="p-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5 text-xs font-medium">
+                        {m.label}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="size-3 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs text-xs">{m.tooltip}</TooltipContent>
+                        </Tooltip>
+                      </span>
+                      <span className={cn(
+                        'text-sm font-bold',
+                        passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+                      )}>
+                        {value.toFixed(3)}
+                      </span>
+                    </div>
+                    <Progress value={percentage} className={cn('h-2', !passed && '[&>div]:bg-red-500')} />
+                    <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
+                      <span>{m.description}</span>
+                      <span>Threshold: {m.threshold}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+
+            {/* Privacy Score card */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-xs font-medium">
+                    <Shield className="size-3.5" /> Privacy Score
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="size-3 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs text-xs">
+                        PII residual detection via Presidio. Must be exactly 0.0 — any detected PII immediately fails the conversation.
+                      </TooltipContent>
+                    </Tooltip>
+                  </span>
+                  <span className={cn(
+                    'text-sm font-bold',
+                    selectedReport.metrics.privacy_score === 0.0
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-red-600 dark:text-red-400'
+                  )}>
+                    {selectedReport.metrics.privacy_score.toFixed(3)}
+                  </span>
+                </div>
+                <Progress
+                  value={selectedReport.metrics.privacy_score === 0.0 ? 100 : 0}
+                  className={cn('h-2', selectedReport.metrics.privacy_score !== 0.0 && '[&>div]:bg-red-500')}
+                />
+                <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
+                  <span>Zero PII residual required</span>
+                  <span>Must be 0.0</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Memorization card */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-xs font-medium">
+                    <Shield className="size-3.5" /> Memorization
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="size-3 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs text-xs">
+                        Extraction attack success rate. Measures if the model memorized training data. Must be below 1% for safety.
+                      </TooltipContent>
+                    </Tooltip>
+                  </span>
+                  <span className={cn(
+                    'text-sm font-bold',
+                    selectedReport.metrics.memorizacion < QUALITY_THRESHOLDS.memorizacion
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-red-600 dark:text-red-400'
+                  )}>
+                    {selectedReport.metrics.memorizacion.toFixed(4)}
+                  </span>
+                </div>
+                <Progress
+                  value={Math.min(Math.round((1 - selectedReport.metrics.memorizacion / 0.05) * 100), 100)}
+                  className={cn('h-2', selectedReport.metrics.memorizacion >= QUALITY_THRESHOLDS.memorizacion && '[&>div]:bg-red-500')}
+                />
+                <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
+                  <span>Extraction attack success rate</span>
+                  <span>Must be {'<'} {QUALITY_THRESHOLDS.memorizacion}</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Prompt to run evaluation */}
+        {evaluations.length === 0 && (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center p-8 text-center">
+              <FlaskConical className="mb-3 size-8 text-muted-foreground" />
+              <p className="mb-1 text-sm font-medium">No evaluations run yet</p>
+              <p className="mb-3 text-xs text-muted-foreground">
+                Select conversations and click &ldquo;Evaluate&rdquo; to generate quality reports
+                {demoMode ? ' with mock metrics.' : ' using the SCSF evaluation API.'}
+              </p>
+              <Button size="sm" onClick={runEvaluation} disabled={running}>
+                {running ? (
+                  <Loader2 className="mr-1.5 size-4 animate-spin" />
+                ) : (
+                  <Play className="mr-1.5 size-4" />
+                )}
+                Evaluate All Conversations
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Results table */}
+        {evaluations.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold">Evaluation Results</h3>
+            <DataTable
+              columns={columns}
+              data={evaluations}
+              rowKey={r => r.conversation_id}
+              onRowClick={r => setSelectedReport(r)}
+            />
+          </div>
+        )}
+      </div>
+    </TooltipProvider>
   )
 }

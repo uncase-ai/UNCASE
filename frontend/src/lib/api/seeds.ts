@@ -1,8 +1,8 @@
-import type { SeedSchema } from '@/types/api'
+import type { SeedSchema, SeedResponse, SeedListResponse } from '@/types/api'
 import { SUPPORTED_DOMAINS } from '@/types/api'
+import { apiGet, apiPost, apiPut, apiDelete } from './client'
 
 // ─── Client-side seed validation ───
-// Seeds are managed locally and through import; no dedicated CRUD endpoint yet
 
 export function validateSeed(seed: Partial<SeedSchema>): string[] {
   const errors: string[] = []
@@ -78,4 +78,34 @@ export function createEmptySeed(): Partial<SeedSchema> {
       coherencia_dialogica_min: 0.85
     }
   }
+}
+
+// ─── Backend seed CRUD ───
+
+export function fetchSeeds(params?: { domain?: string; page?: number; page_size?: number }, signal?: AbortSignal) {
+  const query = new URLSearchParams()
+
+  if (params?.domain) query.set('domain', params.domain)
+  if (params?.page) query.set('page', String(params.page))
+  if (params?.page_size) query.set('page_size', String(params.page_size))
+
+  const qs = query.toString()
+
+  return apiGet<SeedListResponse>(`/api/v1/seeds${qs ? `?${qs}` : ''}`, { signal })
+}
+
+export function fetchSeed(seedId: string, signal?: AbortSignal) {
+  return apiGet<SeedResponse>(`/api/v1/seeds/${seedId}`, { signal })
+}
+
+export function createSeedApi(data: Record<string, unknown>, signal?: AbortSignal) {
+  return apiPost<SeedResponse>('/api/v1/seeds', data, { signal })
+}
+
+export function updateSeedApi(seedId: string, data: Record<string, unknown>, signal?: AbortSignal) {
+  return apiPut<SeedResponse>(`/api/v1/seeds/${seedId}`, data, { signal })
+}
+
+export function deleteSeedApi(seedId: string, signal?: AbortSignal) {
+  return apiDelete(`/api/v1/seeds/${seedId}`, { signal })
 }

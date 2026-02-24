@@ -128,3 +128,20 @@ class DuplicateError(UNCASEError):
 
     status_code = 409
     detail = "Resource already exists"
+
+
+# -- Generation / LLM --
+
+
+class GenerationError(UNCASEError):
+    """Synthetic conversation generation failed."""
+
+    status_code = 500
+    detail = "Generation failed"
+
+
+class LLMConfigurationError(UNCASEError):
+    """LLM provider is not configured or unreachable."""
+
+    status_code = 503
+    detail = "LLM provider not configured"

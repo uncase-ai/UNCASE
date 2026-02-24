@@ -229,6 +229,80 @@ export interface ValidationReport {
   validated_at: string
 }
 
+// ─── Seed CRUD ───
+export interface SeedResponse {
+  id: string
+  dominio: string
+  idioma: string
+  version: string
+  etiquetas: string[]
+  objetivo: string
+  tono: string
+  roles: string[]
+  descripcion_roles: Record<string, string>
+  pasos_turnos: PasosTurnos
+  parametros_factuales: ParametrosFactuales
+  privacidad: Privacidad
+  metricas_calidad: MetricasCalidad
+  organization_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface SeedListResponse {
+  items: SeedResponse[]
+  total: number
+  page: number
+  page_size: number
+}
+
+// ─── Generation ───
+export interface GenerateRequest {
+  seed: SeedSchema
+  count: number
+  temperature: number
+  model?: string
+  language_override?: string
+  evaluate_after: boolean
+}
+
+export interface GenerationSummary {
+  total_generated: number
+  total_passed: number | null
+  avg_composite_score: number | null
+  model_used: string
+  temperature: number
+  duration_seconds: number
+}
+
+export interface GenerateResponse {
+  conversations: Conversation[]
+  reports: QualityReport[] | null
+  generation_summary: GenerationSummary
+}
+
+// ─── Batch Evaluation ───
+export interface BatchEvaluationResponse {
+  total: number
+  passed: number
+  failed: number
+  pass_rate: number
+  avg_composite_score: number
+  metric_averages: Record<string, number>
+  failure_summary: Record<string, number>
+  reports: QualityReport[]
+}
+
+export interface QualityThresholdsResponse {
+  rouge_l_min: number
+  fidelidad_min: number
+  diversidad_lexica_min: number
+  coherencia_dialogica_min: number
+  privacy_score_max: number
+  memorizacion_max: number
+  formula: string
+}
+
 // ─── Quality Thresholds (constants) ───
 export const QUALITY_THRESHOLDS = {
   rouge_l: 0.65,
