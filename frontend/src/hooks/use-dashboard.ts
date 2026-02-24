@@ -46,13 +46,23 @@ export function useSidebar() {
   return { collapsed, toggle, setCollapsed }
 }
 
+// Cache the last raw JSON string and parsed result so useSyncExternalStore
+// gets a stable reference when the underlying data hasn't changed.
+let _cachedJobsRaw: string | null = null
+let _cachedJobs: PipelineJob[] = EMPTY_JOBS
+
 function readJobs(): PipelineJob[] {
   if (typeof window === 'undefined') return EMPTY_JOBS
 
   try {
-    const stored = localStorage.getItem(JOBS_KEY)
+    const raw = localStorage.getItem(JOBS_KEY)
 
-    return stored ? JSON.parse(stored) : EMPTY_JOBS
+    if (raw === _cachedJobsRaw) return _cachedJobs
+
+    _cachedJobsRaw = raw
+    _cachedJobs = raw ? JSON.parse(raw) : EMPTY_JOBS
+
+    return _cachedJobs
   } catch {
     return EMPTY_JOBS
   }
