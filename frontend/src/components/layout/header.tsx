@@ -12,8 +12,6 @@ import { ModeToggle } from '@/components/layout/mode-toggle'
 
 import { HeaderNavigation, HeaderNavigationSmallScreen, type Navigation } from '@/components/layout/header-navigation'
 
-import FlowLogo from '@/assets/svg/flow-logo'
-
 import { cn } from '@/lib/utils'
 
 type HeaderProps = {
@@ -50,10 +48,11 @@ const Header = ({ navigationData, className }: HeaderProps) => {
       <div className='flex h-full items-center justify-between gap-4 border-b px-4 sm:px-6 lg:px-8'>
         {/* Logo */}
         <Link href='/#home'>
-          <div className='flex items-center gap-3'>
-            <FlowLogo className='size-8' />
-            <span className='text-xl font-semibold max-[430px]:hidden'>UNCASE</span>
-          </div>
+          <img
+            src='/images/logo/logo-horizontal.png'
+            alt='UNCASE'
+            className='h-8 w-auto dark:invert'
+          />
         </Link>
 
         {/* Navigation */}
