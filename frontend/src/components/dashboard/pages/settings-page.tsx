@@ -358,7 +358,7 @@ export function SettingsPage() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Shield className="size-4 text-amber-500" /> API Key Created
+                <Shield className="size-4" /> API Key Created
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
@@ -373,7 +373,7 @@ export function SettingsPage() {
                   {showKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </Button>
                 <Button variant="ghost" size="icon" className="size-8" onClick={() => copyKey(createdKey.plain_key)}>
-                  {copiedKey ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
+                  {copiedKey ? <Check className="size-4" /> : <Copy className="size-4" />}
                 </Button>
               </div>
               <div className="text-xs text-muted-foreground">

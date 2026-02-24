@@ -395,12 +395,7 @@ export function EvaluatePage() {
       header: 'Score',
       cell: row => (
         <span
-          className={cn(
-            'font-mono text-sm font-medium',
-            row.composite_score >= 0.55 ? 'text-emerald-600 dark:text-emerald-400' :
-            row.composite_score > 0 ? 'text-amber-600 dark:text-amber-400' :
-            'text-red-600 dark:text-red-400'
-          )}
+          className="font-mono text-sm font-medium"
         >
           {row.composite_score.toFixed(3)}
         </span>
@@ -419,7 +414,7 @@ export function EvaluatePage() {
       key: 'rouge',
       header: 'ROUGE-L',
       cell: row => (
-        <span className={cn('text-xs', row.metrics.rouge_l < QUALITY_THRESHOLDS.rouge_l ? 'text-red-500' : 'text-muted-foreground')}>
+        <span className={cn('text-xs', row.metrics.rouge_l < QUALITY_THRESHOLDS.rouge_l ? 'text-destructive' : 'text-muted-foreground')}>
           {row.metrics.rouge_l.toFixed(3)}
         </span>
       )
@@ -428,7 +423,7 @@ export function EvaluatePage() {
       key: 'fidelity',
       header: 'Fidelity',
       cell: row => (
-        <span className={cn('text-xs', row.metrics.fidelidad_factual < QUALITY_THRESHOLDS.fidelidad_factual ? 'text-red-500' : 'text-muted-foreground')}>
+        <span className={cn('text-xs', row.metrics.fidelidad_factual < QUALITY_THRESHOLDS.fidelidad_factual ? 'text-destructive' : 'text-muted-foreground')}>
           {row.metrics.fidelidad_factual.toFixed(3)}
         </span>
       )
@@ -437,7 +432,7 @@ export function EvaluatePage() {
       key: 'ttr',
       header: 'TTR',
       cell: row => (
-        <span className={cn('text-xs', row.metrics.diversidad_lexica < QUALITY_THRESHOLDS.diversidad_lexica ? 'text-red-500' : 'text-muted-foreground')}>
+        <span className={cn('text-xs', row.metrics.diversidad_lexica < QUALITY_THRESHOLDS.diversidad_lexica ? 'text-destructive' : 'text-muted-foreground')}>
           {row.metrics.diversidad_lexica.toFixed(3)}
         </span>
       )
@@ -446,7 +441,7 @@ export function EvaluatePage() {
       key: 'coherence',
       header: 'Coherence',
       cell: row => (
-        <span className={cn('text-xs', row.metrics.coherencia_dialogica < QUALITY_THRESHOLDS.coherencia_dialogica ? 'text-red-500' : 'text-muted-foreground')}>
+        <span className={cn('text-xs', row.metrics.coherencia_dialogica < QUALITY_THRESHOLDS.coherencia_dialogica ? 'text-destructive' : 'text-muted-foreground')}>
           {row.metrics.coherencia_dialogica.toFixed(3)}
         </span>
       )
@@ -518,11 +513,11 @@ export function EvaluatePage() {
         />
 
         {/* Info banner */}
-        <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30">
+        <Card className="bg-muted/40">
           <CardContent className="flex items-start gap-3 p-4">
-            <Info className="mt-0.5 size-4 shrink-0 text-blue-600 dark:text-blue-400" />
-            <div className="space-y-1 text-xs text-blue-800 dark:text-blue-300">
-              <p className="font-medium">How Quality Evaluation Works</p>
+            <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+            <div className="space-y-1 text-xs text-muted-foreground">
+              <p className="font-medium text-foreground">How Quality Evaluation Works</p>
               <p>
                 Each conversation is evaluated against its origin seed using 6 quality metrics.
                 The composite score formula is: Q = min(ROUGE-L, Fidelity, TTR, Coherence) if privacy=0.0
@@ -535,19 +530,17 @@ export function EvaluatePage() {
 
         {/* API status and demo mode toggle */}
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 text-[10px]">
+          <Badge variant="outline" className="gap-1 text-[10px]">
             {apiAvailable ? (
               <>
-                <Cloud className="size-3 text-emerald-500" />
-                <span className="text-emerald-600 dark:text-emerald-400">API connected</span>
+                <Cloud className="size-3" /> API Connected
               </>
             ) : (
               <>
-                <CloudOff className="size-3 text-amber-500" />
-                <span className="text-amber-600 dark:text-amber-400">API unavailable</span>
+                <CloudOff className="size-3" /> API Unavailable
               </>
             )}
-          </div>
+          </Badge>
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-muted-foreground">Demo Mode</span>
             <Switch checked={demoMode} onCheckedChange={setDemoMode} />
@@ -556,10 +549,10 @@ export function EvaluatePage() {
 
         {/* Error display */}
         {evaluationError && (
-          <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/30">
+          <Card className="bg-muted/40">
             <CardContent className="flex items-center gap-3 p-3">
-              <AlertTriangle className="size-4 shrink-0 text-amber-600" />
-              <p className="flex-1 text-xs text-amber-800 dark:text-amber-300">{evaluationError}</p>
+              <AlertTriangle className="size-4 shrink-0 text-muted-foreground" />
+              <p className="flex-1 text-xs text-muted-foreground">{evaluationError}</p>
               <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setEvaluationError(null)}>
                 <XIcon className="size-3" />
               </Button>
@@ -569,7 +562,7 @@ export function EvaluatePage() {
 
         {/* Batch summary from API */}
         {batchSummary && !running && (
-          <Card className="border-l-4 border-l-primary">
+          <Card className="border-l-4 border-l-foreground/20">
             <CardContent className="p-4">
               <p className="mb-2 text-sm font-semibold">Batch Evaluation Summary</p>
               <div className="grid grid-cols-4 gap-4 text-center text-xs">
@@ -578,11 +571,11 @@ export function EvaluatePage() {
                   <p className="text-muted-foreground">Total</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{batchSummary.passed}</p>
+                  <p className="text-lg font-bold">{batchSummary.passed}</p>
                   <p className="text-muted-foreground">Passed</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-red-600 dark:text-red-400">{batchSummary.failed}</p>
+                  <p className="text-lg font-bold">{batchSummary.failed}</p>
                   <p className="text-muted-foreground">Failed</p>
                 </div>
                 <div>
@@ -608,19 +601,14 @@ export function EvaluatePage() {
 
         {/* Quality Gate Summary */}
         {evaluations.length > 0 && (
-          <Card className={cn(
-            'border-l-4',
-            passRate >= 80 ? 'border-l-emerald-500' :
-            passRate >= 50 ? 'border-l-amber-500' :
-            'border-l-red-500'
-          )}>
+          <Card className="border-l-4 border-l-foreground/20">
             <CardContent className="flex items-center gap-4 p-4">
               {passRate >= 80 ? (
-                <CheckCircle2 className="size-8 text-emerald-500" />
+                <CheckCircle2 className="size-8 text-muted-foreground" />
               ) : passRate >= 50 ? (
-                <AlertTriangle className="size-8 text-amber-500" />
+                <AlertTriangle className="size-8 text-muted-foreground" />
               ) : (
-                <XCircle className="size-8 text-red-500" />
+                <XCircle className="size-8 text-muted-foreground" />
               )}
               <div className="flex-1">
                 <p className="text-sm font-semibold">
@@ -636,11 +624,11 @@ export function EvaluatePage() {
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <div className="text-center">
-                  <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{passCount}</p>
+                  <p className="text-lg font-bold">{passCount}</p>
                   <p className="text-[10px] text-muted-foreground">Passed</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-lg font-bold text-red-600 dark:text-red-400">{failCount}</p>
+                  <p className="text-lg font-bold">{failCount}</p>
                   <p className="text-[10px] text-muted-foreground">Failed</p>
                 </div>
               </div>
@@ -721,7 +709,7 @@ export function EvaluatePage() {
                     {!seedMap.has(conv.seed_id) && !demoMode && (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <AlertTriangle className="size-3 text-amber-500" />
+                          <AlertTriangle className="size-3 text-muted-foreground" />
                         </TooltipTrigger>
                         <TooltipContent className="text-xs">No matching seed found — cannot evaluate via API</TooltipContent>
                       </Tooltip>
@@ -803,12 +791,12 @@ export function EvaluatePage() {
                       </span>
                       <span className={cn(
                         'text-sm font-bold',
-                        passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+                        !passed && 'text-destructive'
                       )}>
                         {value.toFixed(3)}
                       </span>
                     </div>
-                    <Progress value={percentage} className={cn('h-2', !passed && '[&>div]:bg-red-500')} />
+                    <Progress value={percentage} className={cn('h-2', !passed && '[&>div]:bg-destructive')} />
                     <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
                       <span>{m.description}</span>
                       <span>Threshold: {m.threshold}</span>
@@ -835,16 +823,14 @@ export function EvaluatePage() {
                   </span>
                   <span className={cn(
                     'text-sm font-bold',
-                    selectedReport.metrics.privacy_score === 0.0
-                      ? 'text-emerald-600 dark:text-emerald-400'
-                      : 'text-red-600 dark:text-red-400'
+                    selectedReport.metrics.privacy_score !== 0.0 && 'text-destructive'
                   )}>
                     {selectedReport.metrics.privacy_score.toFixed(3)}
                   </span>
                 </div>
                 <Progress
                   value={selectedReport.metrics.privacy_score === 0.0 ? 100 : 0}
-                  className={cn('h-2', selectedReport.metrics.privacy_score !== 0.0 && '[&>div]:bg-red-500')}
+                  className={cn('h-2', selectedReport.metrics.privacy_score !== 0.0 && '[&>div]:bg-destructive')}
                 />
                 <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
                   <span>Zero PII residual required</span>
@@ -870,16 +856,14 @@ export function EvaluatePage() {
                   </span>
                   <span className={cn(
                     'text-sm font-bold',
-                    selectedReport.metrics.memorizacion < QUALITY_THRESHOLDS.memorizacion
-                      ? 'text-emerald-600 dark:text-emerald-400'
-                      : 'text-red-600 dark:text-red-400'
+                    selectedReport.metrics.memorizacion >= QUALITY_THRESHOLDS.memorizacion && 'text-destructive'
                   )}>
                     {selectedReport.metrics.memorizacion.toFixed(4)}
                   </span>
                 </div>
                 <Progress
                   value={Math.min(Math.round((1 - selectedReport.metrics.memorizacion / 0.05) * 100), 100)}
-                  className={cn('h-2', selectedReport.metrics.memorizacion >= QUALITY_THRESHOLDS.memorizacion && '[&>div]:bg-red-500')}
+                  className={cn('h-2', selectedReport.metrics.memorizacion >= QUALITY_THRESHOLDS.memorizacion && '[&>div]:bg-destructive')}
                 />
                 <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
                   <span>Extraction attack success rate</span>

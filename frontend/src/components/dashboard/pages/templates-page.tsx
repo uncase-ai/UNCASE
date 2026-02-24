@@ -273,8 +273,8 @@ export function TemplatesPage() {
             <Card
               key={template.name}
               className={cn(
-                'cursor-pointer transition-all hover:shadow-sm',
-                isSelected && 'ring-2 ring-primary ring-offset-2 ring-offset-background'
+                'cursor-pointer transition-colors hover:bg-muted/50',
+                isSelected && 'border-foreground/50 bg-muted/30'
               )}
               onClick={() => handleSelectTemplate(template.name)}
             >
@@ -314,7 +314,7 @@ export function TemplatesPage() {
       {/* Render Preview Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Render Preview</h2>
+          <h2 className="text-sm font-semibold">Render Preview</h2>
           <div className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground">Tool call mode:</span>
             <ToggleGroup

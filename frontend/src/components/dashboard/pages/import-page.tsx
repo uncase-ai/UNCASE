@@ -32,10 +32,10 @@ type UploadState = 'idle' | 'dragover' | 'uploading' | 'done' | 'error'
 
 const STATE_STYLES: Record<UploadState, string> = {
   idle: 'border-muted-foreground/25 bg-muted/20 hover:border-muted-foreground/40 hover:bg-muted/30',
-  dragover: 'border-blue-400 bg-blue-50 scale-[1.01] dark:border-blue-500 dark:bg-blue-950/30',
+  dragover: 'border-foreground/30 bg-muted/40 scale-[1.01]',
   uploading: 'border-muted-foreground/25 bg-muted/20 animate-pulse',
-  done: 'border-emerald-400 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-950/30',
-  error: 'border-red-400 bg-red-50 dark:border-red-500 dark:bg-red-950/30'
+  done: 'border-foreground/30 bg-muted/30',
+  error: 'border-destructive/30 bg-muted/20'
 }
 
 const STATE_ICONS: Record<UploadState, typeof ArrowDownToLine> = {
@@ -179,7 +179,7 @@ export function ImportPage() {
           <StateIcon
             className={cn(
               'mb-4 size-10 text-muted-foreground',
-              uploadState === 'dragover' && 'text-blue-500'
+              uploadState === 'dragover' && 'text-foreground'
             )}
           />
           <p className="mb-1 text-sm font-medium">
@@ -236,9 +236,9 @@ export function ImportPage() {
           className={cn(
             'mb-3 size-8',
             uploadState === 'uploading' && 'animate-spin text-muted-foreground',
-            uploadState === 'done' && 'text-emerald-500',
-            uploadState === 'error' && 'text-red-500',
-            uploadState === 'dragover' && 'text-blue-500',
+            uploadState === 'done' && 'text-foreground',
+            uploadState === 'error' && 'text-destructive',
+            uploadState === 'dragover' && 'text-foreground',
             uploadState === 'idle' && 'text-muted-foreground'
           )}
         />
@@ -258,10 +258,10 @@ export function ImportPage() {
           <p className="text-xs text-muted-foreground">Processing file...</p>
         )}
         {uploadState === 'done' && (
-          <p className="text-xs text-emerald-600 dark:text-emerald-400">Import complete</p>
+          <p className="text-xs text-muted-foreground">Import complete</p>
         )}
         {uploadState === 'error' && uploadError && (
-          <p className="text-xs text-red-600 dark:text-red-400">{uploadError}</p>
+          <p className="text-xs text-destructive">{uploadError}</p>
         )}
 
         <input
@@ -296,7 +296,7 @@ export function ImportPage() {
                 <CardTitle className="text-sm text-muted-foreground">Imported</CardTitle>
               </CardHeader>
               <CardContent>
-                <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                <span className="text-3xl font-bold">
                   {result.conversations_imported}
                 </span>
                 <span className="ml-1.5 text-sm text-muted-foreground">conversations</span>
@@ -309,12 +309,7 @@ export function ImportPage() {
               </CardHeader>
               <CardContent>
                 <span
-                  className={cn(
-                    'text-3xl font-bold',
-                    result.conversations_failed > 0
-                      ? 'text-red-600 dark:text-red-400'
-                      : 'text-muted-foreground'
-                  )}
+                  className="text-3xl font-bold"
                 >
                   {result.conversations_failed}
                 </span>
@@ -341,7 +336,7 @@ export function ImportPage() {
                     {result.errors.map((err, idx) => (
                       <TableRow key={idx}>
                         <TableCell className="font-mono text-xs">{err.line}</TableCell>
-                        <TableCell className="text-xs text-red-600 dark:text-red-400">
+                        <TableCell className="text-xs text-destructive">
                           {err.error}
                         </TableCell>
                       </TableRow>
@@ -430,7 +425,7 @@ export function ImportPage() {
                 variant={saved ? 'outline' : 'default'}
               >
                 {saved ? (
-                  <CheckCircle2 className="mr-1.5 size-4 text-emerald-500" />
+                  <CheckCircle2 className="mr-1.5 size-4" />
                 ) : (
                   <Save className="mr-1.5 size-4" />
                 )}

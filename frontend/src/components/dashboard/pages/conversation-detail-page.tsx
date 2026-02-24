@@ -39,8 +39,8 @@ function TurnBubble({ turn }: { turn: ConversationTurn }) {
 
   return (
     <div className={cn('flex gap-3', isAssistant ? 'flex-row' : 'flex-row-reverse')}>
-      <div className={cn('flex size-8 shrink-0 items-center justify-center rounded-full', isAssistant ? 'bg-violet-100 dark:bg-violet-900' : 'bg-blue-100 dark:bg-blue-900')}>
-        {isAssistant ? <Bot className="size-4 text-violet-600 dark:text-violet-400" /> : <User className="size-4 text-blue-600 dark:text-blue-400" />}
+      <div className={cn('flex size-8 shrink-0 items-center justify-center rounded-full bg-muted')}>
+        {isAssistant ? <Bot className="size-4 text-muted-foreground" /> : <User className="size-4 text-muted-foreground" />}
       </div>
       <div className={cn('max-w-[75%] space-y-2', isAssistant ? 'items-start' : 'items-end')}>
         <div className="flex items-center gap-2">
@@ -53,12 +53,12 @@ function TurnBubble({ turn }: { turn: ConversationTurn }) {
 
         {/* Tool calls */}
         {turn.tool_calls?.map(tc => (
-          <div key={tc.tool_call_id} className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+          <div key={tc.tool_call_id} className="rounded-md border bg-muted/40 px-3 py-2">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
               <Wrench className="size-3" />
               Tool Call: {tc.tool_name}
             </div>
-            <pre className="mt-1 text-[11px] text-amber-600 dark:text-amber-300">
+            <pre className="mt-1 text-[11px] text-muted-foreground">
               {JSON.stringify(tc.arguments, null, 2)}
             </pre>
           </div>
@@ -66,13 +66,13 @@ function TurnBubble({ turn }: { turn: ConversationTurn }) {
 
         {/* Tool results */}
         {turn.tool_results?.map(tr => (
-          <div key={tr.tool_call_id} className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 dark:border-emerald-800 dark:bg-emerald-950">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+          <div key={tr.tool_call_id} className="rounded-md border bg-muted/40 px-3 py-2">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
               <Code2 className="size-3" />
               Result: {tr.tool_name}
               <StatusBadge variant={tr.status === 'success' ? 'success' : 'error'}>{tr.status}</StatusBadge>
             </div>
-            <pre className="mt-1 text-[11px] text-emerald-600 dark:text-emerald-300">
+            <pre className="mt-1 text-[11px] text-muted-foreground">
               {typeof tr.result === 'string' ? tr.result : JSON.stringify(tr.result, null, 2)}
             </pre>
           </div>

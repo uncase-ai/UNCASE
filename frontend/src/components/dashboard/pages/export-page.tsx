@@ -14,7 +14,7 @@ import {
 
 import type { Conversation, QualityReport, RenderRequest, TemplateInfo } from '@/types/api'
 import { SUPPORTED_DOMAINS } from '@/types/api'
-import { cn } from '@/lib/utils'
+
 import { useApi } from '@/hooks/use-api'
 import { downloadExport, fetchTemplates } from '@/lib/api/templates'
 import { Badge } from '@/components/ui/badge'
@@ -583,10 +583,7 @@ export function ExportPage() {
                     ].map(metric => (
                       <div key={metric.label} className="flex items-center justify-between">
                         <span className="text-[11px] text-muted-foreground">{metric.label}</span>
-                        <span className={cn(
-                          'text-[11px] font-mono font-medium',
-                          metric.value >= 0.65 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
-                        )}>
+                        <span className="text-[11px] font-mono font-medium">
                           {metric.value.toFixed(3)}
                         </span>
                       </div>

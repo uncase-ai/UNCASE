@@ -160,16 +160,9 @@ export function EvaluationsPage() {
         <div className="flex items-center gap-2">
           <Progress
             value={Math.round(row.composite_score * 100)}
-            className={cn('h-2 w-16', row.composite_score === 0 && '[&>div]:bg-red-500')}
+            className={cn('h-2 w-16', row.composite_score === 0 && '[&>div]:bg-destructive')}
           />
-          <span className={cn(
-            'font-mono text-xs font-medium',
-            row.composite_score >= 0.65
-              ? 'text-emerald-600 dark:text-emerald-400'
-              : row.composite_score > 0
-                ? 'text-amber-600 dark:text-amber-400'
-                : 'text-red-600 dark:text-red-400'
-          )}>
+          <span className="font-mono text-xs font-medium">
             {row.composite_score.toFixed(3)}
           </span>
         </div>
@@ -190,7 +183,7 @@ export function EvaluationsPage() {
       cell: row => (
         <span className={cn(
           'text-xs',
-          row.metrics.rouge_l < QUALITY_THRESHOLDS.rouge_l ? 'text-red-500' : 'text-muted-foreground'
+          row.metrics.rouge_l < QUALITY_THRESHOLDS.rouge_l ? 'text-destructive' : 'text-muted-foreground'
         )}>
           {row.metrics.rouge_l.toFixed(3)}
         </span>
@@ -202,7 +195,7 @@ export function EvaluationsPage() {
       cell: row => (
         <span className={cn(
           'text-xs',
-          row.metrics.fidelidad_factual < QUALITY_THRESHOLDS.fidelidad_factual ? 'text-red-500' : 'text-muted-foreground'
+          row.metrics.fidelidad_factual < QUALITY_THRESHOLDS.fidelidad_factual ? 'text-destructive' : 'text-muted-foreground'
         )}>
           {row.metrics.fidelidad_factual.toFixed(3)}
         </span>
@@ -214,7 +207,7 @@ export function EvaluationsPage() {
       cell: row => (
         <span className={cn(
           'text-xs',
-          row.metrics.diversidad_lexica < QUALITY_THRESHOLDS.diversidad_lexica ? 'text-red-500' : 'text-muted-foreground'
+          row.metrics.diversidad_lexica < QUALITY_THRESHOLDS.diversidad_lexica ? 'text-destructive' : 'text-muted-foreground'
         )}>
           {row.metrics.diversidad_lexica.toFixed(3)}
         </span>
@@ -226,7 +219,7 @@ export function EvaluationsPage() {
       cell: row => (
         <span className={cn(
           'text-xs',
-          row.metrics.coherencia_dialogica < QUALITY_THRESHOLDS.coherencia_dialogica ? 'text-red-500' : 'text-muted-foreground'
+          row.metrics.coherencia_dialogica < QUALITY_THRESHOLDS.coherencia_dialogica ? 'text-destructive' : 'text-muted-foreground'
         )}>
           {row.metrics.coherencia_dialogica.toFixed(3)}
         </span>
@@ -362,10 +355,10 @@ export function EvaluationsPage() {
                     <Cell
                       key={`cell-${index}`}
                       fill={entry.passing
-                        ? 'hsl(142, 71%, 45%)'
-                        : 'hsl(0, 84%, 60%)'
+                        ? 'hsl(var(--primary))'
+                        : 'hsl(var(--muted-foreground))'
                       }
-                      fillOpacity={0.8}
+                      fillOpacity={entry.passing ? 0.8 : 0.4}
                     />
                   ))}
                 </Bar>
@@ -373,11 +366,11 @@ export function EvaluationsPage() {
             </ResponsiveContainer>
             <div className="mt-2 flex items-center justify-center gap-4 text-[10px] text-muted-foreground">
               <div className="flex items-center gap-1">
-                <span className="inline-block size-2.5 rounded-sm bg-emerald-500" />
+                <span className="inline-block size-2.5 rounded-sm bg-primary" />
                 Passing (bucket &ge; 0.6)
               </div>
               <div className="flex items-center gap-1">
-                <span className="inline-block size-2.5 rounded-sm bg-red-500" />
+                <span className="inline-block size-2.5 rounded-sm bg-muted-foreground/40" />
                 Failing (bucket &lt; 0.6)
               </div>
             </div>
@@ -434,7 +427,7 @@ export function EvaluationsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="size-4 text-amber-500" />
+              <AlertTriangle className="size-4 text-muted-foreground" />
               <CardTitle className="text-sm font-medium">Failure Analysis</CardTitle>
             </div>
             <CardDescription className="text-xs">
@@ -458,7 +451,7 @@ export function EvaluationsPage() {
                     </div>
                     <Progress
                       value={percentage}
-                      className="h-1.5 [&>div]:bg-amber-500"
+                      className="h-1.5"
                     />
                   </div>
                 )

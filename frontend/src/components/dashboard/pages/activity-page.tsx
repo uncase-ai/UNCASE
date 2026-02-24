@@ -38,14 +38,14 @@ const ACTIVITY_ICONS: Record<ActivityType, typeof Activity> = {
 }
 
 const ACTIVITY_COLORS: Record<ActivityType, string> = {
-  seed_created: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950',
-  conversation_imported: 'text-blue-500 bg-blue-50 dark:bg-blue-950',
-  conversation_generated: 'text-violet-500 bg-violet-50 dark:bg-violet-950',
-  evaluation_completed: 'text-amber-500 bg-amber-50 dark:bg-amber-950',
-  dataset_exported: 'text-rose-500 bg-rose-50 dark:bg-rose-950',
-  tool_registered: 'text-cyan-500 bg-cyan-50 dark:bg-cyan-950',
-  api_key_created: 'text-orange-500 bg-orange-50 dark:bg-orange-950',
-  template_rendered: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-950'
+  seed_created: 'text-muted-foreground bg-muted',
+  conversation_imported: 'text-muted-foreground bg-muted',
+  conversation_generated: 'text-muted-foreground bg-muted',
+  evaluation_completed: 'text-muted-foreground bg-muted',
+  dataset_exported: 'text-muted-foreground bg-muted',
+  tool_registered: 'text-muted-foreground bg-muted',
+  api_key_created: 'text-muted-foreground bg-muted',
+  template_rendered: 'text-muted-foreground bg-muted'
 }
 
 export function loadActivity(): ActivityEvent[] {

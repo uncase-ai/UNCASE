@@ -36,7 +36,7 @@ export function StatsCard({ title, value, icon: Icon, description, trend, classN
         {(description || trend) && (
           <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
             {trend && (
-              <span className={cn('font-medium', trend.value >= 0 ? 'text-emerald-600' : 'text-destructive')}>
+              <span className={cn('font-medium', trend.value < 0 && 'text-destructive')}>
                 {trend.value >= 0 ? '+' : ''}
                 {trend.value}%
               </span>

@@ -67,14 +67,14 @@ function saveSeeds(seeds: SeedSchema[]) {
   localStorage.setItem(STORE_KEY, JSON.stringify(seeds))
 }
 
-// ─── Domain Colors ───
+// ─── Domain Colors — neutral palette ───
 const DOMAIN_COLORS: Record<string, string> = {
-  'automotive.sales': 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-  'medical.consultation': 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
-  'legal.advisory': 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300',
-  'finance.advisory': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300',
-  'industrial.support': 'bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-300',
-  'education.tutoring': 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300'
+  'automotive.sales': '',
+  'medical.consultation': '',
+  'legal.advisory': '',
+  'finance.advisory': '',
+  'industrial.support': '',
+  'education.tutoring': ''
 }
 
 const TONES = ['profesional', 'informal', 'tecnico', 'empatico'] as const
@@ -416,11 +416,11 @@ export function SeedsPage() {
     return (
       <div className="flex items-center gap-1.5">
         {apiAvailable ? (
-          <Badge variant="outline" className="gap-1 text-[10px] text-emerald-600 dark:text-emerald-400">
+          <Badge variant="outline" className="gap-1 text-[10px]">
             <Cloud className="size-3" /> API Connected
           </Badge>
         ) : (
-          <Badge variant="outline" className="gap-1 text-[10px] text-amber-600 dark:text-amber-400">
+          <Badge variant="outline" className="gap-1 text-[10px]">
             <CloudOff className="size-3" /> Local Only
           </Badge>
         )}
@@ -432,16 +432,14 @@ export function SeedsPage() {
   // ─── Info banner ───
   function renderInfoBanner() {
     return (
-      <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30">
+      <Card className="bg-muted/40">
         <CardContent className="flex items-start gap-3 p-4">
-          <Info className="mt-0.5 size-4 shrink-0 text-blue-600 dark:text-blue-400" />
-          <div className="space-y-1 text-xs text-blue-800 dark:text-blue-300">
-            <p className="font-medium">What are Seeds?</p>
+          <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+          <div className="space-y-1 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground">What are Seeds?</p>
             <p>
               Seeds are structured templates that define the parameters for synthetic conversation generation.
               Each seed specifies the domain, roles, conversation flow, factual constraints, and privacy settings.
-              Seeds are the foundation of the SCSF pipeline — they ensure generated conversations are diverse,
-              domain-accurate, and privacy-compliant.
             </p>
           </div>
         </CardContent>
@@ -454,10 +452,10 @@ export function SeedsPage() {
     if (!syncError) return null
 
     return (
-      <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/30">
+      <Card className="bg-muted/40">
         <CardContent className="flex items-center gap-3 p-3">
-          <AlertTriangle className="size-4 shrink-0 text-amber-600" />
-          <p className="text-xs text-amber-800 dark:text-amber-300">{syncError}</p>
+          <AlertTriangle className="size-4 shrink-0 text-muted-foreground" />
+          <p className="text-xs text-muted-foreground">{syncError}</p>
           <Button variant="ghost" size="sm" className="ml-auto h-6 text-xs" onClick={() => setSyncError(null)}>
             Dismiss
           </Button>
@@ -1023,12 +1021,12 @@ export function SeedsPage() {
           {filtered.map(seed => (
             <Card
               key={seed.seed_id}
-              className="cursor-pointer transition-all hover:shadow-sm hover:ring-1 hover:ring-border"
+              className="cursor-pointer transition-colors hover:bg-muted/50"
               onClick={() => { setSelectedSeed(seed); setDetailOpen(true) }}
             >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="font-mono text-xs">
+                  <CardTitle className="text-sm font-medium">
                     {seed.seed_id.slice(0, 16)}...
                   </CardTitle>
                   <Badge
@@ -1084,7 +1082,7 @@ export function SeedsPage() {
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="font-mono text-sm">
+            <DialogTitle className="text-sm font-medium">
               Seed: {selectedSeed?.seed_id.slice(0, 20)}...
             </DialogTitle>
             <DialogDescription>
@@ -1095,7 +1093,7 @@ export function SeedsPage() {
           {selectedSeed && (
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary" className={cn('text-xs', DOMAIN_COLORS[selectedSeed.dominio])}>
+                <Badge variant="secondary" className="text-xs">
                   {selectedSeed.dominio}
                 </Badge>
                 <Badge variant="outline" className="text-xs">{selectedSeed.idioma}</Badge>

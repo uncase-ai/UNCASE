@@ -26,8 +26,8 @@ const STAGES = [
     description: 'Create or manage seed schemas that define conversation structure, domain, roles, and quality constraints.',
     icon: Sprout,
     href: '/dashboard/pipeline/seeds',
-    color: 'text-emerald-500 border-emerald-500',
-    bgColor: 'bg-emerald-50 dark:bg-emerald-950/30',
+    color: 'text-foreground border-foreground/20',
+    bgColor: '',
     details: [
       'Define domain (automotive, medical, legal...)',
       'Set roles and turn structure',
@@ -41,8 +41,8 @@ const STAGES = [
     description: 'Upload raw conversational data in CSV or JSONL format. Auto-detect format, validate, and parse into conversations.',
     icon: ArrowDownToLine,
     href: '/dashboard/pipeline/import',
-    color: 'text-blue-500 border-blue-500',
-    bgColor: 'bg-blue-50 dark:bg-blue-950/30',
+    color: 'text-foreground border-foreground/20',
+    bgColor: '',
     details: [
       'Drag-and-drop CSV/JSONL files',
       'Auto-detect format',
@@ -56,8 +56,8 @@ const STAGES = [
     description: 'Run quality metrics on conversations: ROUGE-L, fidelity, lexical diversity, dialogue coherence, and privacy gate.',
     icon: FlaskConical,
     href: '/dashboard/pipeline/evaluate',
-    color: 'text-amber-500 border-amber-500',
-    bgColor: 'bg-amber-50 dark:bg-amber-950/30',
+    color: 'text-foreground border-foreground/20',
+    bgColor: '',
     details: [
       'ROUGE-L >= 0.65',
       'Factual Fidelity >= 0.90',
@@ -72,8 +72,8 @@ const STAGES = [
     description: 'Generate new synthetic conversations from validated seeds using LLM providers via LiteLLM.',
     icon: Rocket,
     href: '/dashboard/pipeline/generate',
-    color: 'text-violet-500 border-violet-500',
-    bgColor: 'bg-violet-50 dark:bg-violet-950/30',
+    color: 'text-foreground border-foreground/20',
+    bgColor: '',
     details: [
       'Multi-provider LLM support (Claude, Gemini, Qwen, LLaMA)',
       'Domain-aware generation',
@@ -87,8 +87,8 @@ const STAGES = [
     description: 'Bundle certified conversations into training-ready datasets. Apply templates, version, and download.',
     icon: PackageOpen,
     href: '/dashboard/pipeline/export',
-    color: 'text-rose-500 border-rose-500',
-    bgColor: 'bg-rose-50 dark:bg-rose-950/30',
+    color: 'text-foreground border-foreground/20',
+    bgColor: '',
     details: [
       'Apply chat template formatting',
       'Export as JSONL for fine-tuning',
@@ -115,7 +115,7 @@ export function PipelinePage() {
               <div className="absolute -top-4 left-6 h-4 w-px bg-border" />
             )}
 
-            <Card className={cn('transition-colors hover:shadow-sm', stage.bgColor)}>
+            <Card className={cn('transition-colors hover:bg-muted/50', stage.bgColor)}>
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -127,7 +127,7 @@ export function PipelinePage() {
                         <Badge variant="outline" className="text-[10px]">
                           Stage {i + 1}
                         </Badge>
-                        <CardTitle className="text-base">{stage.label}</CardTitle>
+                        <CardTitle className="text-sm font-medium">{stage.label}</CardTitle>
                       </div>
                       <CardDescription className="mt-0.5">{stage.description}</CardDescription>
                     </div>
@@ -157,7 +157,7 @@ export function PipelinePage() {
       {/* Flywheel note */}
       <Card className="border-dashed">
         <CardContent className="flex items-center gap-3 py-4">
-          <CheckCircle2 className="size-5 shrink-0 text-emerald-500" />
+          <CheckCircle2 className="size-5 shrink-0 text-muted-foreground" />
           <div>
             <p className="text-sm font-medium">Flywheel Loop</p>
             <p className="text-xs text-muted-foreground">

@@ -132,14 +132,14 @@ function generateMockConversation(seed: SeedSchema, languageOverride?: string): 
   }
 }
 
-// ─── Domain Colors ───
+// ─── Domain Colors — neutral palette ───
 const DOMAIN_COLORS: Record<string, string> = {
-  'automotive.sales': 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-  'medical.consultation': 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
-  'legal.advisory': 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300',
-  'finance.advisory': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300',
-  'industrial.support': 'bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-300',
-  'education.tutoring': 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300'
+  'automotive.sales': '',
+  'medical.consultation': '',
+  'legal.advisory': '',
+  'finance.advisory': '',
+  'industrial.support': '',
+  'education.tutoring': ''
 }
 
 const LANGUAGES = [
@@ -405,11 +405,11 @@ export function GeneratePage() {
       />
 
       {/* Info banner */}
-      <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30">
+      <Card className="bg-muted/40">
         <CardContent className="flex items-start gap-3 p-4">
-          <Info className="mt-0.5 size-4 shrink-0 text-blue-600 dark:text-blue-400" />
-          <div className="space-y-1 text-xs text-blue-800 dark:text-blue-300">
-            <p className="font-medium">How Synthetic Generation Works</p>
+          <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+          <div className="space-y-1 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground">How Synthetic Generation Works</p>
             <p>
               Select one or more seeds and configure generation parameters. The SCSF engine uses your seed&apos;s
               domain context, role definitions, and conversation flow to generate realistic synthetic conversations
@@ -441,10 +441,10 @@ export function GeneratePage() {
 
       {/* Error display */}
       {generationError && (
-        <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/30">
+        <Card className="bg-muted/40">
           <CardContent className="flex items-center gap-3 p-3">
-            <AlertTriangle className="size-4 shrink-0 text-amber-600" />
-            <p className="flex-1 text-xs text-amber-800 dark:text-amber-300">{generationError}</p>
+            <AlertTriangle className="size-4 shrink-0 text-muted-foreground" />
+            <p className="flex-1 text-xs text-muted-foreground">{generationError}</p>
             <Button
               variant="ghost"
               size="sm"
@@ -459,10 +459,10 @@ export function GeneratePage() {
 
       {/* Success banner */}
       {lastRunCount !== null && !generating && (
-        <Card className="border-l-4 border-l-emerald-500">
+        <Card className="border-l-4 border-l-foreground/20">
           <CardContent className="flex items-center justify-between p-4">
             <div>
-              <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+              <p className="text-sm font-semibold">
                 Successfully generated {lastRunCount} conversation{lastRunCount !== 1 ? 's' : ''}
               </p>
               <p className="text-xs text-muted-foreground">
@@ -480,7 +480,7 @@ export function GeneratePage() {
 
       {/* Quality evaluation results */}
       {qualityResults && !generating && (
-        <Card className="border-l-4 border-l-primary">
+        <Card className="border-l-4 border-l-foreground/20">
           <CardContent className="p-4">
             <p className="mb-2 text-sm font-semibold">Quality Evaluation Results</p>
             <div className="grid grid-cols-3 gap-4 text-center">
@@ -489,7 +489,7 @@ export function GeneratePage() {
                 <p className="text-[10px] text-muted-foreground">Evaluated</p>
               </div>
               <div>
-                <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                <p className="text-lg font-bold">
                   {qualityResults.passed}
                 </p>
                 <p className="text-[10px] text-muted-foreground">Passed</p>
@@ -602,21 +602,17 @@ export function GeneratePage() {
                   </Label>
                   <Switch checked={demoMode} onCheckedChange={setDemoMode} />
                 </div>
-                <div className="flex items-center gap-1.5 text-[10px]">
+                <Badge variant="outline" className="gap-1 text-[10px]">
                   {apiAvailable ? (
                     <>
-                      <Cloud className="size-3 text-emerald-500" />
-                      <span className="text-emerald-600 dark:text-emerald-400">API connected</span>
+                      <Cloud className="size-3" /> API Connected
                     </>
                   ) : (
                     <>
-                      <CloudOff className="size-3 text-amber-500" />
-                      <span className="text-amber-600 dark:text-amber-400">
-                        API unavailable — demo mode active
-                      </span>
+                      <CloudOff className="size-3" /> API Unavailable
                     </>
                   )}
-                </div>
+                </Badge>
               </div>
 
               {/* Evaluate After toggle (API mode only) */}
