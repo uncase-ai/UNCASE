@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="grad-primary" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#1E293B"/>
+    </linearGradient>
+    <linearGradient id="grad-accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <linearGradient id="grad-shield" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="50%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#4F46E5"/>
+    </linearGradient>
+    <clipPath id="shield-clip">
+      <path d="M256 28L440 116V272C440 380 362 456 256 492C150 456 72 380 72 272V116L256 28Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- Outer shield shape — bold geometric -->
+  <path d="M256 28L440 116V272C440 380 362 456 256 492C150 456 72 380 72 272V116L256 28Z"
+        fill="url(#grad-primary)" stroke="#334155" stroke-width="4"/>
+
+  <!-- Inner shield border — accent line -->
+  <path d="M256 56L416 132V272C416 366 348 434 256 466C164 434 96 366 96 272V132L256 56Z"
+        fill="none" stroke="url(#grad-accent)" stroke-width="3" opacity="0.6"/>
+
+  <!-- Central geometric "U" mark — constructed from rectangles -->
+  <!-- Left vertical bar -->
+  <rect x="164" y="148" width="40" height="168" rx="4" fill="url(#grad-shield)"/>
+
+  <!-- Right vertical bar -->
+  <rect x="308" y="148" width="40" height="168" rx="4" fill="url(#grad-shield)"/>
+
+  <!-- Bottom connecting arc (approximated with a rounded rect) -->
+  <path d="M168 280V320C168 364 208 396 256 396C304 396 344 364 344 320V280H308V320C308 344 284 364 256 364C228 364 204 344 204 320V280H168Z"
+        fill="url(#grad-shield)"/>
+
+  <!-- Horizontal data-flow bars — representing the 5 SCSF layers -->
+  <rect x="216" y="168" width="80" height="6" rx="3" fill="#818CF8" opacity="0.9"/>
+  <rect x="216" y="192" width="80" height="6" rx="3" fill="#818CF8" opacity="0.7"/>
+  <rect x="216" y="216" width="80" height="6" rx="3" fill="#818CF8" opacity="0.5"/>
+  <rect x="216" y="240" width="80" height="6" rx="3" fill="#818CF8" opacity="0.35"/>
+  <rect x="216" y="264" width="80" height="6" rx="3" fill="#818CF8" opacity="0.2"/>
+
+  <!-- Lock/privacy keyhole — small geometric indicator at top center -->
+  <circle cx="256" cy="108" r="16" fill="none" stroke="#A5B4FC" stroke-width="3.5"/>
+  <rect x="249" y="112" width="14" height="18" rx="2" fill="#A5B4FC"/>
+  <rect x="253" y="118" width="6" height="8" rx="1" fill="#1E293B"/>
+</svg>
