@@ -40,7 +40,7 @@ const CTASection = () => {
                 Start Building Privacy-First AI Today
               </h2>
 
-              <p className='dark:text-muted-foreground w-full text-xl text-white/80 lg:max-w-2xl'>
+              <p className='dark:text-muted-foreground w-full text-base text-white/80 sm:text-xl lg:max-w-2xl'>
                 Deploy the full pipeline, connect your data sources, route through any LLM provider, and produce
                 compliant LoRA adapters — all without exposing a single data point.
               </p>
@@ -55,11 +55,11 @@ const CTASection = () => {
                       index !== 0 && 'lg:border-l lg:border-white/20 lg:pl-12 dark:lg:border-muted-foreground/20'
                     )}
                   >
-                    <span className='dark:text-foreground text-3xl font-bold text-white md:text-4xl'>
+                    <span className='dark:text-foreground text-2xl font-bold tabular-nums text-white sm:text-3xl md:text-4xl'>
                       <NumberTicker value={stat.value} decimalPlaces={stat.decimalPlaces} />
                       {stat.suffix}
                     </span>
-                    <span className='dark:text-muted-foreground text-sm text-white/80'>{stat.description}</span>
+                    <span className='dark:text-muted-foreground text-xs text-white/80 sm:text-sm'>{stat.description}</span>
                   </div>
                 ))}
               </div>

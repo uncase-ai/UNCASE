@@ -53,7 +53,7 @@ const WorkflowItem = ({
       transition={{ duration: 0.5 }}
       delay={delay}
       inView={false}
-      className={cn('relative z-1 w-full pt-7.5 max-md:max-w-sm md:w-82.5', className)}
+      className={cn('relative z-1 w-full pt-7.5 max-md:max-w-xs max-md:mx-auto sm:max-md:max-w-sm md:w-82.5', className)}
     >
       <div
         className={cn('absolute top-0 left-0 -z-1 flex items-center gap-2.5 rounded-t-xl p-4 pt-1.5 capitalize', {

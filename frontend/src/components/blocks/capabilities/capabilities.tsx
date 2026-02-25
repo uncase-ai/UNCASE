@@ -13,7 +13,7 @@ const CapabilityCard = ({ capability, index }: { capability: Capability; index: 
       fade
       slide={{ direction: 'down', offset: 35 }}
       blur
-      delay={0.15 * index}
+      delay={Math.min(0.1 * (index % 3), 0.3)}
       transition={{ duration: 0.5 }}
     >
       <Card className='h-full shadow-none'>
@@ -50,7 +50,7 @@ const Capabilities = () => {
 
           <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>Everything You Need to Ship Compliant AI</h2>
 
-          <p className='text-muted-foreground mx-auto max-w-3xl text-xl'>
+          <p className='text-muted-foreground mx-auto max-w-3xl text-base sm:text-xl'>
             LLM Gateway, Privacy Interceptor, Connector Hub, and 52 API endpoints — all built with privacy,
             compliance, and auditability as non-negotiable requirements.
           </p>

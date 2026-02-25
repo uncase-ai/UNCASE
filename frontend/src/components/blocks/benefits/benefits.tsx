@@ -144,7 +144,7 @@ const Benefits = ({ featuresList }: { featuresList: Features }) => {
 
         <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>Why UNCASE Matters</h2>
 
-        <p className='text-muted-foreground mx-auto max-w-3xl text-xl'>
+        <p className='text-muted-foreground mx-auto max-w-3xl text-base sm:text-xl'>
           73% of fine-tuning projects fail due to privacy, quality, or regulatory obstacles. UNCASE eliminates all three.
         </p>
 
@@ -210,16 +210,16 @@ const Benefits = ({ featuresList }: { featuresList: Features }) => {
           </div>
 
           {/* Mobile: Simple stacked layout */}
-          <div className='flex flex-col gap-16 md:hidden'>
+          <div className='flex flex-col gap-8 md:hidden'>
             {featuresList.map((feature, index) => (
-              <div key={index} className='space-y-16'>
-                <div className='bg-muted relative px-6 py-20'>
-                  <div className='bg-card sticky top-20 flex h-87.5 items-center justify-center overflow-hidden rounded-xl border'>
+              <div key={index} className='space-y-4'>
+                <div className='bg-muted relative px-4 py-8'>
+                  <div className='bg-card flex h-60 items-center justify-center overflow-hidden rounded-xl border'>
                     <div className='absolute inset-0 flex items-center justify-center'>
                       <img
                         src={feature.image}
                         alt={feature.title}
-                        className='size-full max-h-70 max-w-96 object-contain dark:invert max-sm:max-w-70'
+                        className='size-full max-h-52 max-w-70 object-contain dark:invert'
                       />
                     </div>
                     {['top-4.5 left-4.5', 'top-4.5 right-4.5', 'bottom-4.5 left-4.5', 'bottom-4.5 right-4.5'].map(
@@ -239,12 +239,12 @@ const Benefits = ({ featuresList }: { featuresList: Features }) => {
                     )}
                   </div>
                 </div>
-                <div className='space-y-4 max-md:px-4'>
-                  <div className='flex items-center gap-4 [&>svg]:size-5'>
+                <div className='space-y-3 px-4'>
+                  <div className='flex items-center gap-3 [&>svg]:size-5'>
                     {feature.icon}
-                    <div className='text-xl font-medium'>{feature.title}</div>
+                    <div className='text-lg font-medium'>{feature.title}</div>
                   </div>
-                  <div className='text-muted-foreground'>{feature.description}</div>
+                  <div className='text-muted-foreground text-sm'>{feature.description}</div>
                 </div>
               </div>
             ))}

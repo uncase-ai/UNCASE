@@ -6,6 +6,7 @@ import {
   AnimatePresence,
   motion,
   useInView,
+  useReducedMotion,
   type HTMLMotionProps,
   type UseInViewOptions,
   type Transition,
@@ -43,6 +44,24 @@ interface MotionPresetProps {
 
 const motionComponents = motion as any
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = React.useState(false)
+
+  React.useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+
+    setIsMobile(mq.matches)
+
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+
+    mq.addEventListener('change', handler)
+
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  return isMobile
+}
+
 function MotionPreset({
   ref,
   children,
@@ -60,6 +79,9 @@ function MotionPreset({
   motionProps = {}
 }: MotionPresetProps) {
   const localRef = React.useRef<any>(null)
+  const prefersReducedMotion = useReducedMotion()
+  const isMobile = useIsMobile()
+  const shouldReduceMotion = prefersReducedMotion || isMobile
 
   React.useImperativeHandle(ref, () => localRef.current)
 
@@ -73,12 +95,12 @@ function MotionPreset({
   const hiddenVariant: Variant = {}
   const visibleVariant: Variant = {}
 
-  if (blur) {
+  if (blur && !shouldReduceMotion) {
     hiddenVariant.filter = blur === true ? 'blur(10px)' : `blur(${blur})`
     visibleVariant.filter = 'blur(0px)'
   }
 
-  if (slide) {
+  if (slide && !shouldReduceMotion) {
     const offset = slide === true ? 100 : (slide.offset ?? 100)
     const direction = slide === true ? 'left' : (slide.direction ?? 'left')
     const axis = direction === 'up' || direction === 'down' ? 'y' : 'x'
@@ -92,10 +114,12 @@ function MotionPreset({
     visibleVariant.opacity = fade === true ? 1 : (fade.opacity ?? 1)
   }
 
-  if (zoom) {
+  if (zoom && !shouldReduceMotion) {
     hiddenVariant.scale = zoom === true ? 0.5 : (zoom.initialScale ?? 0.5)
     visibleVariant.scale = zoom === true ? 1 : (zoom.scale ?? 1)
   }
+
+  const effectiveDelay = shouldReduceMotion ? Math.min(delay, 0.15) : delay
 
   const MotionComponent = motionComponents[component] || motion.div
 
@@ -112,7 +136,8 @@ function MotionPreset({
         }}
         transition={{
           ...transition,
-          delay: (transition?.delay ?? 0) + delay
+          delay: (transition?.delay ?? 0) + effectiveDelay,
+          ...(shouldReduceMotion ? { duration: 0.2 } : {})
         }}
         className={className}
         {...motionProps}

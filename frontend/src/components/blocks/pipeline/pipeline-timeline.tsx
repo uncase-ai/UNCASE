@@ -71,7 +71,7 @@ const PipelineTimeline = () => {
 
           <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>From Expert Knowledge to LoRA Adapter</h2>
 
-          <p className='text-muted-foreground mx-auto max-w-2xl text-xl'>
+          <p className='text-muted-foreground mx-auto max-w-2xl text-base sm:text-xl'>
             5 layers. Zero real data. Every step delivers value independently.
           </p>
         </MotionPreset>

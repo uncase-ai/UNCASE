@@ -69,7 +69,7 @@ const JourneyTimeline = ({ data }: { data: TimelineEntry[] }) => {
       <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
         <div className='mb-12 space-y-4 text-center md:mb-16 lg:mb-24'>
           <h2 className='text-2xl font-semibold tracking-tight md:text-3xl lg:text-4xl'>The Journey That Shaped Us</h2>
-          <p className='text-muted-foreground text-xl'>
+          <p className='text-muted-foreground text-base sm:text-xl'>
             From a small home setup to building solutions for global clients, our journey reflects passion, persistence,
             and continuous growth. Every milestone has shaped who we are today.
           </p>

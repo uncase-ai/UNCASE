@@ -51,7 +51,7 @@ const Pricing = ({ plans }: { plans: Plans }) => {
 
           <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>Free and Open Source</h2>
 
-          <p className='text-muted-foreground text-xl'>
+          <p className='text-muted-foreground text-base sm:text-xl'>
             UNCASE is open source at its core. Enterprise and research programs offer additional support.
           </p>
 

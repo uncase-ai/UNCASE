@@ -93,31 +93,31 @@ const HeroSection40 = () => {
     <section id='home' className='relative flex flex-col overflow-hidden'>
       <div className='border-b px-4 sm:px-6 lg:px-8'>
         <div className='mx-auto flex max-w-7xl flex-col gap-6 border-x px-4 py-8 sm:px-6 sm:py-16 lg:px-8 lg:py-24'>
-          <div className='flex flex-col items-center gap-4 text-center'>
+          <div className='flex flex-col items-center gap-3 text-center sm:gap-4'>
             <Badge variant='outline' className='bg-muted relative gap-2.5 px-1.5 py-1'>
-              <span className='bg-primary text-primary-foreground flex h-5.5 items-center rounded-full px-2 py-0.5'>
+              <span className='bg-primary text-primary-foreground flex h-5.5 items-center rounded-full px-2 py-0.5 text-xs sm:text-sm'>
                 Production Ready
               </span>
-              <span className='text-muted-foreground text-sm font-normal text-wrap'>
-                Privacy-First AI Infrastructure for Regulated Industries
+              <span className='text-muted-foreground text-xs font-normal text-wrap sm:text-sm'>
+                Privacy-First AI for Regulated Industries
               </span>
               <BorderBeam colorFrom='var(--primary)' colorTo='var(--primary)' size={35} />
             </Badge>
 
-            <h1 className='text-2xl font-semibold sm:text-3xl lg:text-5xl lg:leading-[1.29167]'>
+            <h1 className='text-xl font-semibold leading-tight sm:text-3xl lg:text-5xl lg:leading-[1.29167]'>
               Turn sensitive conversations into
-              <br />
-              trained AI models — without the risk
+              <br className='hidden sm:block' />
+              {' '}trained AI models — without the risk
             </h1>
 
-            <p className='text-muted-foreground max-w-3xl text-xl'>
+            <p className='text-muted-foreground max-w-3xl text-base sm:text-xl'>
               UNCASE is an open-source framework that transforms expert knowledge into privacy-safe synthetic data,
               routes it through any LLM provider, and produces LoRA-ready adapters — all with zero PII exposure,
               full traceability, and built-in compliance.
             </p>
 
-            <div className='flex flex-wrap items-center justify-center gap-4 sm:gap-6 lg:gap-8'>
-              <PrimaryFlowButton size='lg' asChild>
+            <div className='flex flex-wrap items-center justify-center gap-3 sm:gap-6 lg:gap-8'>
+              <PrimaryFlowButton size='lg' className='max-sm:h-9 max-sm:px-3 max-sm:text-sm' asChild>
                 <Link href='https://github.com/uncase-ai/UNCASE'>
                   <ArrowUpRightIcon />
                   View on GitHub
@@ -125,6 +125,7 @@ const HeroSection40 = () => {
               </PrimaryFlowButton>
               <SecondaryFlowButton
                 size='lg'
+                className='max-sm:h-9 max-sm:px-3 max-sm:text-sm'
                 onClick={async () => {
                   await activateDemo()
                   router.push('/dashboard')
@@ -133,7 +134,7 @@ const HeroSection40 = () => {
                 <PlayIcon />
                 Try the App
               </SecondaryFlowButton>
-              <SecondaryFlowButton size='lg' asChild>
+              <SecondaryFlowButton size='lg' className='max-sm:h-9 max-sm:px-3 max-sm:text-sm' asChild>
                 <Link href='/docs'>
                   <BookOpenIcon />
                   Documentation
@@ -142,15 +143,15 @@ const HeroSection40 = () => {
             </div>
           </div>
 
-          <div className='flex w-full items-center justify-center gap-6 max-sm:flex-col sm:gap-8'>
+          <div className='flex w-full items-center justify-center gap-4 max-sm:grid max-sm:grid-cols-2 sm:gap-8'>
             {stats.map((stat, index) => (
-              <div key={stat.label} className='flex items-center gap-6 sm:gap-8'>
+              <div key={stat.label} className='flex items-center gap-4 sm:gap-8'>
                 <div className='flex flex-col items-center'>
-                  <span className='text-2xl font-semibold'>
+                  <span className='text-xl font-semibold tabular-nums sm:text-2xl'>
                     <NumberTicker value={stat.value} decimalPlaces={stat.decimalPlaces} />
                     {stat.suffix}
                   </span>
-                  <span className='text-muted-foreground text-sm'>{stat.label}</span>
+                  <span className='text-muted-foreground text-xs sm:text-sm'>{stat.label}</span>
                 </div>
                 {index < stats.length - 1 && (
                   <Separator orientation='vertical' className='data-[orientation=vertical]:h-8 max-sm:hidden' />
@@ -170,10 +171,10 @@ const HeroSection40 = () => {
                   <TabsTrigger
                     key={value}
                     value={value}
-                    className='border-border text-foreground focus-visible:outline-primary/20 data-[state=active]:border-primary/60! data-[state=active]:bg-muted! h-15 flex-1 cursor-pointer rounded-none px-4 py-2.5 text-base focus-visible:ring-0 focus-visible:outline-[3px] focus-visible:-outline-offset-4 data-[state=active]:z-1'
+                    className='border-border text-foreground focus-visible:outline-primary/20 data-[state=active]:border-primary/60! data-[state=active]:bg-muted! h-11 flex-1 cursor-pointer rounded-none px-2 py-2 text-xs sm:h-15 sm:px-4 sm:py-2.5 sm:text-base focus-visible:ring-0 focus-visible:outline-[3px] focus-visible:-outline-offset-4 data-[state=active]:z-1'
                   >
-                    <Icon />
-                    {name}
+                    <Icon className='size-3.5 sm:size-4' />
+                    <span className='hidden sm:inline'>{name}</span>
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -183,7 +184,7 @@ const HeroSection40 = () => {
         </div>
 
         <div className='px-4 sm:px-6 lg:px-8'>
-          <div className='relative mx-auto h-151 max-w-7xl border-x'>
+          <div className='relative mx-auto min-h-100 max-w-7xl border-x sm:min-h-120 md:h-151'>
             {/* Background Dots */}
             <div className='pointer-events-none absolute inset-0 -z-2 bg-[radial-gradient(color-mix(in_oklab,var(--primary)10%,transparent)_2px,transparent_2px)] bg-size-[20px_20px] bg-fixed' />
 

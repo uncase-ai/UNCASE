@@ -96,6 +96,21 @@ const Footer = () => {
               </li>
             </ul>
           </div>
+          <div className='flex flex-col gap-5'>
+            <div className='text-lg font-medium'>Legal</div>
+            <ul className='text-muted-foreground space-y-3'>
+              <li>
+                <Link href='/privacy' className='hover:text-foreground transition-colors duration-300'>
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href='/terms' className='hover:text-foreground transition-colors duration-300'>
+                  Terms of Service
+                </Link>
+              </li>
+            </ul>
+          </div>
           <div className='col-span-full flex flex-col gap-5 sm:col-span-2'>
             <div>
               <p className='mb-3 text-lg font-medium'>Subscribe to newsletter</p>

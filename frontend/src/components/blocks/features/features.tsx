@@ -68,7 +68,7 @@ const Features = () => {
 
           <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>5-Layer Pipeline. Zero Real Data. Full Control.</h2>
 
-          <p className='text-muted-foreground text-xl'>
+          <p className='text-muted-foreground text-base sm:text-xl'>
             From expert knowledge to production-ready LoRA adapters — each layer operates independently,
             every step is auditable, and no real data ever touches the pipeline.
           </p>
@@ -79,7 +79,7 @@ const Features = () => {
           <div className='flex flex-col gap-6'>
             {/* Product Reach Card */}
             <MotionPreset fade slide={{ direction: 'down', offset: 35 }} transition={{ duration: 0.5 }}>
-              <Card className='gap-26.5 shadow-none'>
+              <Card className='gap-6 shadow-none sm:gap-26.5'>
                 <div className='flex flex-col items-center gap-8 px-4.5'>
                   <MotionPreset
                     fade
@@ -129,7 +129,7 @@ const Features = () => {
                     <Magnetic
                       range={130}
                       strength={0.25}
-                      className='absolute -bottom-14 left-1/2 w-71.5 -translate-x-1/2'
+                      className='absolute -bottom-14 left-1/2 w-71.5 -translate-x-1/2 max-sm:static max-sm:mt-4 max-sm:w-full max-sm:translate-x-0'
                     >
                       <MotionPreset
                         fade
@@ -209,7 +209,7 @@ const Features = () => {
 
                   <MotionPreset
                     fade
-                    className='absolute top-8 -left-10 -rotate-5'
+                    className='absolute top-8 -left-10 -rotate-5 max-sm:left-0 max-sm:rotate-0'
                     motionProps={{
                       animate: {
                         y: [0, -10, 0],
@@ -228,15 +228,15 @@ const Features = () => {
                       }
                     }}
                   >
-                    <Badge className='bg-background text-foreground border-border gap-2.5 px-3 py-1.5 transition-shadow duration-200 hover:shadow-sm'>
-                      <ZapIcon className='size-3.5' />
+                    <Badge className='bg-background text-foreground border-border gap-2.5 px-2 py-1 text-xs transition-shadow duration-200 hover:shadow-sm sm:px-3 sm:py-1.5 sm:text-sm'>
+                      <ZapIcon className='size-3 sm:size-3.5' />
                       Healthcare
                     </Badge>
                   </MotionPreset>
 
                   <MotionPreset
                     fade
-                    className='absolute bottom-10 -left-15 rotate-5'
+                    className='absolute bottom-10 -left-15 rotate-5 max-sm:-left-2 max-sm:rotate-0'
                     motionProps={{
                       animate: {
                         y: [0, -9, 0],
@@ -255,15 +255,15 @@ const Features = () => {
                       }
                     }}
                   >
-                    <Badge className='bg-background text-foreground border-border gap-2.5 px-3 py-1.5 transition-shadow duration-200 hover:shadow-sm'>
-                      <PaintbrushIcon className='size-3.5' />
+                    <Badge className='bg-background text-foreground border-border gap-2.5 px-2 py-1 text-xs transition-shadow duration-200 hover:shadow-sm sm:px-3 sm:py-1.5 sm:text-sm'>
+                      <PaintbrushIcon className='size-3 sm:size-3.5' />
                       Finance
                     </Badge>
                   </MotionPreset>
 
                   <MotionPreset
                     fade
-                    className='absolute top-8 -right-15 -rotate-10 sm:-right-17'
+                    className='absolute top-8 -right-15 -rotate-10 max-sm:right-0 max-sm:rotate-0 sm:-right-17'
                     motionProps={{
                       animate: {
                         y: [0, -10, 0],
@@ -282,15 +282,15 @@ const Features = () => {
                       }
                     }}
                   >
-                    <Badge className='bg-background text-foreground border-border gap-2.5 px-3 py-1.5 transition-shadow duration-200 hover:shadow-sm'>
-                      <BriefcaseBusinessIcon className='size-3.5' />
+                    <Badge className='bg-background text-foreground border-border gap-2.5 px-2 py-1 text-xs transition-shadow duration-200 hover:shadow-sm sm:px-3 sm:py-1.5 sm:text-sm'>
+                      <BriefcaseBusinessIcon className='size-3 sm:size-3.5' />
                       Legal
                     </Badge>
                   </MotionPreset>
 
                   <MotionPreset
                     fade
-                    className='absolute -right-10 bottom-10 rotate-10'
+                    className='absolute -right-10 bottom-10 rotate-10 max-sm:-right-2 max-sm:rotate-0'
                     motionProps={{
                       animate: {
                         y: [0, -8, 0],
@@ -309,8 +309,8 @@ const Features = () => {
                       }
                     }}
                   >
-                    <Badge className='bg-background text-foreground border-border gap-2.5 px-3 py-1.5 transition-shadow duration-200 hover:shadow-sm'>
-                      <GraduationCapIcon className='size-3.5' />
+                    <Badge className='bg-background text-foreground border-border gap-2.5 px-2 py-1 text-xs transition-shadow duration-200 hover:shadow-sm sm:px-3 sm:py-1.5 sm:text-sm'>
+                      <GraduationCapIcon className='size-3 sm:size-3.5' />
                       Education
                     </Badge>
                   </MotionPreset>

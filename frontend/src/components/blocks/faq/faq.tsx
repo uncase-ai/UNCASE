@@ -38,7 +38,7 @@ const FAQ = ({ faqItems }: { faqItems: FAQs }) => {
 
           <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>Frequently asked questions</h2>
 
-          <p className='text-muted-foreground mx-auto max-w-2xl text-xl'>
+          <p className='text-muted-foreground mx-auto max-w-2xl text-base sm:text-xl'>
             Common questions about UNCASE, the SCSF pipeline, and privacy-first synthetic data generation.
           </p>
         </MotionPreset>

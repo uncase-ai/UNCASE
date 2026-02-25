@@ -78,71 +78,72 @@ const RegularUpdatesCard = () => {
         transition={{ duration: 0.5 }}
         className='relative flex h-full justify-center'
       >
-        <div className='absolute inset-x-3.5 flex min-h-29 justify-center gap-4'>
-          <div className='bg-card flex w-27 flex-col items-start gap-2.5 rounded-xl border p-3 shadow-lg'>
-            <div className='grid size-9.5 place-content-center rounded-full border'>
-              <UsersIcon className='size-5' />
+        <div className='absolute inset-x-3.5 flex min-h-29 justify-center gap-2 sm:gap-4'>
+          <div className='bg-card flex w-24 flex-col items-start gap-2 rounded-xl border p-2.5 shadow-lg sm:w-27 sm:gap-2.5 sm:p-3'>
+            <div className='grid size-8 place-content-center rounded-full border sm:size-9.5'>
+              <UsersIcon className='size-4 sm:size-5' />
             </div>
             <div className='space-y-1'>
-              <p className='font-medium'>
+              <p className='text-sm font-medium tabular-nums sm:text-base'>
                 <NumberTicker value={activeIndex.stats.seeds} />
               </p>
-              <p className='text-muted-foreground text-xs'>Seeds Processed</p>
+              <p className='text-muted-foreground text-[10px] sm:text-xs'>Seeds Processed</p>
             </div>
           </div>
-          <div className='bg-card flex w-27 flex-col items-start gap-2.5 rounded-xl border p-3 shadow-lg'>
-            <div className='grid size-9.5 place-content-center rounded-full border'>
-              <UserPlusIcon className='size-5' />
+          <div className='bg-card flex w-24 flex-col items-start gap-2 rounded-xl border p-2.5 shadow-lg sm:w-27 sm:gap-2.5 sm:p-3'>
+            <div className='grid size-8 place-content-center rounded-full border sm:size-9.5'>
+              <UserPlusIcon className='size-4 sm:size-5' />
             </div>
             <div className='space-y-1'>
-              <p className='font-medium'>
+              <p className='text-sm font-medium tabular-nums sm:text-base'>
                 <NumberTicker value={activeIndex.stats.domains} />
               </p>
-              <p className='text-muted-foreground text-xs'>Domains Active</p>
+              <p className='text-muted-foreground text-[10px] sm:text-xs'>Domains Active</p>
             </div>
           </div>
-          <div className='bg-card flex w-27 flex-col items-start gap-2.5 rounded-xl border p-3 shadow-lg'>
-            <div className='grid size-9.5 place-content-center rounded-full border'>
-              <TriangleAlertIcon className='size-5' />
+          <div className='bg-card flex w-24 flex-col items-start gap-2 rounded-xl border p-2.5 shadow-lg sm:w-27 sm:gap-2.5 sm:p-3'>
+            <div className='grid size-8 place-content-center rounded-full border sm:size-9.5'>
+              <TriangleAlertIcon className='size-4 sm:size-5' />
             </div>
             <div className='space-y-1'>
-              <p className='font-medium'>
+              <p className='text-sm font-medium tabular-nums sm:text-base'>
                 <NumberTicker value={activeIndex.stats.passRate} />%
               </p>
-              <p className='text-muted-foreground text-xs'>Quality Pass Rate</p>
+              <p className='text-muted-foreground text-[10px] sm:text-xs'>Quality Pass Rate</p>
             </div>
           </div>
         </div>
-        <RegularUpdatesRippleBg className='text-border pointer-events-none size-118 select-none' />
+        <RegularUpdatesRippleBg className='text-border pointer-events-none size-80 select-none sm:size-118' />
         <Logo className='absolute top-1/2 size-30 -translate-y-1/2' />
 
         {notifications.map((notification, index) => (
           <motion.div
             key={notification.id}
-            className='bg-card absolute bottom-0 left-1/2 flex h-20 w-72 -translate-x-1/2 items-center justify-between rounded-xl border p-4 shadow-xl md:w-75 xl:w-72'
+            className='bg-card absolute bottom-0 left-1/2 flex h-20 w-64 items-center justify-between rounded-xl border p-3 shadow-xl sm:w-72 sm:p-4 md:w-75 xl:w-72'
             style={{
-              transformOrigin: 'bottom center'
+              transformOrigin: 'bottom center',
+              zIndex: notifications.length - index
             }}
             animate={{
-              bottom: (index - 2) * -8,
+              y: (index - 2) * 8,
               scale: 1 - index * 0.1,
               opacity: 1 - index * 0.25,
-              zIndex: notifications.length - index
+              x: '-50%'
             }}
             transition={{
               duration: 0.5,
               ease: 'easeInOut'
             }}
           >
-            <div className='flex flex-col gap-1'>
-              <p className='text-xl font-semibold'>{notification.seedId}</p>
+            <div className='flex min-w-0 flex-col gap-1'>
+              <p className='truncate text-sm font-semibold sm:text-xl'>{notification.seedId}</p>
               <Badge className='bg-primary/10 [a&]:hover:bg-primary/5 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 text-primary focus-visible:outline-none'>
                 {notification.percentageChange > 0 ? <TrendingUpIcon /> : <TrendingDownIcon />}
                 {notification.percentageChange}%
               </Badge>
             </div>
 
-            <Badge variant='outline' className='shrink-0 text-xs'>{notification.domain}</Badge>
+            <Badge variant='outline' className='hidden shrink-0 text-xs sm:inline-flex'>{notification.domain}</Badge>
           </motion.div>
         ))}
       </MotionPreset>

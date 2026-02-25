@@ -51,7 +51,7 @@ const PipelineDataFlow = () => {
 
           <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>Real Data Transformation</h2>
 
-          <p className='text-muted-foreground mx-auto max-w-2xl text-xl'>
+          <p className='text-muted-foreground mx-auto max-w-2xl text-base sm:text-xl'>
             See how a seed from the automotive.sales domain flows through all 5 layers.
           </p>
         </MotionPreset>
