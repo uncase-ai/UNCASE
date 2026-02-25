@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Library,
   MessageSquare,
+  Package,
   PackageOpen,
   Puzzle,
   Rocket,
@@ -45,7 +46,8 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Conversations', href: '/dashboard/conversations', icon: MessageSquare },
       { label: 'Templates', href: '/dashboard/templates', icon: BookOpen },
-      { label: 'Tools', href: '/dashboard/tools', icon: Puzzle }
+      { label: 'Tools', href: '/dashboard/tools', icon: Puzzle },
+      { label: 'Plugins', href: '/dashboard/plugins', icon: Package }
     ]
   },
   {

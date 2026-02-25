@@ -325,6 +325,88 @@ export const SUPPORTED_DOMAINS = [
 
 export type SupportedDomain = (typeof SUPPORTED_DOMAINS)[number]
 
+// ─── LLM Providers ───
+export const PROVIDER_TYPES = ['anthropic', 'openai', 'google', 'ollama', 'vllm', 'groq', 'custom'] as const
+export type ProviderType = (typeof PROVIDER_TYPES)[number]
+
+export interface ProviderCreateRequest {
+  name: string
+  provider_type: ProviderType
+  api_base?: string | null
+  api_key?: string | null
+  default_model: string
+  max_tokens?: number
+  temperature_default?: number
+  is_default?: boolean
+}
+
+export interface ProviderUpdateRequest {
+  name?: string
+  api_base?: string | null
+  api_key?: string | null
+  default_model?: string
+  max_tokens?: number
+  temperature_default?: number
+  is_active?: boolean
+  is_default?: boolean
+}
+
+export interface ProviderResponse {
+  id: string
+  name: string
+  provider_type: string
+  api_base: string | null
+  has_api_key: boolean
+  default_model: string
+  max_tokens: number
+  temperature_default: number
+  is_active: boolean
+  is_default: boolean
+  organization_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ProviderTestResponse {
+  provider_id: string
+  provider_name: string
+  status: 'ok' | 'error' | 'timeout'
+  latency_ms: number | null
+  model_tested: string
+  error: string | null
+}
+
+export interface ProviderListResponse {
+  items: ProviderResponse[]
+  total: number
+}
+
+// ─── Plugins ───
+export interface PluginManifest {
+  id: string
+  name: string
+  description: string
+  version: string
+  author: string
+  domains: string[]
+  tags: string[]
+  tools: ToolDefinition[]
+  icon: string
+  license: string
+  homepage: string | null
+  source: 'official' | 'community'
+  verified: boolean
+  downloads: number
+}
+
+export interface InstalledPlugin {
+  plugin_id: string
+  name: string
+  version: string
+  tools_registered: string[]
+  domains: string[]
+}
+
 // ─── Knowledge Base ───
 export type KnowledgeType = 'facts' | 'procedures' | 'terminology' | 'reference'
 

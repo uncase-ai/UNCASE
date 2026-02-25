@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 
-import { Check, Copy, Eye, EyeOff, Key, Plus, RefreshCw, Shield, Trash2 } from 'lucide-react'
+import { Check, Copy, Eye, EyeOff, Key, Loader2, Play, Plus, RefreshCw, Server, Shield, Star, Trash2, Zap } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
-import type { APIKeyCreatedResponse, APIKeyResponse, OrganizationResponse } from '@/types/api'
+import type { APIKeyCreatedResponse, APIKeyResponse, OrganizationResponse, ProviderResponse, ProviderTestResponse } from '@/types/api'
+import { PROVIDER_TYPES } from '@/types/api'
 import { checkApiHealth } from '@/lib/api/client'
 import {
   createApiKey,
@@ -15,6 +16,12 @@ import {
   revokeApiKey,
   rotateApiKey
 } from '@/lib/api/organizations'
+import {
+  createProvider,
+  deleteProvider,
+  fetchProviders,
+  testProvider
+} from '@/lib/api/providers'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -62,6 +69,78 @@ export function SettingsPage() {
   const [apiOk, setApiOk] = useState<boolean | null>(null)
   const [testLoading, setTestLoading] = useState(false)
 
+  // ─── Providers ───
+  const [providers, setProviders] = useState<ProviderResponse[]>([])
+  const [providersLoading, setProvidersLoading] = useState(false)
+  const [showCreateProvider, setShowCreateProvider] = useState(false)
+  const [createProviderLoading, setCreateProviderLoading] = useState(false)
+  const [providerTest, setProviderTest] = useState<Record<string, ProviderTestResponse | 'loading'>>({})
+
+  const [newProvider, setNewProvider] = useState({
+    name: '',
+    provider_type: 'anthropic' as string,
+    api_key: '',
+    api_base: '',
+    default_model: '',
+    is_default: false
+  })
+
+  const loadProviders = async () => {
+    setProvidersLoading(true)
+    const res = await fetchProviders(false)
+
+    if (res.data) setProviders(res.data.items)
+    setProvidersLoading(false)
+  }
+
+  const handleCreateProvider = async () => {
+    if (!newProvider.name.trim() || !newProvider.default_model.trim()) return
+    setCreateProviderLoading(true)
+
+    const res = await createProvider({
+      name: newProvider.name.trim(),
+      provider_type: newProvider.provider_type as (typeof PROVIDER_TYPES)[number],
+      api_key: newProvider.api_key.trim() || undefined,
+      api_base: newProvider.api_base.trim() || undefined,
+      default_model: newProvider.default_model.trim(),
+      is_default: newProvider.is_default
+    })
+
+    if (res.data) {
+      setShowCreateProvider(false)
+      setNewProvider({ name: '', provider_type: 'anthropic', api_key: '', api_base: '', default_model: '', is_default: false })
+      loadProviders()
+    }
+
+    setCreateProviderLoading(false)
+  }
+
+  const handleDeleteProvider = async (id: string) => {
+    await deleteProvider(id)
+    loadProviders()
+  }
+
+  const handleTestProvider = async (id: string) => {
+    setProviderTest(prev => ({ ...prev, [id]: 'loading' }))
+    const res = await testProvider(id)
+
+    if (res.data) {
+      setProviderTest(prev => ({ ...prev, [id]: res.data! }))
+    } else {
+      setProviderTest(prev => ({ ...prev, [id]: { provider_id: id, provider_name: '', status: 'error', latency_ms: null, model_tested: '', error: res.error?.message ?? 'Test failed' } }))
+    }
+  }
+
+  const MODEL_HINTS: Record<string, string> = {
+    anthropic: 'claude-sonnet-4-20250514',
+    openai: 'gpt-4o',
+    google: 'gemini-2.0-flash',
+    ollama: 'llama3.1:8b',
+    vllm: 'meta-llama/Llama-3.1-8B',
+    groq: 'llama-3.1-8b-instant',
+    custom: 'model-name'
+  }
+
   const loadOrg = async (id: string) => {
     setOrgLoading(true)
     setOrgError(null)
@@ -92,6 +171,8 @@ export function SettingsPage() {
       setOrgId(stored)
       loadOrg(stored)
     }
+
+    loadProviders()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -438,6 +519,194 @@ export function SettingsPage() {
             </div>
             <Button onClick={handleCreateKey} disabled={createKeyLoading || !newKeyName.trim()}>
               {createKeyLoading ? 'Creating...' : 'Create Key'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Separator />
+
+      {/* LLM Providers */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Server className="size-4" /> LLM Providers
+              </CardTitle>
+              <CardDescription>Configure language model providers for synthetic data generation</CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setShowCreateProvider(true)}>
+              <Plus className="mr-1 size-3" /> Add Provider
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {providersLoading ? (
+            <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+              <Loader2 className="mr-2 size-4 animate-spin" /> Loading providers...
+            </div>
+          ) : providers.length === 0 ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              No providers configured. Add one to enable synthetic data generation.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {providers.map(p => {
+                const test = providerTest[p.id]
+                const isTestLoading = test === 'loading'
+                const testResult = test && test !== 'loading' ? test : null
+
+                return (
+                  <div key={p.id} className="flex items-center gap-4 rounded-lg border px-4 py-3">
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{p.name}</span>
+                        <Badge variant="secondary" className="text-[10px]">{p.provider_type}</Badge>
+                        {p.is_default && (
+                          <Badge variant="outline" className="gap-1 text-[10px]">
+                            <Star className="size-2.5" /> Default
+                          </Badge>
+                        )}
+                        <StatusBadge variant={p.is_active ? 'success' : 'error'}>
+                          {p.is_active ? 'Active' : 'Inactive'}
+                        </StatusBadge>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>Model: <code>{p.default_model}</code></span>
+                        {p.has_api_key && <span className="flex items-center gap-1"><Key className="size-3" /> Key set</span>}
+                        {p.api_base && <span>Base: {p.api_base}</span>}
+                      </div>
+                      {testResult && (
+                        <div className="mt-1 flex items-center gap-2 text-xs">
+                          <StatusBadge variant={testResult.status === 'ok' ? 'success' : 'error'}>
+                            {testResult.status === 'ok' ? 'Connected' : 'Failed'}
+                          </StatusBadge>
+                          {testResult.latency_ms !== null && (
+                            <span className="text-muted-foreground">{testResult.latency_ms}ms</span>
+                          )}
+                          {testResult.error && (
+                            <span className="text-destructive">{testResult.error}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7"
+                        onClick={() => handleTestProvider(p.id)}
+                        disabled={isTestLoading}
+                        title="Test connection"
+                      >
+                        {isTestLoading ? <Loader2 className="size-3 animate-spin" /> : <Play className="size-3" />}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7 text-destructive"
+                        onClick={() => handleDeleteProvider(p.id)}
+                        title="Delete provider"
+                      >
+                        <Trash2 className="size-3" />
+                      </Button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Create Provider dialog */}
+      <Dialog open={showCreateProvider} onOpenChange={setShowCreateProvider}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="size-4" /> Add LLM Provider
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <Label>Name *</Label>
+              <Input
+                value={newProvider.name}
+                onChange={e => setNewProvider(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="My Claude Provider"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Provider Type *</Label>
+              <Select
+                value={newProvider.provider_type}
+                onValueChange={v => setNewProvider(prev => ({ ...prev, provider_type: v, default_model: '' }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROVIDER_TYPES.map(t => (
+                    <SelectItem key={t} value={t}>
+                      {t.charAt(0).toUpperCase() + t.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label>API Key</Label>
+              <Input
+                type="password"
+                value={newProvider.api_key}
+                onChange={e => setNewProvider(prev => ({ ...prev, api_key: e.target.value }))}
+                placeholder="sk-..."
+              />
+              <p className="text-[11px] text-muted-foreground">Encrypted at rest. Not required for local providers (Ollama, vLLM).</p>
+            </div>
+            {['ollama', 'vllm', 'custom'].includes(newProvider.provider_type) && (
+              <div className="space-y-1">
+                <Label>API Base URL</Label>
+                <Input
+                  value={newProvider.api_base}
+                  onChange={e => setNewProvider(prev => ({ ...prev, api_base: e.target.value }))}
+                  placeholder={newProvider.provider_type === 'ollama' ? 'http://localhost:11434' : 'http://localhost:8080/v1'}
+                />
+              </div>
+            )}
+            <div className="space-y-1">
+              <Label>Default Model *</Label>
+              <Input
+                value={newProvider.default_model}
+                onChange={e => setNewProvider(prev => ({ ...prev, default_model: e.target.value }))}
+                placeholder={MODEL_HINTS[newProvider.provider_type] ?? 'model-name'}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="is-default-provider"
+                checked={newProvider.is_default}
+                onChange={e => setNewProvider(prev => ({ ...prev, is_default: e.target.checked }))}
+                className="size-4 rounded border"
+              />
+              <Label htmlFor="is-default-provider" className="text-sm font-normal">
+                Set as default provider
+              </Label>
+            </div>
+            <Button
+              onClick={handleCreateProvider}
+              disabled={createProviderLoading || !newProvider.name.trim() || !newProvider.default_model.trim()}
+              className="w-full"
+            >
+              {createProviderLoading ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" /> Creating...
+                </>
+              ) : (
+                'Add Provider'
+              )}
             </Button>
           </div>
         </DialogContent>
