@@ -42,10 +42,11 @@ const jsonLd = {
 }
 
 const Home = () => {
-  // When NEXT_PUBLIC_LANDING is not set (e.g. local dev after git clone),
-  // send users straight to the dashboard. The landing page is only shown
-  // on the production marketing site (Vercel) where the env var is set.
-  if (process.env.NEXT_PUBLIC_LANDING !== 'true') {
+  // The landing page is shown by default on all deployments (Vercel, etc.).
+  // Only redirect to the dashboard when explicitly opted in — this is used
+  // for local development (after git clone) and E2B sandbox containers
+  // where users want the dashboard immediately.
+  if (process.env.NEXT_PUBLIC_DASHBOARD_REDIRECT === 'true') {
     redirect('/dashboard')
   }
 

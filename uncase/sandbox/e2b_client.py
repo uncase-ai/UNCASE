@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
-from uncase.exceptions import SandboxNotConfiguredError
+from uncase.exceptions import SandboxNotConfiguredError, SandboxTimeoutError
 from uncase.sandbox.schemas import (
     SandboxGenerateResponse,
     SandboxGenerationSummary,
@@ -286,15 +286,11 @@ class E2BSandboxOrchestrator:
                     duration_seconds=duration,
                 ), progress_events
 
-            except TimeoutError:
+            except TimeoutError as exc:
                 error_msg = f"Sandbox timed out after {self._settings.e2b_sandbox_timeout}s"
                 _progress("error", error=error_msg)
                 logger.error("sandbox_timeout", seed_id=seed_id, timeout=self._settings.e2b_sandbox_timeout)
-                return SandboxSeedResult(
-                    seed_id=seed_id,
-                    error=error_msg,
-                    duration_seconds=round(time.monotonic() - start_time, 2),
-                ), progress_events
+                raise SandboxTimeoutError(error_msg) from exc
 
             except Exception as exc:
                 error_msg = str(exc)

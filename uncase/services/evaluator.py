@@ -8,6 +8,7 @@ import structlog
 
 from uncase.core.evaluator.evaluator import ConversationEvaluator
 from uncase.db.models.evaluation import EvaluationReportModel
+from uncase.exceptions import QualityThresholdError
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -59,13 +60,28 @@ class EvaluatorService:
             passed=report.passed,
         )
 
-    async def evaluate_single(self, conversation: Conversation, seed: SeedSchema) -> QualityReport:
-        """Evaluate a single conversation against its origin seed."""
+    async def evaluate_single(
+        self, conversation: Conversation, seed: SeedSchema, *, strict: bool = False
+    ) -> QualityReport:
+        """Evaluate a single conversation against its origin seed.
+
+        Args:
+            conversation: The conversation to evaluate.
+            seed: The origin seed for comparison.
+            strict: If True, raise QualityThresholdError when the
+                conversation fails quality thresholds.
+        """
         report = await self._evaluator.evaluate(conversation, seed)
         await self._persist_report(report, dominio=conversation.dominio)
 
         if self._session is not None:
             await self._session.commit()
+
+        if strict and not report.passed:
+            failure_detail = ", ".join(report.failures) if report.failures else "composite score below threshold"
+            raise QualityThresholdError(
+                f"Quality thresholds not met for conversation {report.conversation_id}: {failure_detail}"
+            )
 
         return report
 

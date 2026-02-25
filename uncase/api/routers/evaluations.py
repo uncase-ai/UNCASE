@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Annotated
 
 import structlog
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from uncase.api.deps import get_db
@@ -27,11 +27,18 @@ logger = structlog.get_logger(__name__)
 async def evaluate_conversation(
     request: EvaluateRequest,
     session: Annotated[AsyncSession, Depends(get_db)],
+    strict: bool = Query(
+        default=False,
+        description="Raise 422 if the conversation fails quality thresholds",
+    ),
 ) -> QualityReport:
     """Evaluate a single conversation against its origin seed.
 
     Returns a QualityReport with individual metric scores, composite score,
     and pass/fail determination. The report is persisted to the database.
+
+    When ``strict=true``, a 422 QualityThresholdError is raised if the
+    conversation does not pass all quality thresholds.
     """
     service = EvaluatorService(session=session)
 
@@ -39,9 +46,10 @@ async def evaluate_conversation(
         "api_evaluate_single",
         conversation_id=request.conversation.conversation_id,
         seed_id=request.seed.seed_id,
+        strict=strict,
     )
 
-    return await service.evaluate_single(request.conversation, request.seed)
+    return await service.evaluate_single(request.conversation, request.seed, strict=strict)
 
 
 @router.post("/batch", response_model=BatchEvaluationResponse)

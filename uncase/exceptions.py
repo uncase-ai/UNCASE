@@ -96,6 +96,13 @@ class PluginNotFoundError(UNCASEError):
     detail = "Plugin not found"
 
 
+class KnowledgeDocumentNotFoundError(UNCASEError):
+    """Requested knowledge document does not exist."""
+
+    status_code = 404
+    detail = "Knowledge document not found"
+
+
 # -- Validation --
 
 

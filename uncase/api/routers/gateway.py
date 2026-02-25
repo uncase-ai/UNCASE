@@ -5,14 +5,14 @@ from __future__ import annotations
 from typing import Annotated
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from uncase.api.deps import get_db, get_settings
 from uncase.config import UNCASESettings
 from uncase.core.privacy.interceptor import PrivacyInterceptor
-from uncase.exceptions import LLMConfigurationError, ProviderNotFoundError
+from uncase.exceptions import LLMConfigurationError, PIIDetectedError, ProviderNotFoundError
 from uncase.services.provider import ProviderService
 
 router = APIRouter(prefix="/api/v1/gateway", tags=["gateway"])
@@ -121,10 +121,7 @@ async def chat_proxy(
         outbound_pii_count += result.scan.entity_count
 
         if result.blocked:
-            raise HTTPException(
-                status_code=422,
-                detail=f"PII detected in message (mode=block): {result.message}",
-            )
+            raise PIIDetectedError(f"PII detected in message (mode=block): {result.message}")
 
         # Use anonymized text if available
         clean_content = result.scan.anonymized_text if result.scan.anonymized_text else msg.content
@@ -169,10 +166,7 @@ async def chat_proxy(
             model=model_to_use,
             pii_count=inbound_pii_count,
         )
-        raise HTTPException(
-            status_code=422,
-            detail="PII detected in LLM response (mode=block). Response withheld.",
-        )
+        raise PIIDetectedError("PII detected in LLM response (mode=block). Response withheld.")
 
     logger.info(
         "gateway_chat_complete",

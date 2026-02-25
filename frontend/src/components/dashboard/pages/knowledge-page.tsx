@@ -6,7 +6,10 @@ import {
   BookOpen,
   ChevronDown,
   ChevronRight,
+  Cloud,
+  CloudOff,
   FileText,
+  HardDrive,
   List,
   Loader2,
   Search,
@@ -18,6 +21,20 @@ import {
 
 import type { KnowledgeChunk, KnowledgeDocument, KnowledgeType } from '@/types/api'
 import { SUPPORTED_DOMAINS } from '@/types/api'
+import { useApi } from '@/hooks/use-api'
+import { checkApiHealth } from '@/lib/api/client'
+import type {
+  KnowledgeDocumentResponse,
+  KnowledgeDocumentSummary,
+  KnowledgeListResponse,
+  KnowledgeSearchResponse
+} from '@/lib/api/knowledge'
+import {
+  deleteKnowledgeDocument,
+  fetchKnowledgeDocuments,
+  searchKnowledgeChunks,
+  uploadKnowledgeDocument
+} from '@/lib/api/knowledge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -31,11 +48,11 @@ import { Separator } from '@/components/ui/separator'
 import { EmptyState } from '../empty-state'
 import { PageHeader } from '../page-header'
 
-// ─── Storage ───
+// ─── Local storage (fallback when API is offline) ───
 
 const STORE_KEY = 'uncase-knowledge'
 
-function loadDocuments(): KnowledgeDocument[] {
+function loadLocalDocuments(): KnowledgeDocument[] {
   if (typeof window === 'undefined') return []
 
   try {
@@ -47,11 +64,11 @@ function loadDocuments(): KnowledgeDocument[] {
   }
 }
 
-function saveDocuments(docs: KnowledgeDocument[]) {
+function saveLocalDocuments(docs: KnowledgeDocument[]) {
   localStorage.setItem(STORE_KEY, JSON.stringify(docs))
 }
 
-// ─── Text chunking ───
+// ─── Text chunking (client-side fallback) ───
 
 function chunkText(text: string, chunkSize = 800, overlap = 100): string[] {
   const paragraphs = text.split(/\n{2,}/)
@@ -66,7 +83,6 @@ function chunkText(text: string, chunkSize = 800, overlap = 100): string[] {
     if (current.length + trimmed.length > chunkSize && current.length > 0) {
       chunks.push(current.trim())
 
-      // Keep tail for overlap
       const words = current.split(/\s+/)
       const overlapWords = Math.ceil(overlap / 5)
 
@@ -80,7 +96,6 @@ function chunkText(text: string, chunkSize = 800, overlap = 100): string[] {
     chunks.push(current.trim())
   }
 
-  // If no paragraph breaks, chunk by sentences
   if (chunks.length === 0 && text.trim().length > 0) {
     const sentences = text.split(/(?<=[.!?])\s+/)
     let buf = ''
@@ -118,11 +133,45 @@ const TYPE_DESCRIPTIONS: Record<KnowledgeType, string> = {
   reference: 'Regulations, policies, manuals, general context'
 }
 
+// ─── Helpers ───
+
+function apiDocToLocal(doc: KnowledgeDocumentSummary | KnowledgeDocumentResponse): KnowledgeDocument {
+  const chunks: KnowledgeChunk[] = 'chunks' in doc && doc.chunks
+    ? doc.chunks.map(c => ({
+        id: c.id,
+        document_id: c.document_id,
+        content: c.content,
+        type: c.type as KnowledgeType,
+        domain: c.domain,
+        tags: c.tags,
+        source: c.source,
+        order: c.order
+      }))
+    : []
+
+  return {
+    id: doc.id,
+    filename: doc.filename,
+    domain: doc.domain,
+    type: doc.type as KnowledgeType,
+    chunk_count: doc.chunk_count,
+    chunks,
+    uploaded_at: doc.created_at,
+    metadata: (doc.metadata as Record<string, unknown>) ?? {}
+  }
+}
+
 // ─── Component ───
 
 export function KnowledgePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [documents, setDocuments] = useState<KnowledgeDocument[]>(() => loadDocuments())
+
+  // Storage mode
+  const [apiAvailable, setApiAvailable] = useState<boolean | null>(null)
+  const [storageMode, setStorageMode] = useState<'api' | 'local'>('local')
+
+  // Documents (unified state for both modes)
+  const [documents, setDocuments] = useState<KnowledgeDocument[]>(() => loadLocalDocuments())
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState<string>('all')
   const [domainFilter, setDomainFilter] = useState<string>('all')
@@ -135,6 +184,47 @@ export function KnowledgePage() {
   const [uploadType, setUploadType] = useState<KnowledgeType>('reference')
   const [uploadTags, setUploadTags] = useState('')
   const [processing, setProcessing] = useState(false)
+
+  // Search results from API
+  const [searchResults, setSearchResults] = useState<KnowledgeSearchResponse | null>(null)
+
+  // Check API availability and load documents
+  const initFetcher = useCallback(async (signal: AbortSignal) => {
+    const isHealthy = await checkApiHealth()
+
+    setApiAvailable(isHealthy)
+
+    if (isHealthy) {
+      setStorageMode('api')
+      const res = await fetchKnowledgeDocuments({ page_size: 100 }, { signal })
+
+      if (res.data) {
+        const apiDocs = res.data.items.map(apiDocToLocal)
+
+        setDocuments(apiDocs)
+
+        // Sync to localStorage as cache
+        saveLocalDocuments(apiDocs)
+
+        return { data: res.data, error: null }
+      }
+
+      return res
+    }
+
+    // Fallback: load from localStorage
+    setStorageMode('local')
+    const localDocs = loadLocalDocuments()
+
+    setDocuments(localDocs)
+
+    return {
+      data: { items: [], total: localDocs.length, page: 1, page_size: 100 } as KnowledgeListResponse,
+      error: null
+    }
+  }, [])
+
+  useApi<KnowledgeListResponse>(initFetcher)
 
   // Stats
   const totalChunks = useMemo(() => documents.reduce((s, d) => s + d.chunks.length, 0), [documents])
@@ -163,9 +253,9 @@ export function KnowledgePage() {
     return result
   }, [documents, search, typeFilter, domainFilter])
 
-  // Filtered chunks for search highlighting
+  // Filtered chunks for search highlighting (local mode)
   const matchingChunks = useMemo(() => {
-    if (!search) return null
+    if (!search || storageMode === 'api') return null
 
     const q = search.toLowerCase()
     const matches: (KnowledgeChunk & { docFilename: string })[] = []
@@ -179,7 +269,28 @@ export function KnowledgePage() {
     }
 
     return matches.slice(0, 20)
-  }, [filteredDocuments, search])
+  }, [filteredDocuments, search, storageMode])
+
+  // API search with debounce
+  const handleSearch = useCallback(
+    async (query: string) => {
+      setSearch(query)
+
+      if (storageMode === 'api' && query.trim().length >= 2) {
+        const res = await searchKnowledgeChunks(query, {
+          domain: domainFilter !== 'all' ? domainFilter : undefined,
+          type: typeFilter !== 'all' ? typeFilter : undefined
+        })
+
+        if (res.data) {
+          setSearchResults(res.data)
+        }
+      } else {
+        setSearchResults(null)
+      }
+    },
+    [storageMode, domainFilter, typeFilter]
+  )
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -195,40 +306,61 @@ export function KnowledgePage() {
 
     try {
       const text = await uploadFile.text()
-      const rawChunks = chunkText(text)
-      const docId = `kb-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
       const tags = uploadTags
         .split(',')
         .map(t => t.trim())
         .filter(Boolean)
 
-      const chunks: KnowledgeChunk[] = rawChunks.map((content, i) => ({
-        id: `${docId}-${i}`,
-        document_id: docId,
-        content,
-        type: uploadType,
-        domain: uploadDomain,
-        tags,
-        source: uploadFile.name,
-        order: i
-      }))
+      if (storageMode === 'api') {
+        // Upload via API — server does chunking
+        const res = await uploadKnowledgeDocument({
+          filename: uploadFile.name,
+          content: text,
+          domain: uploadDomain,
+          type: uploadType,
+          tags
+        })
 
-      const doc: KnowledgeDocument = {
-        id: docId,
-        filename: uploadFile.name,
-        domain: uploadDomain,
-        type: uploadType,
-        chunk_count: chunks.length,
-        chunks,
-        uploaded_at: new Date().toISOString(),
-        metadata: { size_bytes: uploadFile.size, tags }
+        if (res.data) {
+          const newDoc = apiDocToLocal(res.data)
+          const updated = [...documents, newDoc]
+
+          setDocuments(updated)
+          saveLocalDocuments(updated)
+        }
+      } else {
+        // Client-side chunking (offline fallback)
+        const rawChunks = chunkText(text)
+        const docId = `kb-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+        const chunks: KnowledgeChunk[] = rawChunks.map((content, i) => ({
+          id: `${docId}-${i}`,
+          document_id: docId,
+          content,
+          type: uploadType,
+          domain: uploadDomain,
+          tags,
+          source: uploadFile.name,
+          order: i
+        }))
+
+        const doc: KnowledgeDocument = {
+          id: docId,
+          filename: uploadFile.name,
+          domain: uploadDomain,
+          type: uploadType,
+          chunk_count: chunks.length,
+          chunks,
+          uploaded_at: new Date().toISOString(),
+          metadata: { size_bytes: uploadFile.size, tags }
+        }
+
+        const updated = [...documents, doc]
+
+        setDocuments(updated)
+        saveLocalDocuments(updated)
       }
-
-      const updated = [...documents, doc]
-
-      setDocuments(updated)
-      saveDocuments(updated)
 
       // Reset upload state
       setShowUpload(false)
@@ -239,69 +371,44 @@ export function KnowledgePage() {
     } finally {
       setProcessing(false)
     }
-  }, [uploadFile, uploadDomain, uploadType, uploadTags, documents])
+  }, [uploadFile, uploadDomain, uploadType, uploadTags, documents, storageMode])
 
   const handleDelete = useCallback(
-    (docId: string) => {
+    async (docId: string) => {
+      if (storageMode === 'api') {
+        await deleteKnowledgeDocument(docId)
+      }
+
       const updated = documents.filter(d => d.id !== docId)
 
       setDocuments(updated)
-      saveDocuments(updated)
+      saveLocalDocuments(updated)
 
       if (expandedDoc === docId) setExpandedDoc(null)
     },
-    [documents, expandedDoc]
+    [documents, expandedDoc, storageMode]
   )
 
-  // ─── Empty state ───
-  if (documents.length === 0 && !showUpload) {
+  // ─── Storage mode badge ───
+  function StorageBadge() {
+    if (apiAvailable === null) return null
+
     return (
-      <div className="space-y-6">
-        <PageHeader
-          title="Knowledge Base"
-          description="Upload domain literature to ground synthetic generation in real facts"
-          actions={
-            <Button size="sm" onClick={() => setShowUpload(true)}>
-              <Upload className="mr-1.5 size-3.5" />
-              Upload Document
-            </Button>
-          }
-        />
-
-        <EmptyState
-          icon={BookOpen}
-          title="No knowledge documents yet"
-          description="Upload manuals, procedures, product catalogs, or domain reference material. The system will extract and chunk the content for use during seed creation and synthetic generation."
-          action={
-            <Button variant="outline" onClick={() => setShowUpload(true)}>
-              <Upload className="mr-1.5 size-4" /> Upload your first document
-            </Button>
-          }
-        />
-
-        {/* Type reference */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Knowledge Types</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {(Object.entries(TYPE_LABELS) as [KnowledgeType, string][]).map(([key, label]) => (
-              <div key={key} className="flex items-start gap-3">
-                <Badge variant="outline" className="mt-0.5 shrink-0 text-[10px] font-normal">
-                  {label}
-                </Badge>
-                <span className="text-xs text-muted-foreground">{TYPE_DESCRIPTIONS[key]}</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Upload dialog */}
-        {renderUploadDialog()}
-      </div>
+      <Badge variant="outline" className="gap-1.5 text-[10px]">
+        {storageMode === 'api' ? (
+          <>
+            <Cloud className="size-2.5" /> Synced to API
+          </>
+        ) : (
+          <>
+            <HardDrive className="size-2.5" /> Local storage
+          </>
+        )}
+      </Badge>
     )
   }
 
+  // ─── Upload dialog ───
   function renderUploadDialog() {
     return (
       <Dialog open={showUpload} onOpenChange={setShowUpload}>
@@ -319,7 +426,8 @@ export function KnowledgePage() {
                 onChange={handleFileSelect}
               />
               <p className="text-[11px] text-muted-foreground">
-                Supported: .txt, .md, .csv, .tsv, .log (plain text files). PDF support coming with backend integration.
+                Supported: .txt, .md, .csv, .tsv, .log (plain text files).
+                {storageMode === 'api' && ' Server-side chunking with configurable parameters.'}
               </p>
             </div>
 
@@ -382,16 +490,85 @@ export function KnowledgePage() {
     )
   }
 
+  // ─── Empty state ───
+  if (documents.length === 0 && !showUpload) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Knowledge Base"
+          description="Upload domain literature to ground synthetic generation in real facts"
+          actions={
+            <div className="flex items-center gap-2">
+              <StorageBadge />
+              <Button size="sm" onClick={() => setShowUpload(true)}>
+                <Upload className="mr-1.5 size-3.5" />
+                Upload Document
+              </Button>
+            </div>
+          }
+        />
+
+        <EmptyState
+          icon={BookOpen}
+          title="No knowledge documents yet"
+          description="Upload manuals, procedures, product catalogs, or domain reference material. The system will extract and chunk the content for use during seed creation and synthetic generation."
+          action={
+            <Button variant="outline" onClick={() => setShowUpload(true)}>
+              <Upload className="mr-1.5 size-4" /> Upload your first document
+            </Button>
+          }
+        />
+
+        {/* Offline notice */}
+        {storageMode === 'local' && apiAvailable === false && (
+          <Card className="border-amber-500/30 bg-amber-500/5">
+            <CardContent className="flex items-center gap-3 py-4">
+              <CloudOff className="size-4 shrink-0 text-amber-500" />
+              <div>
+                <p className="text-xs font-medium text-amber-700 dark:text-amber-400">API unavailable</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Documents are stored locally. They will sync to the backend when the API becomes available.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Type reference */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Knowledge Types</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {(Object.entries(TYPE_LABELS) as [KnowledgeType, string][]).map(([key, label]) => (
+              <div key={key} className="flex items-start gap-3">
+                <Badge variant="outline" className="mt-0.5 shrink-0 text-[10px] font-normal">
+                  {label}
+                </Badge>
+                <span className="text-xs text-muted-foreground">{TYPE_DESCRIPTIONS[key]}</span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {renderUploadDialog()}
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
       <PageHeader
         title="Knowledge Base"
         description={`${documents.length} documents, ${totalChunks} chunks`}
         actions={
-          <Button size="sm" onClick={() => setShowUpload(true)}>
-            <Upload className="mr-1.5 size-3.5" />
-            Upload Document
-          </Button>
+          <div className="flex items-center gap-2">
+            <StorageBadge />
+            <Button size="sm" onClick={() => setShowUpload(true)}>
+              <Upload className="mr-1.5 size-3.5" />
+              Upload Document
+            </Button>
+          </div>
         }
       />
 
@@ -402,11 +579,17 @@ export function KnowledgePage() {
           <Input
             placeholder="Search content, tags..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => handleSearch(e.target.value)}
             className="pl-8"
           />
           {search && (
-            <button className="absolute right-2 top-1/2 -translate-y-1/2" onClick={() => setSearch('')}>
+            <button
+              className="absolute right-2 top-1/2 -translate-y-1/2"
+              onClick={() => {
+                setSearch('')
+                setSearchResults(null)
+              }}
+            >
               <X className="size-3.5 text-muted-foreground" />
             </button>
           )}
@@ -445,7 +628,36 @@ export function KnowledgePage() {
         </span>
       </div>
 
-      {/* Search results — show matching chunks */}
+      {/* API search results */}
+      {searchResults && searchResults.results.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">
+              Matching Chunks ({searchResults.total})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {searchResults.results.map(result => (
+              <div key={result.chunk_id} className="rounded border bg-muted/30 px-3 py-2">
+                <div className="mb-1 flex items-center gap-2">
+                  <span className="text-[10px] font-medium text-muted-foreground">{result.filename}</span>
+                  <Badge variant="outline" className="text-[9px]">
+                    {TYPE_LABELS[result.type as KnowledgeType] ?? result.type}
+                  </Badge>
+                  {result.tags.map(t => (
+                    <span key={t} className="text-[9px] text-muted-foreground">
+                      #{t}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground line-clamp-3">{result.content}</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Local search results (fallback) */}
       {matchingChunks && matchingChunks.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
@@ -532,17 +744,23 @@ export function KnowledgePage() {
                 <CollapsibleContent>
                   <Separator />
                   <div className="space-y-2 px-4 py-3">
-                    {doc.chunks.map((chunk, ci) => (
-                      <div key={chunk.id} className="rounded border bg-muted/20 px-3 py-2">
-                        <div className="mb-1 flex items-center gap-2 text-[10px] text-muted-foreground">
-                          <span className="font-medium">Chunk {ci + 1}</span>
-                          <span>{chunk.content.length} chars</span>
+                    {doc.chunks.length > 0 ? (
+                      doc.chunks.map((chunk, ci) => (
+                        <div key={chunk.id} className="rounded border bg-muted/20 px-3 py-2">
+                          <div className="mb-1 flex items-center gap-2 text-[10px] text-muted-foreground">
+                            <span className="font-medium">Chunk {ci + 1}</span>
+                            <span>{chunk.content.length} chars</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-5">
+                            {chunk.content}
+                          </p>
                         </div>
-                        <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-5">
-                          {chunk.content}
-                        </p>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="py-2 text-center text-xs text-muted-foreground">
+                        Expand to load chunks from the API.
+                      </p>
+                    )}
                   </div>
                 </CollapsibleContent>
               </div>

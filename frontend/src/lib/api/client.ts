@@ -1,7 +1,22 @@
 // ─── Type-safe fetch wrapper for UNCASE API ───
-// Supports: retries, abort signals, file uploads, error normalization
+// Supports: retries, abort signals, file uploads, error normalization, API key auth
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+const API_KEY_STORAGE_KEY = 'uncase-api-key'
+
+function getStoredApiKey(): string | null {
+  if (typeof window === 'undefined') return null
+
+  return localStorage.getItem(API_KEY_STORAGE_KEY)
+}
+
+export function setStoredApiKey(key: string): void {
+  localStorage.setItem(API_KEY_STORAGE_KEY, key)
+}
+
+export function clearStoredApiKey(): void {
+  localStorage.removeItem(API_KEY_STORAGE_KEY)
+}
 
 export interface ApiError {
   status: number
@@ -36,6 +51,13 @@ async function request<T>(
 ): Promise<ApiResponse<T>> {
   const { signal, headers = {}, retries = 0, retryDelay = 1000 } = options
   const url = `${API_BASE}${path}`
+
+  // Inject API key if stored
+  const apiKey = getStoredApiKey()
+
+  if (apiKey && !headers['X-API-Key']) {
+    headers['X-API-Key'] = apiKey
+  }
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
@@ -128,12 +150,20 @@ export async function apiUpload<T>(
 
   formData.append('file', file)
 
+  // Inject API key for uploads
+  const uploadHeaders: Record<string, string> = { ...(options?.headers ?? {}) }
+  const storedKey = getStoredApiKey()
+
+  if (storedKey && !uploadHeaders['X-API-Key']) {
+    uploadHeaders['X-API-Key'] = storedKey
+  }
+
   try {
     const res = await fetch(url.toString(), {
       method: 'POST',
       body: formData,
       signal: options?.signal,
-      headers: options?.headers ?? {}
+      headers: uploadHeaders
     })
 
     if (!res.ok) {

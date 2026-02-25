@@ -7,7 +7,7 @@ import { useTheme } from 'next-themes'
 
 import type { APIKeyCreatedResponse, APIKeyResponse, OrganizationResponse, ProviderResponse, ProviderTestResponse } from '@/types/api'
 import { PROVIDER_TYPES } from '@/types/api'
-import { checkApiHealth } from '@/lib/api/client'
+import { checkApiHealth, clearStoredApiKey, setStoredApiKey } from '@/lib/api/client'
 import {
   createApiKey,
   createOrganization,
@@ -37,6 +37,7 @@ import { PageHeader } from '../page-header'
 import { StatusBadge } from '../status-badge'
 
 const ORG_ID_KEY = 'uncase-org-id'
+const API_KEY_STORAGE_KEY = 'uncase-api-key'
 
 export function SettingsPage() {
   const { theme, setTheme } = useTheme()
@@ -64,6 +65,9 @@ export function SettingsPage() {
   const [createdKey, setCreatedKey] = useState<APIKeyCreatedResponse | null>(null)
   const [showKey, setShowKey] = useState(false)
   const [copiedKey, setCopiedKey] = useState(false)
+
+  // ─── Active API Key ───
+  const [activeKeyPrefix, setActiveKeyPrefix] = useState<string | null>(null)
 
   // ─── API Health ───
   const [apiOk, setApiOk] = useState<boolean | null>(null)
@@ -170,6 +174,13 @@ export function SettingsPage() {
     if (stored) {
       setOrgId(stored)
       loadOrg(stored)
+    }
+
+    // Load active API key prefix for display
+    const storedKey = localStorage.getItem(API_KEY_STORAGE_KEY)
+
+    if (storedKey) {
+      setActiveKeyPrefix(storedKey.slice(0, 12) + '...')
     }
 
     loadProviders()
@@ -331,6 +342,29 @@ export function SettingsPage() {
                 {apiOk ? 'Connected' : 'Unreachable'}
               </StatusBadge>
             )}
+            {activeKeyPrefix ? (
+              <div className="flex items-center justify-between rounded border border-green-200 bg-green-50 px-3 py-2 dark:border-green-900 dark:bg-green-950">
+                <div className="flex items-center gap-2 text-xs">
+                  <Key className="size-3 text-green-600 dark:text-green-400" />
+                  <span className="text-green-700 dark:text-green-300">Active key: <code>{activeKeyPrefix}</code></span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 text-xs text-destructive"
+                  onClick={() => {
+                    clearStoredApiKey()
+                    setActiveKeyPrefix(null)
+                  }}
+                >
+                  Clear
+                </Button>
+              </div>
+            ) : (
+              <p className="text-[11px] text-muted-foreground">
+                No API key active. Create one below and set it as active to authenticate requests.
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -461,6 +495,18 @@ export function SettingsPage() {
                 <p>Name: {createdKey.name}</p>
                 <p>Scopes: {createdKey.scopes}</p>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => {
+                  setStoredApiKey(createdKey.plain_key)
+                  setActiveKeyPrefix(createdKey.plain_key.slice(0, 12) + '...')
+                  setCreatedKey(null)
+                }}
+              >
+                <Key className="mr-1 size-3" /> Set as Active Key for API Requests
+              </Button>
             </div>
           </DialogContent>
         </Dialog>

@@ -263,6 +263,7 @@ export interface GenerateRequest {
   count: number
   temperature: number
   model?: string
+  provider_id?: string
   language_override?: string
   evaluate_after: boolean
 }

@@ -12,9 +12,12 @@ from uncase.config import UNCASESettings
 from uncase.db.engine import get_async_session
 from uncase.db.models.organization import OrganizationModel
 from uncase.exceptions import AuthenticationError, AuthorizationError
+from uncase.logging import get_logger
 from uncase.services.organization import OrganizationService
 
 _settings: UNCASESettings | None = None
+
+logger = get_logger(__name__)
 
 
 def get_settings() -> UNCASESettings:
@@ -47,6 +50,31 @@ async def get_current_org(
 
     service = OrganizationService(session)
     return await service.verify_and_get_org(x_api_key)
+
+
+async def get_optional_org(
+    session: Annotated[AsyncSession, Depends(get_db)],
+    x_api_key: Annotated[str | None, Header()] = None,
+) -> OrganizationModel | None:
+    """Optionally authenticate the request via X-API-Key header.
+
+    Returns the organization if a valid API key is provided, or None
+    if no key is present. This allows endpoints to work in both
+    authenticated and unauthenticated modes during the Phase 0 → 1
+    transition.
+
+    Raises:
+        AuthenticationError: Only if a key IS provided but is invalid/revoked.
+    """
+    if not x_api_key:
+        return None
+
+    service = OrganizationService(session)
+    try:
+        return await service.verify_and_get_org(x_api_key)
+    except AuthenticationError:
+        logger.warning("optional_auth_failed", reason="invalid_key")
+        raise
 
 
 def require_scopes(*required: str) -> Callable[..., object]:
