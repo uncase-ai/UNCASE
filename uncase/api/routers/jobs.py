@@ -35,8 +35,7 @@ class JobResponse(BaseModel):
     completed_at: str | None = Field(default=None, description="Completion timestamp")
     created_at: str = Field(..., description="Creation timestamp")
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 def _to_response(job: Any) -> JobResponse:
