@@ -1,5 +1,5 @@
-import type { RenderRequest, RenderResponse, TemplateInfo } from '@/types/api'
-import { apiGet, apiPost, API_BASE } from './client'
+import type { RenderRequest, RenderResponse, TemplateConfig, TemplateConfigUpdateRequest, TemplateInfo } from '@/types/api'
+import { apiGet, apiPost, apiPut, API_BASE } from './client'
 
 export function fetchTemplates(signal?: AbortSignal) {
   return apiGet<TemplateInfo[]>('/api/v1/templates', { signal })
@@ -28,4 +28,12 @@ export async function downloadExport(req: RenderRequest, signal?: AbortSignal): 
   } catch {
     return null
   }
+}
+
+export function fetchTemplateConfig(signal?: AbortSignal) {
+  return apiGet<TemplateConfig>('/api/v1/templates/config', { signal })
+}
+
+export function updateTemplateConfig(data: TemplateConfigUpdateRequest) {
+  return apiPut<TemplateConfig>('/api/v1/templates/config', data)
 }

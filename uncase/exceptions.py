@@ -96,6 +96,27 @@ class PluginNotFoundError(UNCASEError):
     detail = "Plugin not found"
 
 
+class PluginAlreadyInstalledError(UNCASEError):
+    """Plugin is already installed for this organization."""
+
+    status_code = 409
+    detail = "Plugin already installed"
+
+
+class CustomToolNotFoundError(UNCASEError):
+    """Requested custom tool does not exist."""
+
+    status_code = 404
+    detail = "Custom tool not found"
+
+
+class TemplateConfigNotFoundError(UNCASEError):
+    """Template configuration not found for this organization."""
+
+    status_code = 404
+    detail = "Template configuration not found"
+
+
 class KnowledgeDocumentNotFoundError(UNCASEError):
     """Requested knowledge document does not exist."""
 

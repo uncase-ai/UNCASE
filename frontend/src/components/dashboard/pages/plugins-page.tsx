@@ -7,6 +7,7 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  Clock,
   Download,
   Factory,
   GraduationCap,
@@ -16,24 +17,34 @@ import {
   Package,
   Scale,
   Search,
+  Settings2,
   ShieldCheck,
   Trash2,
   Users,
   Wrench
 } from 'lucide-react'
 
-import type { InstalledPlugin, PluginManifest } from '@/types/api'
+import type { InstalledPluginListResponse, InstalledPluginResponse, PluginManifest } from '@/types/api'
 import { SUPPORTED_DOMAINS } from '@/types/api'
 import { cn } from '@/lib/utils'
 import { useApi } from '@/hooks/use-api'
-import { fetchPlugins, installPlugin, uninstallPlugin } from '@/lib/api/plugins'
-import { apiGet } from '@/lib/api/client'
+import { fetchInstalledPlugins, fetchPlugins, installPlugin, uninstallPlugin, updatePluginConfig } from '@/lib/api/plugins'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
 
 import { EmptyState } from '../empty-state'
 import { PageHeader } from '../page-header'
@@ -68,22 +79,33 @@ export function PluginsPage() {
     useCallback((signal: AbortSignal) => fetchPlugins(undefined, signal), [])
   )
 
-  const installedFetcher = useCallback(
-    (signal: AbortSignal) => apiGet<InstalledPlugin[]>('/api/v1/plugins/installed', { signal }),
-    []
+  const { data: installedData, loading: installedLoading, execute: refetchInstalled } = useApi<InstalledPluginListResponse>(
+    useCallback((signal: AbortSignal) => fetchInstalledPlugins(signal), [])
   )
-
-  const { data: installed, loading: installedLoading, execute: refetchInstalled } = useApi<InstalledPlugin[]>(installedFetcher)
 
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({})
   const [expandedPlugin, setExpandedPlugin] = useState<string | null>(null)
+
+  // Config dialog state
+  const [configTarget, setConfigTarget] = useState<InstalledPluginResponse | null>(null)
+  const [configActive, setConfigActive] = useState(true)
+  const [configSaving, setConfigSaving] = useState(false)
 
   // Filters
   const [search, setSearch] = useState('')
   const [domainFilter, setDomainFilter] = useState<string>('all')
   const [sourceFilter, setSourceFilter] = useState<string>('all')
 
-  const installedIds = useMemo(() => new Set((installed ?? []).map(p => p.plugin_id)), [installed])
+  const installedItems = useMemo(() => installedData?.items ?? [], [installedData])
+  const installedIds = useMemo(() => new Set(installedItems.map(p => p.plugin_id)), [installedItems])
+
+  const installedMap = useMemo(() => {
+    const map = new Map<string, InstalledPluginResponse>()
+
+    for (const p of installedItems) map.set(p.plugin_id, p)
+
+    return map
+  }, [installedItems])
 
   const filtered = useMemo(() => {
     if (!plugins) return []
@@ -129,9 +151,22 @@ export function PluginsPage() {
     setActionLoading(prev => ({ ...prev, [pluginId]: false }))
   }
 
-  const installedList = installed ?? []
-  const installedCount = installedList.length
-  const totalTools = installedList.reduce((sum, p) => sum + p.tools_registered.length, 0)
+  const handleOpenConfig = (installed: InstalledPluginResponse) => {
+    setConfigTarget(installed)
+    setConfigActive(installed.is_active)
+  }
+
+  const handleSaveConfig = async () => {
+    if (!configTarget) return
+    setConfigSaving(true)
+    await updatePluginConfig(configTarget.plugin_id, { is_active: configActive })
+    setConfigSaving(false)
+    setConfigTarget(null)
+    await refetchInstalled()
+  }
+
+  const installedCount = installedItems.length
+  const totalTools = installedItems.reduce((sum, p) => sum + p.tools_registered.length, 0)
 
   if (loading) {
     return (
@@ -229,6 +264,7 @@ export function PluginsPage() {
         <div className="grid gap-4 lg:grid-cols-2">
           {filtered.map(plugin => {
             const isInstalled = installedIds.has(plugin.id)
+            const installedRecord = installedMap.get(plugin.id)
             const isLoading = actionLoading[plugin.id]
             const isExpanded = expandedPlugin === plugin.id
 
@@ -266,10 +302,21 @@ export function PluginsPage() {
                         )}
                       </div>
                     </div>
-                    <div className="flex shrink-0 items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-1">
                       {isInstalled ? (
-                        <div className="flex items-center gap-1">
+                        <>
                           <StatusBadge variant="success">Installed</StatusBadge>
+                          {installedRecord && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7"
+                              onClick={() => handleOpenConfig(installedRecord)}
+                              title="Configure"
+                            >
+                              <Settings2 className="size-3" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -280,7 +327,7 @@ export function PluginsPage() {
                           >
                             {isLoading ? <Loader2 className="size-3 animate-spin" /> : <Trash2 className="size-3" />}
                           </Button>
-                        </div>
+                        </>
                       ) : (
                         <Button
                           variant="outline"
@@ -331,6 +378,12 @@ export function PluginsPage() {
                         {plugin.license}
                       </Badge>
                     )}
+                    {installedRecord && (
+                      <Badge variant="outline" className="gap-1 text-[10px]">
+                        <Clock className="size-2.5" />
+                        {new Date(installedRecord.created_at).toLocaleDateString()}
+                      </Badge>
+                    )}
                   </div>
 
                   {/* Expand/collapse tools */}
@@ -347,7 +400,7 @@ export function PluginsPage() {
                       <div className="mt-2 space-y-1.5">
                         <Separator />
                         {plugin.tools.map(tool => {
-                          const isRegistered = isInstalled && installedList.find(p => p.plugin_id === plugin.id)?.tools_registered.includes(tool.name)
+                          const isRegistered = isInstalled && installedRecord?.tools_registered.includes(tool.name)
 
                           return (
                             <div
@@ -371,6 +424,41 @@ export function PluginsPage() {
           })}
         </div>
       )}
+
+      {/* Plugin config dialog */}
+      <Dialog open={!!configTarget} onOpenChange={open => { if (!open) setConfigTarget(null) }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Plugin Settings</DialogTitle>
+            <DialogDescription>
+              Configure {configTarget?.plugin_name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="flex items-center justify-between">
+              <Label>Active</Label>
+              <Switch checked={configActive} onCheckedChange={setConfigActive} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              When disabled, the plugin&apos;s tools will not be available in the pipeline.
+            </p>
+            {configTarget && (
+              <div className="space-y-1 text-xs text-muted-foreground">
+                <p>Version: {configTarget.plugin_version}</p>
+                <p>Source: {configTarget.plugin_source}</p>
+                <p>Tools: {configTarget.tools_registered.length}</p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfigTarget(null)}>Cancel</Button>
+            <Button onClick={handleSaveConfig} disabled={configSaving}>
+              {configSaving && <Loader2 className="mr-1.5 size-4 animate-spin" />}
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

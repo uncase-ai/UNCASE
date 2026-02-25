@@ -48,8 +48,70 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     settings = UNCASESettings()
     setup_logging(log_level=settings.uncase_log_level, json_output=settings.is_production)
     init_engine(settings)
+    await _hydrate_tools_from_db()
     yield
     await close_engine()
+
+
+async def _hydrate_tools_from_db() -> None:
+    """Restore persisted custom tools and plugin installations on startup.
+
+    This ensures the in-memory registries are consistent with database state
+    after a server restart. Non-fatal: logs but never crashes the app.
+    """
+    import contextlib
+
+    from uncase.logging import get_logger
+
+    _logger = get_logger("uncase.hydration")
+
+    with contextlib.suppress(Exception):
+        from sqlalchemy import select
+
+        from uncase.db.engine import get_async_session
+        from uncase.db.models.custom_tool import CustomToolModel
+        from uncase.db.models.installed_plugin import InstalledPluginModel
+        from uncase.plugins import get_registry as get_plugin_registry
+        from uncase.tools import get_registry as get_tool_registry
+        from uncase.tools.schemas import ToolDefinition
+
+        tool_registry = get_tool_registry()
+        plugin_registry = get_plugin_registry()
+
+        async for session in get_async_session():
+            # Hydrate installed plugins
+            result = await session.execute(select(InstalledPluginModel).where(InstalledPluginModel.is_active.is_(True)))
+            plugin_count = 0
+            for row in result.scalars():
+                try:
+                    if not plugin_registry.is_installed(row.plugin_id):
+                        plugin_registry.install(row.plugin_id)
+                        plugin_count += 1
+                except Exception:
+                    _logger.debug("plugin_hydration_skipped", plugin_id=row.plugin_id)
+
+            # Hydrate custom tools
+            result = await session.execute(select(CustomToolModel).where(CustomToolModel.is_active.is_(True)))
+            tool_count = 0
+            for row in result.scalars():
+                if row.name not in tool_registry:
+                    tool_def = ToolDefinition(
+                        name=row.name,
+                        description=row.description,
+                        input_schema=row.input_schema,
+                        output_schema=row.output_schema,
+                        domains=row.domains,
+                        category=row.category,
+                        requires_auth=row.requires_auth,
+                        execution_mode=row.execution_mode,
+                        version=row.version,
+                        metadata=row.metadata_ or {},
+                    )
+                    tool_registry.register(tool_def)
+                    tool_count += 1
+
+            _logger.info("hydration_complete", plugins=plugin_count, custom_tools=tool_count)
+            break  # Only need one session
 
 
 def create_app() -> FastAPI:

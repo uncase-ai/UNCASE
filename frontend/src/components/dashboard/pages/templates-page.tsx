@@ -2,15 +2,25 @@
 
 import { useCallback, useMemo, useState } from 'react'
 
-import { Download, Eye, FileText, FlipHorizontal2, Loader2, Play } from 'lucide-react'
+import { Download, Eye, FileText, FlipHorizontal2, Loader2, Play, Save, Settings2 } from 'lucide-react'
 
-import type { Conversation, RenderRequest, TemplateInfo } from '@/types/api'
+import type { Conversation, RenderRequest, TemplateConfig, TemplateInfo } from '@/types/api'
 import { cn } from '@/lib/utils'
 import { useApi } from '@/hooks/use-api'
-import { downloadExport, fetchTemplates, renderTemplate } from '@/lib/api/templates'
+import { downloadExport, fetchTemplateConfig, fetchTemplates, renderTemplate, updateTemplateConfig } from '@/lib/api/templates'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
@@ -39,6 +49,10 @@ export function TemplatesPage() {
     useCallback((signal: AbortSignal) => fetchTemplates(signal), [])
   )
 
+  const { data: savedConfig, execute: refetchConfig } = useApi<TemplateConfig>(
+    useCallback((signal: AbortSignal) => fetchTemplateConfig(signal), [])
+  )
+
   // Selection state — single or compare mode
   const [selectedTemplates, setSelectedTemplates] = useState<string[]>([])
   const [compareMode, setCompareMode] = useState(false)
@@ -54,7 +68,18 @@ export function TemplatesPage() {
   const [rendering, setRendering] = useState(false)
   const [renderingB, setRenderingB] = useState(false)
 
+  // Preferences dialog state (populated when dialog opens)
+  const [prefsOpen, setPrefsOpen] = useState(false)
+  const [prefTemplate, setPrefTemplate] = useState('chatml')
+  const [prefToolMode, setPrefToolMode] = useState('none')
+  const [prefSystemPrompt, setPrefSystemPrompt] = useState('')
+  const [prefExportFormat, setPrefExportFormat] = useState('txt')
+  const [prefSaving, setPrefSaving] = useState(false)
+
   const maxSelections = compareMode ? 2 : 1
+
+  // Derive the effective default template from config (for display only)
+  const defaultTemplateName = savedConfig?.default_template ?? 'chatml'
 
   function handleSelectTemplate(name: string) {
     setSelectedTemplates(prev => {
@@ -63,14 +88,12 @@ export function TemplatesPage() {
       }
 
       if (prev.length >= maxSelections) {
-        // Replace last selection
         return [...prev.slice(0, maxSelections - 1), name]
       }
 
       return [...prev, name]
     })
 
-    // Clear previous renders when selection changes
     setRenderedOutput([])
     setRenderedOutputB([])
   }
@@ -188,7 +211,7 @@ export function TemplatesPage() {
     const a = document.createElement('a')
 
     a.href = url
-    a.download = `${selectedTemplates[0]}-export.txt`
+    a.download = `${selectedTemplates[0]}-export.${prefExportFormat}`
     document.body.appendChild(a)
     a.click()
     a.remove()
@@ -198,6 +221,19 @@ export function TemplatesPage() {
   function handleLoadSample() {
     setConversationJson(JSON.stringify(SAMPLE_CONVERSATION, null, 2))
     setJsonError(null)
+  }
+
+  async function handleSavePrefs() {
+    setPrefSaving(true)
+    await updateTemplateConfig({
+      default_template: prefTemplate,
+      default_tool_call_mode: prefToolMode as 'none' | 'inline',
+      default_system_prompt: prefSystemPrompt || null,
+      export_format: prefExportFormat
+    })
+    setPrefSaving(false)
+    setPrefsOpen(false)
+    refetchConfig()
   }
 
   const selectedDisplay = useMemo(() => {
@@ -252,6 +288,24 @@ export function TemplatesPage() {
         actions={
           <div className="flex items-center gap-2">
             <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // Populate form from saved config before opening
+                if (savedConfig) {
+                  setPrefTemplate(savedConfig.default_template)
+                  setPrefToolMode(savedConfig.default_tool_call_mode)
+                  setPrefSystemPrompt(savedConfig.default_system_prompt ?? '')
+                  setPrefExportFormat(savedConfig.export_format)
+                }
+
+                setPrefsOpen(true)
+              }}
+            >
+              <Settings2 className="mr-1.5 size-4" />
+              Preferences
+            </Button>
+            <Button
               variant={compareMode ? 'default' : 'outline'}
               size="sm"
               onClick={handleToggleCompare}
@@ -268,6 +322,7 @@ export function TemplatesPage() {
         {templates.map(template => {
           const isSelected = selectedTemplates.includes(template.name)
           const selectionIndex = selectedTemplates.indexOf(template.name)
+          const isDefault = defaultTemplateName === template.name
 
           return (
             <Card
@@ -280,7 +335,12 @@ export function TemplatesPage() {
             >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-sm">{template.display_name}</CardTitle>
+                  <div className="flex items-center gap-1.5">
+                    <CardTitle className="text-sm">{template.display_name}</CardTitle>
+                    {isDefault && (
+                      <Badge variant="secondary" className="text-[9px]">default</Badge>
+                    )}
+                  </div>
                   {isSelected && compareMode && (
                     <Badge variant="default" className="shrink-0 text-[10px]">
                       {selectionIndex === 0 ? 'A' : 'B'}
@@ -295,7 +355,7 @@ export function TemplatesPage() {
                       Tool Calls
                     </StatusBadge>
                   )}
-                  {template.special_tokens.map(token => (
+                  {template.special_tokens.slice(0, 3).map(token => (
                     <Badge
                       key={token}
                       variant="secondary"
@@ -304,6 +364,11 @@ export function TemplatesPage() {
                       {token}
                     </Badge>
                   ))}
+                  {template.special_tokens.length > 3 && (
+                    <Badge variant="outline" className="text-[10px]">
+                      +{template.special_tokens.length - 3} more
+                    </Badge>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -422,6 +487,83 @@ export function TemplatesPage() {
           )
         )}
       </div>
+
+      {/* Preferences dialog */}
+      <Dialog open={prefsOpen} onOpenChange={setPrefsOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Template Preferences</DialogTitle>
+            <DialogDescription>
+              Set default rendering preferences for your organization. These settings persist across sessions.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Default Template</Label>
+              <Select value={prefTemplate} onValueChange={setPrefTemplate}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {templates.map(t => (
+                    <SelectItem key={t.name} value={t.name}>
+                      {t.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Default Tool Call Mode</Label>
+              <Select value={prefToolMode} onValueChange={setPrefToolMode}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="inline">Inline</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Default System Prompt</Label>
+              <Textarea
+                value={prefSystemPrompt}
+                onChange={e => setPrefSystemPrompt(e.target.value)}
+                placeholder="Optional system prompt prepended to conversations..."
+                className="min-h-[80px] text-xs"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Export Format</Label>
+              <Select value={prefExportFormat} onValueChange={setPrefExportFormat}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="txt">Plain Text (.txt)</SelectItem>
+                  <SelectItem value="jsonl">JSON Lines (.jsonl)</SelectItem>
+                  <SelectItem value="parquet">Parquet (.parquet)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPrefsOpen(false)}>Cancel</Button>
+            <Button onClick={handleSavePrefs} disabled={prefSaving}>
+              {prefSaving ? (
+                <Loader2 className="mr-1.5 size-4 animate-spin" />
+              ) : (
+                <Save className="mr-1.5 size-4" />
+              )}
+              Save Preferences
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

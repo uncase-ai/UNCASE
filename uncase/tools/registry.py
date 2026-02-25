@@ -92,6 +92,23 @@ class ToolRegistry:
         """
         return [tool for tool in self._tools.values() if tool.category == category]
 
+    def unregister(self, name: str) -> None:
+        """Remove a tool from the registry.
+
+        Parameters
+        ----------
+        name:
+            Snake_case tool identifier to remove.
+
+        Raises
+        ------
+        ToolNotFoundError
+            If no tool with the given name is registered.
+        """
+        if name not in self._tools:
+            raise ToolNotFoundError(f"Tool '{name}' is not registered") from None
+        del self._tools[name]
+
     # -- Dunder helpers -----------------------------------------------------
 
     def __contains__(self, name: str) -> bool:

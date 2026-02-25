@@ -382,6 +382,49 @@ export interface ProviderListResponse {
   total: number
 }
 
+// ─── Custom Tools (persisted) ───
+export interface CustomToolResponse extends ToolDefinition {
+  id: string
+  is_active: boolean
+  is_builtin: boolean
+  organization_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface CustomToolListResponse {
+  items: CustomToolResponse[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface CustomToolCreateRequest {
+  name: string
+  description: string
+  input_schema: Record<string, unknown>
+  output_schema?: Record<string, unknown>
+  domains?: string[]
+  category?: string
+  requires_auth?: boolean
+  execution_mode?: 'simulated' | 'live' | 'mock'
+  version?: string
+  metadata?: Record<string, unknown>
+}
+
+export interface CustomToolUpdateRequest {
+  description?: string
+  input_schema?: Record<string, unknown>
+  output_schema?: Record<string, unknown>
+  domains?: string[]
+  category?: string
+  requires_auth?: boolean
+  execution_mode?: 'simulated' | 'live' | 'mock'
+  version?: string
+  metadata?: Record<string, unknown>
+  is_active?: boolean
+}
+
 // ─── Plugins ───
 export interface PluginManifest {
   id: string
@@ -406,6 +449,47 @@ export interface InstalledPlugin {
   version: string
   tools_registered: string[]
   domains: string[]
+}
+
+export interface InstalledPluginResponse {
+  id: string
+  plugin_id: string
+  plugin_name: string
+  plugin_version: string
+  plugin_source: 'official' | 'community'
+  tools_registered: string[]
+  domains: string[]
+  config: Record<string, unknown> | null
+  is_active: boolean
+  organization_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface InstalledPluginListResponse {
+  items: InstalledPluginResponse[]
+  total: number
+}
+
+// ─── Template Config ───
+export interface TemplateConfig {
+  id: string
+  organization_id: string | null
+  default_template: string
+  default_tool_call_mode: 'none' | 'inline'
+  default_system_prompt: string | null
+  preferred_templates: string[]
+  export_format: string
+  created_at: string
+  updated_at: string
+}
+
+export interface TemplateConfigUpdateRequest {
+  default_template?: string
+  default_tool_call_mode?: 'none' | 'inline'
+  default_system_prompt?: string | null
+  preferred_templates?: string[]
+  export_format?: string
 }
 
 // ─── Knowledge Base ───

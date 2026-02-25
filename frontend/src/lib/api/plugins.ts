@@ -1,6 +1,6 @@
-import type { InstalledPlugin, PluginManifest } from '@/types/api'
+import type { InstalledPluginListResponse, InstalledPluginResponse, PluginManifest } from '@/types/api'
 
-import { apiDelete, apiGet, apiPost } from './client'
+import { apiDelete, apiGet, apiPost, apiPut } from './client'
 
 export function fetchPlugins(
   params?: { domain?: string; tag?: string; source?: string },
@@ -17,7 +17,7 @@ export function fetchPlugins(
 }
 
 export function fetchInstalledPlugins(signal?: AbortSignal) {
-  return apiGet<InstalledPlugin[]>('/api/v1/plugins/installed', { signal })
+  return apiGet<InstalledPluginListResponse>('/api/v1/plugins/installed', { signal })
 }
 
 export function fetchPlugin(id: string, signal?: AbortSignal) {
@@ -25,11 +25,15 @@ export function fetchPlugin(id: string, signal?: AbortSignal) {
 }
 
 export function installPlugin(id: string) {
-  return apiPost<InstalledPlugin>(`/api/v1/plugins/${encodeURIComponent(id)}/install`)
+  return apiPost<InstalledPluginResponse>(`/api/v1/plugins/${encodeURIComponent(id)}/install`)
 }
 
 export function uninstallPlugin(id: string) {
   return apiDelete(`/api/v1/plugins/${encodeURIComponent(id)}/install`)
+}
+
+export function updatePluginConfig(id: string, data: { config?: Record<string, unknown>; is_active?: boolean }) {
+  return apiPut<InstalledPluginResponse>(`/api/v1/plugins/${encodeURIComponent(id)}/config`, data)
 }
 
 export function publishPlugin(manifest: PluginManifest) {
