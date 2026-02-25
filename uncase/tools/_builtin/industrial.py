@@ -440,4 +440,3 @@ INDUSTRIAL_TOOLS: list[ToolDefinition] = [
     buscar_manual_tecnico,
     registrar_incidencia,
 ]
-

@@ -48,7 +48,7 @@ buscar_curriculum = ToolDefinition(
             },
             "tema": {
                 "type": "string",
-                "description": "Specific topic or keyword within the curriculum (e.g. fracciones, Revolución Mexicana).",
+                "description": "Specific topic or keyword within the curriculum (e.g. fracciones).",
             },
             "plan_estudios": {
                 "type": "string",
@@ -448,4 +448,3 @@ EDUCATION_TOOLS: list[ToolDefinition] = [
     buscar_recurso_educativo,
     programar_sesion,
 ]
-

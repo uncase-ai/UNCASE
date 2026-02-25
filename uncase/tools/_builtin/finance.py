@@ -415,4 +415,3 @@ FINANCE_TOOLS: list[ToolDefinition] = [
     verificar_cumplimiento,
     simular_inversion,
 ]
-

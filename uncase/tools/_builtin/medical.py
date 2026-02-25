@@ -386,4 +386,3 @@ MEDICAL_TOOLS: list[ToolDefinition] = [
     consultar_resultados_lab,
     consultar_cobertura_seguro,
 ]
-

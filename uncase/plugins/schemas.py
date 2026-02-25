@@ -10,7 +10,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from uncase.tools.schemas import ToolDefinition
+from uncase.tools.schemas import ToolDefinition  # noqa: TC001
 
 
 class PluginManifest(BaseModel):

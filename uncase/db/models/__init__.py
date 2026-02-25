@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from uncase.db.models.evaluation import EvaluationReportModel
+from uncase.db.models.job import JobModel
 from uncase.db.models.knowledge import KnowledgeChunkModel, KnowledgeDocumentModel
 from uncase.db.models.organization import APIKeyAuditLogModel, APIKeyModel, OrganizationModel
 from uncase.db.models.provider import LLMProviderModel
@@ -14,6 +15,7 @@ __all__ = [
     "APIKeyAuditLogModel",
     "APIKeyModel",
     "EvaluationReportModel",
+    "JobModel",
     "KnowledgeChunkModel",
     "KnowledgeDocumentModel",
     "LLMProviderModel",

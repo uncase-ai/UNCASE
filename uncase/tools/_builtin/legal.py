@@ -377,4 +377,3 @@ LEGAL_TOOLS: list[ToolDefinition] = [
     buscar_legislacion,
     calcular_honorarios,
 ]
-

@@ -7,6 +7,7 @@ import typer
 from uncase._version import __version__
 from uncase.cli.evaluate import evaluate_app
 from uncase.cli.import_cmd import import_app
+from uncase.cli.pipeline import pipeline_app
 from uncase.cli.seed import seed_app
 from uncase.cli.template import template_app
 from uncase.cli.tool import tool_app
@@ -23,6 +24,7 @@ app.add_typer(seed_app, name="seed")
 app.add_typer(template_app, name="template")
 app.add_typer(import_app, name="import")
 app.add_typer(tool_app, name="tool")
+app.add_typer(pipeline_app, name="pipeline")
 app.add_typer(evaluate_app, name="evaluate")
 
 
