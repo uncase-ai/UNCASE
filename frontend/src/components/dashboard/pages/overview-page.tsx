@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useSyncExternalStore } from 'react'
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -75,13 +75,8 @@ function SetupStep({
   actionLabel: string
   icon: React.ElementType
 }) {
-  const content = (
-    <div
-      className={cn(
-        'flex items-start gap-4 rounded-lg border px-4 py-3.5 transition-colors',
-        done ? 'border-muted bg-muted/30' : 'hover:bg-muted/50'
-      )}
-    >
+  const inner = (
+    <>
       <div
         className={cn(
           'flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
@@ -95,28 +90,71 @@ function SetupStep({
         <div className="text-xs text-muted-foreground">{description}</div>
       </div>
       {!done && (
-        <Button variant="outline" size="sm" className="shrink-0 text-xs" asChild={typeof action === 'string'}>
-          {typeof action === 'string' ? (
-            <Link href={action}>
-              {actionLabel}
-              <ChevronRight className="ml-1 size-3" />
-            </Link>
-          ) : (
-            <span onClick={action}>
-              {actionLabel}
-              <ChevronRight className="ml-1 size-3" />
-            </span>
-          )}
-        </Button>
+        <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border px-3 text-xs font-medium">
+          {actionLabel}
+          <ChevronRight className="ml-1 size-3" />
+        </span>
       )}
-    </div>
+    </>
+  )
+
+  const rowClass = cn(
+    'flex items-start gap-4 rounded-lg border px-4 py-3.5 transition-colors',
+    done ? 'border-muted bg-muted/30' : 'hover:bg-muted/50'
   )
 
   if (typeof action === 'string' && !done) {
-    return <Link href={action} className="block">{content}</Link>
+    return (
+      <Link href={action} className={rowClass}>
+        {inner}
+      </Link>
+    )
   }
 
-  return content
+  if (typeof action === 'function' && !done) {
+    return (
+      <button type="button" onClick={action} className={cn(rowClass, 'w-full text-left')}>
+        {inner}
+      </button>
+    )
+  }
+
+  return <div className={rowClass}>{inner}</div>
+}
+
+// ─── localStorage snapshot (avoids hydration mismatch + setState-in-effect) ───
+
+type ClientSnapshot = { conversations: number; evaluations: number; hasOrg: boolean }
+
+const SERVER_SNAPSHOT: ClientSnapshot = { conversations: 0, evaluations: 0, hasOrg: false }
+const subscribeNoop = () => () => {}
+
+let _cachedKey: string | null = null
+let _cachedValue: ClientSnapshot = SERVER_SNAPSHOT
+
+function getClientSnapshot(): ClientSnapshot {
+  const key = `${localStorage.getItem('uncase-conversations')}|${localStorage.getItem('uncase-evaluations')}|${localStorage.getItem(ORG_ID_KEY)}`
+
+  if (key !== _cachedKey) {
+    _cachedKey = key
+    let conversations = 0
+    let evaluations = 0
+
+    try {
+      conversations = JSON.parse(localStorage.getItem('uncase-conversations') ?? '[]').length
+      evaluations = JSON.parse(localStorage.getItem('uncase-evaluations') ?? '[]').length
+    } catch {
+      /* empty */
+    }
+
+    _cachedValue = { conversations, evaluations, hasOrg: !!localStorage.getItem(ORG_ID_KEY) }
+  }
+
+  return _cachedValue
+}
+
+function getServerSnapshot(): ClientSnapshot {
+  return SERVER_SNAPSHOT
 }
 
 // ─── Main Component ───
@@ -133,24 +171,7 @@ export function OverviewPage() {
   const templates = useApi<TemplateInfo[]>(templatesFetcher)
   const tools = useApi<ToolDefinition[]>(toolsFetcher)
 
-  const [localCounts] = useState(() => {
-    if (typeof window === 'undefined') return { conversations: 0, evaluations: 0 }
-
-    try {
-      const convs = JSON.parse(localStorage.getItem('uncase-conversations') ?? '[]')
-      const evals = JSON.parse(localStorage.getItem('uncase-evaluations') ?? '[]')
-
-      return { conversations: convs.length, evaluations: evals.length }
-    } catch {
-      return { conversations: 0, evaluations: 0 }
-    }
-  })
-
-  const [hasOrg] = useState(() => {
-    if (typeof window === 'undefined') return false
-
-    return !!localStorage.getItem(ORG_ID_KEY)
-  })
+  const clientData = useSyncExternalStore(subscribeNoop, getClientSnapshot, getServerSnapshot)
 
   const stats = useMemo(
     () => ({
@@ -163,7 +184,7 @@ export function OverviewPage() {
     [templates.data, tools.data, health.data]
   )
 
-  const setupComplete = hasOrg && stats.apiOk
+  const setupComplete = clientData.hasOrg && stats.apiOk
 
   const handleStartDemo = async () => {
     await activateDemo()
@@ -216,7 +237,7 @@ export function OverviewPage() {
               step={1}
               title="Create your organization"
               description="Set up your workspace to manage seeds, API keys, and team access."
-              done={hasOrg}
+              done={clientData.hasOrg}
               action="/dashboard/settings"
               actionLabel="Set up"
               icon={Building2}
@@ -247,8 +268,8 @@ export function OverviewPage() {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard title="Templates" value={stats.templates} icon={BookOpen} description="Chat formats available" />
         <StatsCard title="Tools" value={stats.tools} icon={Puzzle} description="Registered definitions" />
-        <StatsCard title="Conversations" value={localCounts.conversations} icon={MessageSquare} description="In local store" />
-        <StatsCard title="Evaluations" value={localCounts.evaluations} icon={BarChart3} description="Quality reports" />
+        <StatsCard title="Conversations" value={clientData.conversations} icon={MessageSquare} description="In local store" />
+        <StatsCard title="Evaluations" value={clientData.evaluations} icon={BarChart3} description="Quality reports" />
       </div>
 
       {/* Pipeline */}

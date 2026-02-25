@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation'
+
 import HeroSection40 from '@/components/shadcn-studio/blocks/hero-section-40/hero-section-40'
 import Features from '@/components/blocks/features/features'
 import Benefits from '@/components/blocks/benefits/benefits'
@@ -40,6 +42,13 @@ const jsonLd = {
 }
 
 const Home = () => {
+  // When NEXT_PUBLIC_LANDING is not set (e.g. local dev after git clone),
+  // send users straight to the dashboard. The landing page is only shown
+  // on the production marketing site (Vercel) where the env var is set.
+  if (process.env.NEXT_PUBLIC_LANDING !== 'true') {
+    redirect('/dashboard')
+  }
+
   return (
     <>
       <HeroSection40 />
