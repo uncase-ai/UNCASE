@@ -134,6 +134,10 @@ export function apiDelete<T = void>(path: string, options?: RequestOptions): Pro
   return request<T>('DELETE', path, undefined, options)
 }
 
+export function apiPatch<T>(path: string, body?: unknown, options?: RequestOptions): Promise<ApiResponse<T>> {
+  return request<T>('PATCH', path, body, options)
+}
+
 export async function apiUpload<T>(
   path: string,
   file: File,

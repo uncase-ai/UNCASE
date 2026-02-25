@@ -44,5 +44,19 @@ async def meter(
                 ip_address=ip_address,
             )
         )
+
+        # Dispatch webhook event (fire-and-forget)
+        try:
+            from uncase.services.webhook import WebhookService
+
+            webhook_service = WebhookService(session)
+            await webhook_service.dispatch_event(
+                event_type,
+                organization_id=organization_id,
+                resource_id=resource_id,
+                data=metadata,
+            )
+        except Exception:
+            logger.debug("webhook_dispatch_skipped", event_type=event_type)
     except Exception:
         logger.warning("usage_metering_failed", event_type=event_type, exc_info=True)

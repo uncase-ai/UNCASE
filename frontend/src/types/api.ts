@@ -432,3 +432,101 @@ export interface KnowledgeDocument {
   uploaded_at: string
   metadata: Record<string, unknown>
 }
+
+// ─── Gateway / Chat ───
+export interface ChatMessage {
+  role: string
+  content: string
+}
+
+export interface ChatTool {
+  type: string
+  function: { name: string; description?: string; parameters?: Record<string, unknown> }
+}
+
+export interface ChatRequest {
+  messages: ChatMessage[]
+  provider_id?: string
+  model?: string
+  temperature?: number
+  max_tokens?: number
+  privacy_mode?: 'audit' | 'warn' | 'block'
+  tools?: ChatTool[]
+  tool_choice?: string
+  bypass_words?: string[]
+}
+
+export interface ChatStreamChunk {
+  delta: string
+  index: number
+  tool_calls?: Record<string, unknown>[]
+}
+
+export interface ChatStreamComplete {
+  full_response: string
+  finish_reason: string
+  model: string
+  provider_name: string
+  privacy: {
+    outbound_pii_found: number
+    inbound_pii_found: number
+    mode: string
+    any_blocked: boolean
+  }
+  usage: { input_tokens: number; output_tokens: number }
+}
+
+// ─── Webhooks ───
+export interface WebhookSubscriptionCreate {
+  url: string
+  events: string[]
+  description?: string
+}
+
+export interface WebhookSubscriptionUpdate {
+  url?: string
+  events?: string[]
+  description?: string
+  is_active?: boolean
+}
+
+export interface WebhookSubscriptionResponse {
+  id: string
+  url: string
+  events: string[]
+  description: string | null
+  is_active: boolean
+  last_triggered_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface WebhookSubscriptionCreatedResponse extends WebhookSubscriptionResponse {
+  secret: string
+}
+
+export interface WebhookDeliveryResponse {
+  id: string
+  subscription_id: string
+  event_type: string
+  status: 'pending' | 'delivered' | 'failed'
+  http_status_code: number | null
+  error_message: string | null
+  attempts: number
+  created_at: string
+  delivered_at: string | null
+}
+
+export interface WebhookListResponse {
+  items: WebhookSubscriptionResponse[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface WebhookDeliveryListResponse {
+  items: WebhookDeliveryResponse[]
+  total: number
+  page: number
+  page_size: number
+}

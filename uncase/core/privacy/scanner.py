@@ -98,8 +98,9 @@ class PIIScanner:
         result = scanner.scan_and_anonymize("My SSN is 123-45-6789")
     """
 
-    def __init__(self, confidence_threshold: float = 0.85) -> None:
+    def __init__(self, confidence_threshold: float = 0.85, bypass_words: set[str] | None = None) -> None:
         self.confidence_threshold = confidence_threshold
+        self.bypass_words: set[str] = {w.lower() for w in (bypass_words or set())}
         self._presidio_analyzer: object | None = None
         self._presidio_anonymizer: object | None = None
 
@@ -176,6 +177,10 @@ class PIIScanner:
 
         # Sort by position
         entities.sort(key=lambda e: e.start)
+
+        # Filter out bypassed words
+        if self.bypass_words:
+            entities = [e for e in entities if e.text.lower() not in self.bypass_words]
 
         return PIIScanResult(
             original_text=text,

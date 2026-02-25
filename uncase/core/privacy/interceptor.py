@@ -70,6 +70,7 @@ class PrivacyInterceptor:
         mode: str = "audit",
         confidence_threshold: float = 0.85,
         anonymize_outbound: bool = True,
+        bypass_words: set[str] | None = None,
     ) -> None:
         if mode not in ("audit", "warn", "block"):
             msg = f"Invalid mode '{mode}'. Must be: audit, warn, block"
@@ -77,7 +78,7 @@ class PrivacyInterceptor:
 
         self.mode = mode
         self.anonymize_outbound = anonymize_outbound
-        self._scanner = PIIScanner(confidence_threshold=confidence_threshold)
+        self._scanner = PIIScanner(confidence_threshold=confidence_threshold, bypass_words=bypass_words)
 
     @property
     def has_presidio(self) -> bool:

@@ -25,6 +25,7 @@ from uncase.api.routers.seeds import router as seeds_router
 from uncase.api.routers.templates import router as templates_router
 from uncase.api.routers.tools import router as tools_router
 from uncase.api.routers.usage import router as usage_router
+from uncase.api.routers.webhooks import router as webhooks_router
 from uncase.config import UNCASESettings
 from uncase.db.engine import close_engine, init_engine
 from uncase.logging import setup_logging
@@ -84,6 +85,7 @@ def create_app() -> FastAPI:
     application.include_router(gateway_router)
     application.include_router(knowledge_router)
     application.include_router(usage_router)
+    application.include_router(webhooks_router)
 
     # Mount MCP server (lazy import to avoid hard dependency at module level)
     try:

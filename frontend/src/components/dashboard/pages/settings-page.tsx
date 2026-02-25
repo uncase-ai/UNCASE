@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-import { Check, Copy, Eye, EyeOff, Key, Loader2, Play, Plus, RefreshCw, Server, Shield, Star, Trash2, Zap } from 'lucide-react'
+import { Check, Copy, Eye, EyeOff, Key, Loader2, Play, Plus, RefreshCw, Server, Shield, ShieldOff, Star, Trash2, X, Zap } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
 import type { APIKeyCreatedResponse, APIKeyResponse, OrganizationResponse, ProviderResponse, ProviderTestResponse } from '@/types/api'
@@ -38,6 +38,25 @@ import { StatusBadge } from '../status-badge'
 
 const ORG_ID_KEY = 'uncase-org-id'
 const API_KEY_STORAGE_KEY = 'uncase-api-key'
+const BYPASS_WORDS_KEY = 'uncase-bypass-words'
+
+function loadBypassWords(): string[] {
+  if (typeof window === 'undefined') return []
+
+  try {
+    const raw = localStorage.getItem(BYPASS_WORDS_KEY)
+
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+function saveBypassWords(words: string[]) {
+  localStorage.setItem(BYPASS_WORDS_KEY, JSON.stringify(words))
+}
+
+export { loadBypassWords }
 
 export function SettingsPage() {
   const { theme, setTheme } = useTheme()
@@ -68,6 +87,10 @@ export function SettingsPage() {
 
   // ─── Active API Key ───
   const [activeKeyPrefix, setActiveKeyPrefix] = useState<string | null>(null)
+
+  // ─── Bypass Words ───
+  const [bypassWords, setBypassWords] = useState<string[]>(() => loadBypassWords())
+  const [newBypassWord, setNewBypassWord] = useState('')
 
   // ─── API Health ───
   const [apiOk, setApiOk] = useState<boolean | null>(null)
@@ -260,6 +283,25 @@ export function SettingsPage() {
     await navigator.clipboard.writeText(key)
     setCopiedKey(true)
     setTimeout(() => setCopiedKey(false), 2000)
+  }
+
+  const handleAddBypassWord = () => {
+    const word = newBypassWord.trim()
+
+    if (!word || bypassWords.some(w => w.toLowerCase() === word.toLowerCase())) return
+
+    const updated = [...bypassWords, word]
+
+    setBypassWords(updated)
+    saveBypassWords(updated)
+    setNewBypassWord('')
+  }
+
+  const handleRemoveBypassWord = (word: string) => {
+    const updated = bypassWords.filter(w => w !== word)
+
+    setBypassWords(updated)
+    saveBypassWords(updated)
   }
 
   const keyColumns: Column<APIKeyResponse>[] = [
@@ -569,6 +611,61 @@ export function SettingsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Separator />
+
+      {/* Bypass Words */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <ShieldOff className="size-4" /> Bypassed Words
+              </CardTitle>
+              <CardDescription>
+                Words excluded from PII detection (e.g., bot names, place names, holidays). These words will not be flagged
+                or anonymized when scanning conversations through the LLM Gateway.
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Add a word (e.g., Mariana, Christmas, Tokyo)"
+              value={newBypassWord}
+              onChange={e => setNewBypassWord(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleAddBypassWord()
+              }}
+              className="max-w-sm"
+            />
+            <Button variant="outline" size="sm" onClick={handleAddBypassWord} disabled={!newBypassWord.trim()}>
+              <Plus className="mr-1 size-3" /> Add
+            </Button>
+          </div>
+          {bypassWords.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {bypassWords.map(word => (
+                <Badge key={word} variant="secondary" className="gap-1 pr-1 text-xs">
+                  {word}
+                  <button
+                    onClick={() => handleRemoveBypassWord(word)}
+                    className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              No bypassed words configured. Add words that should be excluded from PII checks, such as bot names
+              (&quot;Mariana&quot;), place names, holiday names, or domain-specific terms.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <Separator />
 
