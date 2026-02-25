@@ -35,10 +35,10 @@ def test_tool_definition_valid() -> None:
 @pytest.mark.parametrize(
     "bad_name",
     [
-        "LookupVehicle",   # uppercase
-        "Lookup",          # starts with uppercase
+        "LookupVehicle",  # uppercase
+        "Lookup",  # starts with uppercase
         "lookup vehicle",  # space
-        "1lookup",         # starts with digit
+        "1lookup",  # starts with digit
         "lookup-vehicle",  # hyphen
     ],
 )

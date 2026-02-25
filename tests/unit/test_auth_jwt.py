@@ -14,7 +14,6 @@ from uncase.services.auth import (
     _decode_jwt,
 )
 
-
 SECRET = "test-secret-key-for-jwt-tests-min-32b"  # noqa: S105
 
 
@@ -86,10 +85,10 @@ class TestTokenLifetimes:
     """Test token lifetime constants."""
 
     def test_access_token_lifetime(self) -> None:
-        assert ACCESS_TOKEN_LIFETIME == timedelta(hours=1)
+        assert timedelta(hours=1) == ACCESS_TOKEN_LIFETIME
 
     def test_refresh_token_lifetime(self) -> None:
-        assert REFRESH_TOKEN_LIFETIME == timedelta(days=30)
+        assert timedelta(days=30) == REFRESH_TOKEN_LIFETIME
 
 
 class TestAuthServiceVerifyToken:

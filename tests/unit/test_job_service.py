@@ -118,9 +118,7 @@ class TestJobServiceLifecycle:
     async def test_update_progress(self, async_session: AsyncSession) -> None:
         service = JobService(async_session)
         job = await service.create_job(job_type="test", config={})
-        await service.update_progress(
-            job.id, progress=0.5, current_stage="generation", status_message="Halfway"
-        )
+        await service.update_progress(job.id, progress=0.5, current_stage="generation", status_message="Halfway")
         updated = await service.get_job(job.id)
         assert updated.progress == 0.5
         assert updated.current_stage == "generation"

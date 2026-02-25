@@ -530,3 +530,103 @@ export interface WebhookDeliveryListResponse {
   page: number
   page_size: number
 }
+
+// ─── Background Jobs ───
+export interface JobResponse {
+  id: string
+  job_type: string
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled'
+  progress: number
+  current_stage: string | null
+  status_message: string | null
+  config: Record<string, unknown>
+  result: Record<string, unknown> | null
+  error_message: string | null
+  organization_id: string | null
+  started_at: string | null
+  completed_at: string | null
+  created_at: string
+}
+
+// ─── Pipeline ───
+export interface PipelineRunRequest {
+  raw_conversations: string[]
+  domain: string
+  count?: number
+  model?: string | null
+  temperature?: number
+  train_adapter?: boolean
+  base_model?: string
+  use_qlora?: boolean
+  use_dp_sgd?: boolean
+  dp_epsilon?: number
+  async_mode?: boolean
+}
+
+export interface PipelineRunResponse {
+  job_id: string
+  status: string
+  message: string
+}
+
+// ─── Auth / JWT ───
+export interface LoginRequest {
+  api_key: string
+}
+
+export interface TokenResponse {
+  access_token: string
+  refresh_token: string
+  token_type: string
+  expires_in: number
+  role: 'admin' | 'developer' | 'viewer'
+  org_id: string
+}
+
+export interface TokenVerifyResponse {
+  valid: boolean
+  org_id: string | null
+  role: string | null
+  scopes: string | null
+}
+
+// ─── Cost Tracking ───
+export interface CostSummary {
+  organization_id: string
+  period_days: number
+  total_cost_usd: number
+  total_tokens: number
+  event_count: number
+  cost_by_provider: Record<string, number>
+  cost_by_event_type: Record<string, number>
+}
+
+export interface JobCost {
+  job_id: string
+  total_cost_usd: number
+  total_tokens: number
+  event_count: number
+}
+
+export interface DailyCost {
+  date: string
+  event_count: number
+}
+
+// ─── Audit Logs ───
+export interface AuditLogEntry {
+  id: string
+  action: string
+  resource_type: string
+  resource_id: string | null
+  actor_type: string
+  actor_id: string | null
+  organization_id: string | null
+  ip_address: string | null
+  endpoint: string | null
+  http_method: string | null
+  detail: string | null
+  extra_data: Record<string, unknown> | null
+  status: string
+  created_at: string
+}

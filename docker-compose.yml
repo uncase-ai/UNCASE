@@ -103,6 +103,43 @@ services:
       - models_data:/app/models
       - exports_data:/app/exports
 
+  # ── Prometheus (perfil observability) ──────────────────────
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: uncase-prometheus
+    profiles: ["observability"]
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=30d"
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
+
+  # ── Grafana (perfil observability) ────────────────────────
+  grafana:
+    image: grafana/grafana:11.4.0
+    container_name: uncase-grafana
+    profiles: ["observability"]
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-uncase}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
 volumes:
   postgres_data:
     driver: local
@@ -111,4 +148,8 @@ volumes:
   exports_data:
     driver: local
   mlflow_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
     driver: local

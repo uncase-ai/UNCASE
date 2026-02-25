@@ -192,9 +192,7 @@ async def _execute_pipeline_job(
         try:
             await svc.mark_running(job_id)
 
-            async def _update_progress(
-                stage: str, progress: float, message: str, _svc: JobService = svc
-            ) -> None:
+            async def _update_progress(stage: str, progress: float, message: str, _svc: JobService = svc) -> None:
                 try:
                     await _svc.update_progress(job_id, progress=progress, current_stage=stage, status_message=message)
                 except Exception:

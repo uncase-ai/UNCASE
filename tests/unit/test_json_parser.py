@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import json
 
-import pytest
-
 from uncase.core.seed_engine.parsers import (
     JSONConversationParser,
     detect_format,

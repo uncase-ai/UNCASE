@@ -7,9 +7,10 @@ routers/services via ``UsageMeteringService.record()``.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from uncase.api.deps import get_db, get_optional_org
 from uncase.db.models.organization import OrganizationModel
@@ -19,9 +20,6 @@ from uncase.schemas.usage import (
     UsageTimelineResponse,
 )
 from uncase.services.usage import UsageMeteringService
-
-if TYPE_CHECKING:
-    from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/api/v1/usage", tags=["usage"])
 

@@ -14,7 +14,7 @@ class TestSlidingWindowCounter:
 
     def test_allows_first_request(self) -> None:
         counter = _SlidingWindowCounter()
-        allowed, remaining, reset = counter.is_allowed("key1", 10, 60)
+        allowed, remaining, _reset = counter.is_allowed("key1", 10, 60)
         assert allowed is True
         assert remaining == 9
 

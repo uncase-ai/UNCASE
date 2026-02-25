@@ -13,8 +13,10 @@ from uncase.api.metrics import MetricsMiddleware
 from uncase.api.metrics import router as metrics_router
 from uncase.api.middleware import register_exception_handlers
 from uncase.api.rate_limit import RateLimitMiddleware
+from uncase.api.routers.audit import router as audit_router
 from uncase.api.routers.auth import router as auth_router
 from uncase.api.routers.connectors import router as connectors_router
+from uncase.api.routers.costs import router as costs_router
 from uncase.api.routers.evaluations import router as evaluations_router
 from uncase.api.routers.gateway import router as gateway_router
 from uncase.api.routers.generation import router as generation_router
@@ -107,6 +109,8 @@ def create_app() -> FastAPI:
     application.include_router(knowledge_router)
     application.include_router(usage_router)
     application.include_router(webhooks_router)
+    application.include_router(audit_router)
+    application.include_router(costs_router)
     application.include_router(metrics_router)
 
     # Mount MCP server (lazy import to avoid hard dependency at module level)

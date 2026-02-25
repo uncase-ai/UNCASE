@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from uncase.db.models.audit import AuditLogModel
 from uncase.db.models.evaluation import EvaluationReportModel
 from uncase.db.models.job import JobModel
 from uncase.db.models.knowledge import KnowledgeChunkModel, KnowledgeDocumentModel
@@ -14,6 +15,7 @@ from uncase.db.models.webhook import WebhookDeliveryModel, WebhookSubscriptionMo
 __all__ = [
     "APIKeyAuditLogModel",
     "APIKeyModel",
+    "AuditLogModel",
     "EvaluationReportModel",
     "JobModel",
     "KnowledgeChunkModel",

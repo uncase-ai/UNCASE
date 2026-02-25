@@ -5,6 +5,8 @@ import {
   ArrowDownToLine,
   BarChart3,
   BookOpen,
+  ClipboardList,
+  DollarSign,
   FlaskConical,
   GitBranch,
   LayoutDashboard,
@@ -52,7 +54,11 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: 'Insights',
-    items: [{ label: 'Evaluations', href: '/dashboard/evaluations', icon: BarChart3 }]
+    items: [
+      { label: 'Evaluations', href: '/dashboard/evaluations', icon: BarChart3 },
+      { label: 'Jobs', href: '/dashboard/jobs', icon: ClipboardList },
+      { label: 'Costs', href: '/dashboard/costs', icon: DollarSign }
+    ]
   },
   {
     items: [

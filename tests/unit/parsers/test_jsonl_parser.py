@@ -24,13 +24,15 @@ def parser() -> JSONLConversationParser:
 
 async def test_parse_openai_format(parser: JSONLConversationParser) -> None:
     """Parse OpenAI-style JSONL and verify role mapping."""
-    data = json.dumps({
-        "messages": [
-            {"role": "system", "content": "Eres un asesor de ventas."},
-            {"role": "user", "content": "Busco un auto nuevo."},
-            {"role": "assistant", "content": "Con gusto le ayudo."},
-        ]
-    })
+    data = json.dumps(
+        {
+            "messages": [
+                {"role": "system", "content": "Eres un asesor de ventas."},
+                {"role": "user", "content": "Busco un auto nuevo."},
+                {"role": "assistant", "content": "Con gusto le ayudo."},
+            ]
+        }
+    )
 
     conversations = await parser.parse(data, format="openai")
 
@@ -48,12 +50,14 @@ async def test_parse_openai_format(parser: JSONLConversationParser) -> None:
 
 async def test_parse_sharegpt_format(parser: JSONLConversationParser) -> None:
     """Parse ShareGPT-style JSONL and verify role mapping."""
-    data = json.dumps({
-        "conversations": [
-            {"from": "human", "value": "Busco un vehiculo familiar."},
-            {"from": "gpt", "value": "Le recomiendo ver nuestras SUVs."},
-        ]
-    })
+    data = json.dumps(
+        {
+            "conversations": [
+                {"from": "human", "value": "Busco un vehiculo familiar."},
+                {"from": "gpt", "value": "Le recomiendo ver nuestras SUVs."},
+            ]
+        }
+    )
 
     conversations = await parser.parse(data, format="sharegpt")
 
@@ -197,24 +201,26 @@ async def test_parse_unsupported_format(parser: JSONLConversationParser) -> None
 
 async def test_parse_openai_with_tool_calls(parser: JSONLConversationParser) -> None:
     """OpenAI format with tool_calls is parsed correctly."""
-    data = json.dumps({
-        "messages": [
-            {"role": "user", "content": "Busca un Toyota."},
-            {
-                "role": "assistant",
-                "content": "Buscando...",
-                "tool_calls": [
-                    {
-                        "id": "tc_001",
-                        "function": {
-                            "name": "buscar_inventario",
-                            "arguments": '{"marca": "Toyota"}',
-                        },
-                    }
-                ],
-            },
-        ]
-    })
+    data = json.dumps(
+        {
+            "messages": [
+                {"role": "user", "content": "Busca un Toyota."},
+                {
+                    "role": "assistant",
+                    "content": "Buscando...",
+                    "tool_calls": [
+                        {
+                            "id": "tc_001",
+                            "function": {
+                                "name": "buscar_inventario",
+                                "arguments": '{"marca": "Toyota"}',
+                            },
+                        }
+                    ],
+                },
+            ]
+        }
+    )
 
     conversations = await parser.parse(data, format="openai")
 

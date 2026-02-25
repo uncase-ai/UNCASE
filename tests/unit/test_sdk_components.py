@@ -112,10 +112,10 @@ class TestTrainerSDK:
             use_qlora=False,
             use_dp_sgd=True,
             dp_epsilon=3.0,
-            output_dir="/tmp/custom",
+            output_dir="./outputs/test/custom",
         )
         assert trainer._base_model == "custom/model"
         assert trainer._use_qlora is False
         assert trainer._use_dp_sgd is True
         assert trainer._dp_epsilon == 3.0
-        assert trainer._output_dir == "/tmp/custom"
+        assert trainer._output_dir == "./outputs/test/custom"

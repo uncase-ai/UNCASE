@@ -86,17 +86,13 @@ class TestListJobs:
         assert data[0]["job_type"] == "pipeline_run"
         assert data[0]["status"] == "pending"
 
-    async def test_filter_by_status(
-        self, client: AsyncClient, sample_job: JobModel, running_job: JobModel
-    ) -> None:
+    async def test_filter_by_status(self, client: AsyncClient, sample_job: JobModel, running_job: JobModel) -> None:
         response = await client.get("/api/v1/jobs", params={"status": "running"})
         data = response.json()
         assert len(data) == 1
         assert data[0]["status"] == "running"
 
-    async def test_filter_by_type(
-        self, client: AsyncClient, sample_job: JobModel, completed_job: JobModel
-    ) -> None:
+    async def test_filter_by_type(self, client: AsyncClient, sample_job: JobModel, completed_job: JobModel) -> None:
         response = await client.get("/api/v1/jobs", params={"job_type": "evaluation"})
         data = response.json()
         assert len(data) == 1

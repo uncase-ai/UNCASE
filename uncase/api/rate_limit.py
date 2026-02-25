@@ -49,6 +49,10 @@ class _SlidingWindowCounter:
     def __init__(self) -> None:
         self._windows: dict[str, list[float]] = defaultdict(list)
 
+    def reset(self) -> None:
+        """Clear all rate limit windows (used in tests)."""
+        self._windows.clear()
+
     def is_allowed(self, key: str, limit: int, window: int) -> tuple[bool, int, int]:
         """Check if a request is allowed under the rate limit.
 

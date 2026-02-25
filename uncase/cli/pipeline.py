@@ -42,9 +42,7 @@ def run_pipeline(
         raise typer.Exit(1)
 
     # Split by double newline (conversation separator) or treat as single
-    raw_conversations = (
-        [c.strip() for c in raw_text.split("\n\n") if c.strip()] if "\n\n" in raw_text else [raw_text]
-    )
+    raw_conversations = [c.strip() for c in raw_text.split("\n\n") if c.strip()] if "\n\n" in raw_text else [raw_text]
 
     typer.echo(f"UNCASE Pipeline — Domain: {domain}")
     typer.echo(f"  Input: {input_file} ({len(raw_conversations)} conversation(s))")

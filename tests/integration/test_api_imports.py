@@ -33,10 +33,7 @@ VALID_JSONL_SHAREGPT = (
     '{"from": "gpt", "value": "Con gusto. ¿Tiene preferencia de marca?"}]}\n'
 )
 
-INVALID_CSV_MISSING_COLUMNS = (
-    "id,text\n"
-    "1,This CSV is missing required columns\n"
-)
+INVALID_CSV_MISSING_COLUMNS = "id,text\n1,This CSV is missing required columns\n"
 
 INVALID_CSV_EMPTY = ""
 

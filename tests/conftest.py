@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from uncase.api.deps import get_db, get_settings
 from uncase.api.main import create_app
+from uncase.api.rate_limit import _counter
 from uncase.config import UNCASESettings
 from uncase.db.base import Base
 
@@ -50,6 +51,7 @@ async def async_session() -> AsyncGenerator[AsyncSession, None]:
 @pytest.fixture()
 async def client(async_session: AsyncSession, settings: UNCASESettings) -> AsyncGenerator[AsyncClient, None]:
     """Test client with database session override."""
+    _counter.reset()
     app = create_app()
 
     async def _override_db() -> AsyncGenerator[AsyncSession, None]:

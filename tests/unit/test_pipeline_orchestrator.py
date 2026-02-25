@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -24,9 +22,7 @@ class TestPipelineStageResult:
         assert stage.error is None
 
     def test_failed_stage(self) -> None:
-        stage = PipelineStageResult(
-            stage="generation", success=False, duration_seconds=0.1, error="LLM timeout"
-        )
+        stage = PipelineStageResult(stage="generation", success=False, duration_seconds=0.1, error="LLM timeout")
         assert stage.success is False
         assert stage.error == "LLM timeout"
 
@@ -37,9 +33,7 @@ class TestPipelineStageResult:
 
 class TestPipelineResult:
     def test_default_values(self) -> None:
-        result = PipelineResult(
-            run_id="test-001", domain="automotive.sales", success=False, total_duration_seconds=0.0
-        )
+        result = PipelineResult(run_id="test-001", domain="automotive.sales", success=False, total_duration_seconds=0.0)
         assert result.seeds == []
         assert result.conversations == []
         assert result.reports == []
@@ -207,8 +201,8 @@ class TestPipelineOrchestrator:
             mock_eval.evaluate = AsyncMock(return_value=mock_report)
 
             mock_lora = mock_lora_cls.return_value
-            mock_lora.prepare_dataset = AsyncMock(return_value=Path("/tmp/dataset.jsonl"))
-            mock_lora.train = AsyncMock(return_value=Path("/tmp/adapter"))
+            mock_lora.prepare_dataset = AsyncMock(return_value=Path("./outputs/test/dataset.jsonl"))
+            mock_lora.train = AsyncMock(return_value=Path("./outputs/test/adapter"))
             mock_lora.evaluate_model = AsyncMock(return_value={"perplexity": 2.5})
 
             orchestrator = PipelineOrchestrator(settings=mock_settings)
@@ -220,7 +214,7 @@ class TestPipelineOrchestrator:
                 base_model="test-model",
             )
 
-            assert result.adapter_path == Path("/tmp/adapter")
+            assert result.adapter_path == Path("./outputs/test/adapter")
             assert result.success is True
             assert len(result.stages) == 4
 
@@ -246,9 +240,7 @@ class TestPipelineOrchestrator:
             mock_eval = mock_eval_cls.return_value
             mock_eval.evaluate = AsyncMock(return_value=mock_report)
 
-            orchestrator = PipelineOrchestrator(
-                settings=mock_settings, progress_callback=track_progress
-            )
+            orchestrator = PipelineOrchestrator(settings=mock_settings, progress_callback=track_progress)
             await orchestrator.run(
                 raw_conversations=["Vendedor: Hola\nCliente: Buenos dias"],
                 domain="automotive.sales",

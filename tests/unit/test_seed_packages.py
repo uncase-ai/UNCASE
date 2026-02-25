@@ -8,7 +8,6 @@ from uncase.domains.seed_packages.automotive import AUTOMOTIVE_SEEDS
 from uncase.domains.seed_packages.finance import FINANCE_SEEDS
 from uncase.domains.seed_packages.medical import MEDICAL_SEEDS
 
-
 REQUIRED_FIELDS = {
     "dominio",
     "idioma",

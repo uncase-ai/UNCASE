@@ -80,3 +80,17 @@ class SeedListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+# Rebuild models that reference TYPE_CHECKING-only imports (datetime)
+# so Pydantic can resolve forward references at runtime.
+def _rebuild_models() -> None:
+    from datetime import datetime as _dt
+
+    ns = {"datetime": _dt}
+    SeedResponse.model_rebuild(_types_namespace=ns)
+    SeedListResponse.model_rebuild(_types_namespace=ns)
+
+
+_rebuild_models()
+del _rebuild_models

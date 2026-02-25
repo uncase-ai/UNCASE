@@ -60,7 +60,4 @@ class TestSecurityHeaders:
         """Non-API routes should not get API cache headers."""
         response = await client.get("/health")
         # /health is not under /api/ so should not get the strict cache headers
-        cc = response.headers.get("cache-control", "")
-        # It might or might not have cache-control, but it shouldn't have 'no-store'
-        # unless the framework adds its own
         assert response.status_code == 200

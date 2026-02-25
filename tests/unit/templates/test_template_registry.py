@@ -138,18 +138,20 @@ def test_register_all_templates() -> None:
 
     registry = get_template_registry()
 
-    expected_names = sorted([
-        "alpaca",
-        "chatml",
-        "harmony",
-        "llama",
-        "minimax",
-        "mistral",
-        "moonshot",
-        "nemotron",
-        "openai_api",
-        "qwen",
-    ])
+    expected_names = sorted(
+        [
+            "alpaca",
+            "chatml",
+            "harmony",
+            "llama",
+            "minimax",
+            "mistral",
+            "moonshot",
+            "nemotron",
+            "openai_api",
+            "qwen",
+        ]
+    )
 
     registered = registry.list_names()
 

@@ -103,9 +103,7 @@ class TestPrivacyMetric:
     def test_score_capped_at_one(self) -> None:
         seed = make_seed()
         # Create conversation with many PII entities
-        pii_text = " ".join(
-            [f"email{i}@test.com" for i in range(20)]
-        )
+        pii_text = " ".join([f"email{i}@test.com" for i in range(20)])
         conversation = make_conversation(
             seed_id=seed.seed_id,
             turnos=[ConversationTurn(turno=1, rol="cliente", contenido=pii_text)],

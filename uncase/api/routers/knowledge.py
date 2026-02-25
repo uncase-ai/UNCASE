@@ -6,9 +6,10 @@ search, and deletion.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from uncase.api.deps import get_db, get_optional_org
 from uncase.api.metering import meter
@@ -20,9 +21,6 @@ from uncase.schemas.knowledge import (
     KnowledgeUploadRequest,
 )
 from uncase.services.knowledge import KnowledgeService
-
-if TYPE_CHECKING:
-    from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/api/v1/knowledge", tags=["knowledge"])
 
