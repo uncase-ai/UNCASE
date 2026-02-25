@@ -103,6 +103,13 @@ class KnowledgeDocumentNotFoundError(UNCASEError):
     detail = "Knowledge document not found"
 
 
+class JobNotFoundError(UNCASEError):
+    """Requested background job does not exist."""
+
+    status_code = 404
+    detail = "Job not found"
+
+
 # -- Validation --
 
 
@@ -190,3 +197,27 @@ class SandboxTimeoutError(SandboxError):
 
     status_code = 504
     detail = "Sandbox execution timed out"
+
+
+# -- ML / Training Pipeline --
+
+
+class MLDependencyError(UNCASEError):
+    """Required ML dependencies not installed. Install with: pip install 'uncase[ml]'"""
+
+    status_code = 503
+    detail = "Required ML dependencies not installed. Install with: pip install 'uncase[ml]'"
+
+
+class TrainingError(UNCASEError):
+    """Training pipeline error."""
+
+    status_code = 500
+    detail = "Training pipeline error"
+
+
+class DatasetPreparationError(UNCASEError):
+    """Dataset preparation failed."""
+
+    status_code = 500
+    detail = "Dataset preparation failed"
