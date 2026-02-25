@@ -1,0 +1,132 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  build:
+    name: Build distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # hatch-vcs needs full history
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: pip install build hatchling hatch-vcs
+
+      - name: Build package
+        run: python -m build
+        working-directory: uncase
+
+      - name: Verify version matches tag
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PKG_VERSION=$(python -c "import importlib.metadata; print(importlib.metadata.version('uncase'))" 2>/dev/null || \
+            python -c "from uncase._version import __version__; print(__version__)")
+          echo "Tag: $TAG_VERSION | Package: $PKG_VERSION"
+          # Allow hatch-vcs post-release suffixes
+          if [[ "$PKG_VERSION" != "$TAG_VERSION"* ]]; then
+            echo "::error::Version mismatch: tag=$TAG_VERSION package=$PKG_VERSION"
+            exit 1
+          fi
+        working-directory: uncase
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: uncase/dist/
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/uncase
+    permissions:
+      id-token: write  # trusted publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    name: Create GitHub Release
+    needs: publish-pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "UNCASE $GITHUB_REF_NAME" \
+            --generate-notes
+
+  update-homebrew:
+    name: Update Homebrew formula
+    needs: publish-pypi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install tools
+        run: pip install homebrew-pypi-poet
+
+      - name: Wait for PyPI propagation
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          for i in $(seq 1 30); do
+            if pip index versions uncase 2>/dev/null | grep -q "$VERSION"; then
+              echo "Found uncase==$VERSION on PyPI"
+              break
+            fi
+            echo "Waiting for PyPI... attempt $i/30"
+            sleep 10
+          done
+
+      - name: Generate formula
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          python scripts/generate-homebrew-formula.py --version "$VERSION" --output formula.rb
+
+      - name: Push to homebrew tap
+        env:
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          git clone https://x-access-token:${TAP_TOKEN}@github.com/uncase-ai/homebrew-tap.git tap
+          mkdir -p tap/Formula
+          cp formula.rb tap/Formula/uncase.rb
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/uncase.rb
+          git commit -m "uncase ${GITHUB_REF_NAME}"
+          git push
