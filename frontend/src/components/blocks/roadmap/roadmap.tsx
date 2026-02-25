@@ -1,6 +1,15 @@
 'use client'
 
-import { BuildingIcon, CheckCircle2Icon, CloudIcon, GlobeIcon, NetworkIcon, UsersIcon } from 'lucide-react'
+import {
+  ActivityIcon,
+  BuildingIcon,
+  CheckCircle2Icon,
+  CloudIcon,
+  GlobeIcon,
+  NetworkIcon,
+  PuzzleIcon,
+  UsersIcon
+} from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -115,7 +124,7 @@ const roadmapData = [
           </div>
           <h3 className='text-lg font-semibold'>Layer 4 + Full REST API</h3>
           <p className='text-muted-foreground text-sm leading-relaxed'>
-            LoRA/QLoRA fine-tuning with DP-SGD privacy guarantees. 52 REST API endpoints covering the complete
+            LoRA/QLoRA fine-tuning with DP-SGD privacy guarantees. Full REST API covering the complete
             pipeline. Docker Compose deployment with PostgreSQL and MLflow.
           </p>
           <div className='flex flex-wrap gap-1.5'>
@@ -123,7 +132,7 @@ const roadmapData = [
               DP-SGD
             </Badge>
             <Badge variant='outline' className='text-xs'>
-              52 endpoints
+              75+ endpoints
             </Badge>
             <Badge variant='outline' className='text-xs'>
               Docker
@@ -167,13 +176,13 @@ const roadmapData = [
   {
     title: 'Q1 2026 — E2B Cloud Sandboxes',
     content: (
-      <Card className='max-w-sm border-primary/30 shadow-none'>
+      <Card className='max-w-sm shadow-none'>
         <CardContent className='space-y-3'>
           <div className='flex items-center gap-2'>
-            <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg'>
+            <div className='bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 flex size-10 items-center justify-center rounded-lg'>
               <CloudIcon className='size-5' />
             </div>
-            <Badge className='bg-primary/10 text-primary'>Current</Badge>
+            <Badge className='bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'>Completed</Badge>
           </div>
           <h3 className='text-lg font-semibold'>Parallel Sandboxes & Instant Demos</h3>
           <p className='text-muted-foreground text-sm leading-relaxed'>
@@ -197,27 +206,93 @@ const roadmapData = [
     )
   },
   {
-    title: 'Q2 2026 — Multi-Domain Expansion',
+    title: 'Q1 2026 — Plugins & Knowledge Base',
     content: (
       <Card className='max-w-sm shadow-none'>
         <CardContent className='space-y-3'>
-          <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg'>
-            <GlobeIcon className='size-5' />
+          <div className='flex items-center gap-2'>
+            <div className='bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 flex size-10 items-center justify-center rounded-lg'>
+              <PuzzleIcon className='size-5' />
+            </div>
+            <Badge className='bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'>Completed</Badge>
           </div>
-          <h3 className='text-lg font-semibold'>Domain Templates & MCP Server</h3>
+          <h3 className='text-lg font-semibold'>Plugin Marketplace & Knowledge Persistence</h3>
           <p className='text-muted-foreground text-sm leading-relaxed'>
-            Domain-specific seed templates for all 6 industries. MCP (Model Context Protocol) server for IDE
-            integration. Advanced WhatsApp parser improvements and CRM connector.
+            Plugin registry with 6 official plugins and 30 domain-specific tools. Knowledge base with server-side
+            chunking and full-text search. Usage metering wired across all endpoints. Webhook delivery system with
+            HMAC-signed payloads.
           </p>
           <div className='flex flex-wrap gap-1.5'>
             <Badge variant='outline' className='text-xs'>
-              Seed templates
+              6 plugins
+            </Badge>
+            <Badge variant='outline' className='text-xs'>
+              30 domain tools
+            </Badge>
+            <Badge variant='outline' className='text-xs'>
+              Knowledge base
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  },
+  {
+    title: 'Q1 2026 — Enterprise Infrastructure',
+    content: (
+      <Card className='max-w-sm shadow-none'>
+        <CardContent className='space-y-3'>
+          <div className='flex items-center gap-2'>
+            <div className='bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 flex size-10 items-center justify-center rounded-lg'>
+              <ActivityIcon className='size-5' />
+            </div>
+            <Badge className='bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'>Completed</Badge>
+          </div>
+          <h3 className='text-lg font-semibold'>Audit, Costs & Observability</h3>
+          <p className='text-muted-foreground text-sm leading-relaxed'>
+            Immutable audit logging with compliance trail. LLM cost tracking per organization and job. Data retention
+            policies. Prometheus + Grafana observability stack. 970+ tests at 73% coverage across 22 API routers.
+          </p>
+          <div className='flex flex-wrap gap-1.5'>
+            <Badge variant='outline' className='text-xs'>
+              Audit logging
+            </Badge>
+            <Badge variant='outline' className='text-xs'>
+              Cost tracking
+            </Badge>
+            <Badge variant='outline' className='text-xs'>
+              970+ tests
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  },
+  {
+    title: 'Q2 2026 — Multi-Domain & SDK',
+    content: (
+      <Card className='max-w-sm border-primary/30 shadow-none'>
+        <CardContent className='space-y-3'>
+          <div className='flex items-center gap-2'>
+            <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg'>
+              <GlobeIcon className='size-5' />
+            </div>
+            <Badge className='bg-primary/10 text-primary'>Current</Badge>
+          </div>
+          <h3 className='text-lg font-semibold'>SDK, MCP Server & Domain Templates</h3>
+          <p className='text-muted-foreground text-sm leading-relaxed'>
+            Python SDK for programmatic access. MCP (Model Context Protocol) server for IDE integration.
+            Domain-specific seed templates for all 6 industries. Advanced WhatsApp parser and CRM connector.
+          </p>
+          <div className='flex flex-wrap gap-1.5'>
+            <Badge variant='outline' className='text-xs'>
+              Python SDK
             </Badge>
             <Badge variant='outline' className='text-xs'>
               MCP server
             </Badge>
             <Badge variant='outline' className='text-xs'>
-              CRM connector
+              Domain templates
             </Badge>
           </div>
         </CardContent>
@@ -232,20 +307,20 @@ const roadmapData = [
           <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg'>
             <UsersIcon className='size-5' />
           </div>
-          <h3 className='text-lg font-semibold'>PyPI, Plugins & Marketplace</h3>
+          <h3 className='text-lg font-semibold'>PyPI Distribution & Community Hub</h3>
           <p className='text-muted-foreground text-sm leading-relaxed'>
-            PyPI package distribution with optional extras (ml, privacy, all). Plugin system for custom evaluators and
-            generators. Community seed marketplace for shared domain templates.
+            PyPI package with optional extras (ml, privacy, all). Homebrew formula. Community seed marketplace for
+            shared domain templates. Third-party plugin development docs and contributor guides.
           </p>
           <div className='flex flex-wrap gap-1.5'>
             <Badge variant='outline' className='text-xs'>
               pip install uncase
             </Badge>
             <Badge variant='outline' className='text-xs'>
-              Plugins
+              Homebrew
             </Badge>
             <Badge variant='outline' className='text-xs'>
-              Marketplace
+              Community hub
             </Badge>
           </div>
         </CardContent>
@@ -260,20 +335,20 @@ const roadmapData = [
           <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg'>
             <BuildingIcon className='size-5' />
           </div>
-          <h3 className='text-lg font-semibold'>Enterprise & Audit Dashboard</h3>
+          <h3 className='text-lg font-semibold'>SaaS Platform & Team Management</h3>
           <p className='text-muted-foreground text-sm leading-relaxed'>
-            Enterprise features: team management, role-based access, audit dashboard with full traceability from seed to
-            adapter. SaaS platform with managed infrastructure.
+            Multi-tenant SaaS platform with managed infrastructure. Team management with role-based access control
+            (RBAC). JWT authentication with refresh tokens. Billing integration and usage-based pricing tiers.
           </p>
           <div className='flex flex-wrap gap-1.5'>
-            <Badge variant='outline' className='text-xs'>
-              Audit dashboard
-            </Badge>
             <Badge variant='outline' className='text-xs'>
               RBAC
             </Badge>
             <Badge variant='outline' className='text-xs'>
-              SaaS
+              JWT auth
+            </Badge>
+            <Badge variant='outline' className='text-xs'>
+              SaaS billing
             </Badge>
           </div>
         </CardContent>

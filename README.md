@@ -15,9 +15,9 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License" /></a>
   <a href="https://python.org"><img src="https://img.shields.io/badge/python-≥3.11-blue.svg" alt="Python" /></a>
   <a href="https://docs.astral.sh/ruff/"><img src="https://img.shields.io/badge/code%20style-ruff-000000.svg" alt="Ruff" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/tests-309%20passing-brightgreen.svg" alt="Tests" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/tests-970%20passing-brightgreen.svg" alt="Tests" /></a>
   <a href="#"><img src="https://img.shields.io/badge/coverage-73%25-green.svg" alt="Coverage" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/API%20endpoints-52-purple.svg" alt="Endpoints" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/API%20endpoints-75+-purple.svg" alt="Endpoints" /></a>
 </p>
 
 ---
@@ -665,6 +665,9 @@ docker compose --profile ml up -d
 
 # With NVIDIA GPU support
 docker compose --profile gpu up -d
+
+# With Prometheus + Grafana monitoring
+docker compose --profile observability up -d
 ```
 
 | Service | Port | Profile | Description |
@@ -673,6 +676,8 @@ docker compose --profile gpu up -d
 | `postgres` | 5432 | default | PostgreSQL 16 |
 | `mlflow` | 5000 | `ml` | MLflow tracking server |
 | `api-gpu` | 8001 | `gpu` | GPU-accelerated API |
+| `prometheus` | 9090 | `observability` | Prometheus metrics collector |
+| `grafana` | 3001 | `observability` | Grafana dashboards |
 
 ### Available Extras
 
@@ -819,6 +824,7 @@ make clean         # Remove build artifacts
 | Router | Prefix | Endpoints | Description |
 |---|---|---|---|
 | **health** | `/health` | 2 | Service status, database connectivity |
+| **auth** | `/api/v1/auth` | 3 | JWT login, token refresh, token verification |
 | **seeds** | `/api/v1/seeds` | 5 | Seed CRUD (create, list, get, update, delete) |
 | **generate** | `/api/v1/generate` | 1 | Synthetic conversation generation |
 | **evaluations** | `/api/v1/evaluations` | 3 | Single eval, batch eval, thresholds |
@@ -830,8 +836,17 @@ make clean         # Remove build artifacts
 | **organizations** | `/api/v1/organizations` | 7 | Org CRUD + API key management |
 | **import** | `/api/v1/import` | 2 | CSV and JSONL file import |
 | **sandbox** | `/api/v1/sandbox` | 5 | E2B sandbox generation, SSE streaming, demos, Opik evaluation |
+| **knowledge** | `/api/v1/knowledge` | 5 | Document upload, search, chunking, CRUD |
+| **usage** | `/api/v1/usage` | 4 | Usage metering, summary, timeline, event types |
+| **webhooks** | `/api/v1/webhooks` | 8 | Subscription CRUD, delivery tracking, retry |
+| **plugins** | `/api/v1/plugins` | 4 | Plugin marketplace, install, uninstall, publish |
+| **pipeline** | `/api/v1/pipeline` | 3 | End-to-end pipeline runs, status, cancel |
+| **jobs** | `/api/v1/jobs` | 5 | Background job queue, progress, cancel |
+| **audit** | `/api/v1/audit` | 1 | Compliance audit trail with filtering |
+| **costs** | `/api/v1/costs` | 3 | LLM API cost tracking per org/job |
+| **metrics** | `/metrics` | 1 | Prometheus-compatible metrics |
 
-**Total: 52 endpoints** across 12 routers.
+**Total: 75+ endpoints** across 22 routers.
 
 Interactive documentation available at:
 - **Swagger UI**: `http://localhost:8000/docs`
@@ -860,6 +875,10 @@ Interactive documentation available at:
 | `E2B_MAX_PARALLEL` | `5` | Max concurrent sandboxes (1-20) |
 | `E2B_SANDBOX_TIMEOUT` | `300` | Sandbox timeout in seconds (30-600) |
 | `E2B_ENABLED` | `false` | Enable E2B sandbox support |
+| `PROMETHEUS_PORT` | `9090` | Prometheus server port |
+| `GRAFANA_PORT` | `3001` | Grafana dashboard port |
+| `GRAFANA_ADMIN_USER` | `admin` | Grafana admin username |
+| `GRAFANA_ADMIN_PASSWORD` | `uncase` | Grafana admin password |
 
 ---
 
@@ -867,9 +886,19 @@ Interactive documentation available at:
 
 ### What's Built and Working
 
-- **309 tests passing**, 73% code coverage
-- **52 REST API endpoints** across 12 routers
-- **5 SCSF layers** (4 complete, 1 scaffolded)
+- **970 tests passing**, 73% code coverage (mypy + ruff clean)
+- **75+ REST API endpoints** across 22 routers
+- **5 SCSF layers** fully implemented (Seed Engine → Parser → Evaluator → Generator → LoRA Pipeline)
+- **End-to-end pipeline orchestrator** — seed → generate → evaluate → train in one call
+- **JWT authentication** with access/refresh tokens, RBAC (admin/developer/viewer)
+- **Background job system** — async PostgreSQL-backed job queue with progress tracking
+- **Audit logging** — immutable compliance trail (who, what, when, from where)
+- **Cost tracking** — LLM API spend per organization and per job
+- **Data retention policies** — auto-cleanup with configurable per-resource periods
+- **Rate limiting** — per-key sliding window with configurable tiers
+- **Security headers** — OWASP middleware (HSTS, CSP, X-Frame-Options)
+- **Prometheus metrics** — `/metrics` endpoint with request count, latency, errors
+- **Grafana dashboard** — pre-built monitoring template included
 - **10 chat template** export formats with tool-use support
 - **6 quality metrics** with automated pass/fail certification
 - **Dual-strategy PII detection** (regex + optional Presidio NER)
@@ -879,23 +908,28 @@ Interactive documentation available at:
 - **E2B cloud sandboxes** for parallel generation (up to 20 concurrent)
 - **Instant demo containers** for 6 industry verticals
 - **Opik evaluation sandboxes** with LLM-as-judge metrics
-- **SSE streaming** for real-time sandbox progress
-- **Full-stack dashboard** with 18 routes (Next.js 16)
+- **Python SDK** — `UNCASEClient`, `Pipeline`, `SeedEngine`, `Generator`, `Evaluator`, `Trainer`
+- **150 curated domain seeds** — 50 automotive, 50 medical, 50 finance
+- **5 compliance profiles** — HIPAA, GDPR, SOX, LFPDPPP, EU AI Act
+- **Plugin marketplace** — 6 official plugins, 30 domain tools
+- **Knowledge base** — document upload with chunking and search
+- **Webhook system** — subscription CRUD, delivery tracking, retry
+- **Usage metering** — event tracking, summary, timeline analytics
+- **Full-stack dashboard** with 20+ routes (Next.js 16) — including jobs, costs, and activity pages
 - **MCP server** for AI agent integration
 - **CLI** with 20+ commands
-- **Docker Compose** with PostgreSQL, MLflow, GPU support
+- **Docker Compose** with PostgreSQL, MLflow, GPU, and observability profiles
 - **Automated deployment** via Vercel + deploy.sh
 
 ### What's Next
 
-- **Layer 4: LoRA Pipeline** — Dataset preparation from certified conversations, LoRA/QLoRA fine-tuning via transformers + peft + trl, DP-SGD with epsilon <= 8.0, MLflow experiment tracking, extraction attack testing
-- **Multi-domain expansion** — Domain-specific tools and templates for healthcare, legal, finance
+- **Benchmarks & validation** — Run pipeline on public datasets, publish quality results
+- **Row-level security** — Per-org data isolation in PostgreSQL
+- **Encryption at rest** — For sensitive fields (API keys, conversation content)
 - **Training sandboxes** — LoRA fine-tuning inside E2B sandboxes with GPU support
-- **Persistent Opik dashboard** — Long-running Opik instances for cross-experiment comparison
-- **Batch processing queue** — Async job queue for large-scale generation
-- **Frontend sandbox page** — Visual sandbox management, demo launcher, and evaluation results
-- **Frontend models page** — Visual provider management and connection testing
-- **Frontend connectors page** — Visual connector configuration and import history
+- **End-to-end demo** — Recorded demo videos for automotive and medical domains
+- **API documentation** — Request/response examples, architecture guide
+- **Deployment guide** — Kubernetes, cloud providers
 
 ---
 
@@ -904,50 +938,63 @@ Interactive documentation available at:
 ```
                                     UNCASE Roadmap
 
-  COMPLETED                          IN PROGRESS                    PLANNED
-  ─────────                          ───────────                    ───────
+  COMPLETED ✓                                        IN PROGRESS / PLANNED
+  ─────────                                          ─────────────────────
 
-  Phase 0: Infrastructure            Phase 6: LoRA Pipeline         Phase 7: Multi-Domain
-  ├─ Database + migrations           ├─ Dataset preparation         ├─ Healthcare tools
-  ├─ Organization management         ├─ LoRA/QLoRA training         ├─ Legal tools
-  ├─ API key auth                    ├─ DP-SGD (ε ≤ 8.0)           ├─ Finance tools
-  └─ MCP server                      ├─ MLflow tracking             └─ Manufacturing tools
-                                     └─ Extraction attack tests
-  Phase 1: Parse & Template                                         Phase 8: Scale
-  ├─ 10 chat templates               Phase 6.5: Frontend           ├─ Async job queue
-  ├─ CSV/JSONL parsers               ├─ Sandbox dashboard          ├─ Rate limiting
-  ├─ Tool framework (5 tools)        ├─ Models page                ├─ Training sandboxes (GPU)
-  └─ Format auto-detection           ├─ Connectors page            └─ Horizontal scaling
-                                     └─ Provider selector
-  Phase 2: Quality Engine
-  ├─ ROUGE-L metric
-  ├─ Factual fidelity
-  ├─ Lexical diversity
-  ├─ Dialogic coherence
-  └─ Privacy score gate
+  Phase 0: Infrastructure ✓                          Phase 9: Benchmarks
+  ├─ Database + 8 migrations                         ├─ Public dataset validation
+  ├─ Organization management                         ├─ Quality measurement
+  ├─ API key + JWT auth                              └─ Published results
+  └─ MCP server
+                                                     Phase 10: Security Hardening
+  Phase 1: Parse & Template ✓                        ├─ Row-level security (PostgreSQL)
+  ├─ 10 chat templates                               ├─ Encryption at rest
+  ├─ CSV/JSONL parsers                               └─ CSRF protection
+  ├─ Tool framework (30 tools)
+  └─ Format auto-detection                           Phase 11: Demo & Docs
+                                                     ├─ End-to-end demo videos
+  Phase 2: Quality Engine ✓                          ├─ API documentation
+  ├─ ROUGE-L, Factual fidelity                       ├─ Architecture guide
+  ├─ Lexical diversity, Coherence                    └─ Deployment guide (K8s)
+  └─ Privacy + Memorization gates
 
-  Phase 3: Generation
-  ├─ LiteLLM integration
+  Phase 3: Generation ✓
+  ├─ LiteLLM multi-provider
   ├─ Seed-guided generation
-  ├─ Provider-aware routing
   └─ Quality re-evaluation loop
 
-  Phase 4: Gateway & Connectors
-  ├─ LLM provider registry
-  ├─ Fernet-encrypted keys
-  ├─ Privacy interceptor
-  ├─ WhatsApp connector
-  ├─ Webhook connector
-  └─ Universal chat proxy
+  Phase 4: Gateway & Connectors ✓
+  ├─ LLM Gateway + Privacy Interceptor
+  ├─ WhatsApp + Webhook connectors
+  └─ Fernet-encrypted key storage
 
-  Phase 5: E2B Cloud Sandboxes
+  Phase 5: E2B Cloud Sandboxes ✓
   ├─ Parallel generation (20 concurrent)
-  ├─ Self-contained sandbox workers
-  ├─ SSE real-time streaming
   ├─ Instant demo containers (6 verticals)
   ├─ Opik evaluation sandboxes
-  ├─ Artifact export before destruction
-  └─ Graceful local fallback
+  └─ SSE streaming + artifact export
+
+  Phase 6: Pipeline Completion ✓
+  ├─ Layer 0: Seed Engine (PII + extraction)
+  ├─ Layer 4: LoRA Pipeline (QLoRA + DP-SGD)
+  └─ Pipeline Orchestrator (end-to-end)
+
+  Phase 7: Enterprise ✓
+  ├─ JWT auth + RBAC (admin/dev/viewer)
+  ├─ Background job system + job queue
+  ├─ Audit logging (compliance trail)
+  ├─ Cost tracking per org/job
+  ├─ Data retention policies
+  ├─ Rate limiting (sliding window)
+  ├─ Security headers (OWASP)
+  └─ Prometheus + Grafana observability
+
+  Phase 8: SDK & Domain Packages ✓
+  ├─ Python SDK (Client, Pipeline, etc.)
+  ├─ 150 curated seeds (3 domains)
+  ├─ 5 compliance profiles
+  ├─ Plugin marketplace (6 plugins)
+  └─ 970 tests at 73% coverage
 ```
 
 ---

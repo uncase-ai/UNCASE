@@ -12,7 +12,12 @@ import {
   ServerIcon,
   CloudIcon,
   PlayCircleIcon,
-  BarChart3Icon
+  BarChart3Icon,
+  PuzzleIcon,
+  BookOpenIcon,
+  ClipboardListIcon,
+  DollarSignIcon,
+  ActivityIcon
 } from 'lucide-react'
 
 export type Capability = {
@@ -72,9 +77,9 @@ export const capabilities: Capability[] = [
   },
   {
     icon: ServerIcon,
-    title: '52 REST API Endpoints',
+    title: '75+ REST API Endpoints',
     description:
-      'Complete API coverage: seeds, generation, evaluation, providers, connectors, gateway, templates, tools, imports, sandboxes, and health monitoring. Versioned at /api/v1/.'
+      'Complete API coverage: seeds, generation, evaluation, providers, connectors, gateway, templates, tools, imports, sandboxes, knowledge, usage, audit, costs, webhooks, organizations, and health monitoring. Versioned at /api/v1/.'
   },
   {
     icon: CloudIcon,
@@ -93,5 +98,35 @@ export const capabilities: Capability[] = [
     title: 'Opik Evaluation Sandboxes',
     description:
       'Ephemeral LLM-as-judge evaluation machines with Opik. Hallucination detection, coherence GEval, answer relevance — all inside an isolated sandbox. Results are exported before auto-destruction.'
+  },
+  {
+    icon: PuzzleIcon,
+    title: 'Plugin Marketplace',
+    description:
+      '6 official plugins and 30 domain-specific tools across all industries. Extensible plugin registry with install/uninstall lifecycle. Each domain gets 5 specialized tools (cotizador, simulador, CRM, etc.).'
+  },
+  {
+    icon: BookOpenIcon,
+    title: 'Knowledge Base',
+    description:
+      'Upload domain documents (facts, procedures, terminology, reference) with automatic server-side chunking. Full-text search across chunks. Persistent PostgreSQL storage with organization-level isolation.'
+  },
+  {
+    icon: ClipboardListIcon,
+    title: 'Audit Logging & Compliance',
+    description:
+      'Immutable audit trail for every API action — seeds created, evaluations run, models trained. Data retention policies with configurable TTLs. Full compliance traceability from seed to adapter.'
+  },
+  {
+    icon: DollarSignIcon,
+    title: 'LLM Cost Tracking',
+    description:
+      'Per-organization and per-job cost breakdowns across all LLM providers. Provider-aware pricing estimates. Daily cost timelines and usage metering with event-level granularity.'
+  },
+  {
+    icon: ActivityIcon,
+    title: 'Observability Stack',
+    description:
+      'Prometheus metrics export + pre-built Grafana dashboards. Request rate, latency percentiles, error rates, and top endpoints — all out of the box with Docker Compose observability profile.'
   }
 ]
