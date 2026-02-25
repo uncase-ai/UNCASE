@@ -4,7 +4,7 @@ export const faqItems: FAQs = [
   {
     question: 'What is UNCASE?',
     answer:
-      'UNCASE (Unbiased Neutral Convention for Agnostic Seed Engineering) is an open-source framework for generating high-quality synthetic conversational data. It enables LoRA fine-tuning in privacy-sensitive industries like healthcare, finance, legal, and manufacturing — without exposing any real data. The framework includes a complete API with 47 endpoints, a universal LLM gateway, data connectors, and a privacy interceptor.'
+      'UNCASE (Unbiased Neutral Convention for Agnostic Seed Engineering) is an open-source framework for generating high-quality synthetic conversational data. It enables LoRA fine-tuning in privacy-sensitive industries like healthcare, finance, legal, and manufacturing — without exposing any real data. The framework includes a complete API with 52 endpoints, a universal LLM gateway, data connectors, a privacy interceptor, and E2B cloud sandboxes for parallel generation and instant demos.'
   },
   {
     question: 'How does UNCASE protect privacy?',
@@ -39,11 +39,26 @@ export const faqItems: FAQs = [
   {
     question: 'How do I deploy UNCASE?',
     answer:
-      'Three options: (1) Git + uv for development — clone the repo, run uv sync, start the API with uvicorn. (2) pip install uncase with optional extras for ML, privacy, or everything. (3) Docker Compose with profiles for API + PostgreSQL (default), MLflow tracking (ml profile), or GPU support (gpu profile). The frontend dashboard deploys separately on Vercel or any Node.js host.'
+      'Four options: (1) Git + uv for development — clone the repo, run uv sync, start the API with uvicorn. (2) pip install uncase with optional extras for ML, privacy, sandbox, evaluation, or everything. (3) Docker Compose with profiles for API + PostgreSQL (default), MLflow tracking (ml profile), or GPU support (gpu profile). (4) E2B Cloud Sandboxes — spin up instant demo containers for any industry vertical without any local installation. The frontend dashboard deploys separately on Vercel or any Node.js host.'
   },
   {
     question: 'Which regulations does UNCASE comply with?',
     answer:
       'UNCASE is designed to comply simultaneously with GDPR (EU), HIPAA (US), LFPDPPP (Mexico), the AI Act (EU), CCPA (California), and MiFID II (EU). Since synthetic data generated from abstract seeds does not constitute personal data, many regulatory obligations are addressed by design. The full audit trail from seed to adapter provides the documentation regulators require.'
+  },
+  {
+    question: 'What are E2B Cloud Sandboxes?',
+    answer:
+      'E2B sandboxes are isolated cloud MicroVMs that boot in ~2 seconds. UNCASE uses them for parallel generation — one sandbox per seed, up to 20 concurrent. Each sandbox runs a self-contained worker with LiteLLM generation and quality evaluation. Results stream back via Server-Sent Events in real-time. When E2B is not configured, the system falls back automatically to local sequential generation. You need an E2B API key (e2b.dev) to enable sandbox mode.'
+  },
+  {
+    question: 'How do demo containers work?',
+    answer:
+      'Demo containers are short-lived UNCASE instances for specific industry verticals. You request a domain (e.g., automotive.sales, medical.consultation), and UNCASE spins up a fully configured E2B sandbox with pre-loaded seeds, a running FastAPI server, and Swagger docs — all in seconds. The sandbox auto-destroys after 5-60 minutes. No installation, no configuration. Perfect for live demos, evaluations, and proof-of-concept testing across 6 regulated industries.'
+  },
+  {
+    question: 'What is the Opik evaluation sandbox?',
+    answer:
+      'UNCASE can spin up ephemeral Opik instances inside E2B sandboxes to run LLM-as-judge evaluations on generated conversations. Three metrics are supported: hallucination detection, coherence (via GEval), and answer relevance. Each conversation gets both an Opik composite score and an UNCASE composite score. Before the sandbox auto-destroys, all traces, metrics, and experiment data are exported to persistent storage.'
   }
 ]

@@ -9,7 +9,10 @@ import {
   SearchIcon,
   NetworkIcon,
   MessageSquareIcon,
-  ServerIcon
+  ServerIcon,
+  CloudIcon,
+  PlayCircleIcon,
+  BarChart3Icon
 } from 'lucide-react'
 
 export type Capability = {
@@ -69,8 +72,26 @@ export const capabilities: Capability[] = [
   },
   {
     icon: ServerIcon,
-    title: '47 REST API Endpoints',
+    title: '52 REST API Endpoints',
     description:
-      'Complete API coverage: seeds, generation, evaluation, providers, connectors, gateway, templates, tools, imports, and health monitoring. Versioned at /api/v1/.'
+      'Complete API coverage: seeds, generation, evaluation, providers, connectors, gateway, templates, tools, imports, sandboxes, and health monitoring. Versioned at /api/v1/.'
+  },
+  {
+    icon: CloudIcon,
+    title: 'E2B Cloud Sandboxes',
+    description:
+      'Parallel generation in isolated MicroVMs — one sandbox per seed, ~2s boot time. Fan out 20 concurrent sandboxes for massive throughput. Automatic fallback to local generation when E2B is not configured.'
+  },
+  {
+    icon: PlayCircleIcon,
+    title: 'Instant Demo Containers',
+    description:
+      'Spin up a fully configured UNCASE instance for any industry vertical in seconds. Pre-loaded seeds, running API, Swagger docs — auto-destroys after 5-60 minutes. Zero installation required.'
+  },
+  {
+    icon: BarChart3Icon,
+    title: 'Opik Evaluation Sandboxes',
+    description:
+      'Ephemeral LLM-as-judge evaluation machines with Opik. Hallucination detection, coherence GEval, answer relevance — all inside an isolated sandbox. Results are exported before auto-destruction.'
   }
 ]

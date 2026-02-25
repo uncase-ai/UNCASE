@@ -42,6 +42,13 @@ class UNCASESettings(BaseSettings):
     uncase_pii_confidence_threshold: float = Field(default=0.85, ge=0.0, le=1.0)
     uncase_dp_epsilon: float = Field(default=8.0, gt=0.0)
 
+    # -- E2B Sandboxes --
+    e2b_api_key: str = ""
+    e2b_template_id: str = "base"
+    e2b_max_parallel: int = Field(default=5, ge=1, le=20)
+    e2b_sandbox_timeout: int = Field(default=300, ge=30, le=600)
+    e2b_enabled: bool = False
+
     # -- Directories --
     uncase_models_dir: str = "./models"
     uncase_exports_dir: str = "./exports"
@@ -50,6 +57,11 @@ class UNCASESettings(BaseSettings):
     def is_production(self) -> bool:
         """Check if running in production."""
         return self.uncase_env == "production"
+
+    @property
+    def sandbox_available(self) -> bool:
+        """Check if E2B sandbox is configured and enabled."""
+        return self.e2b_enabled and bool(self.e2b_api_key)
 
     @property
     def cors_origins_list(self) -> list[str]:

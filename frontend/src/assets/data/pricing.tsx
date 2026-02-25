@@ -15,12 +15,14 @@ export const plans: Plans = [
     buttonText: 'Get Started',
     features: [
       'Full 5-layer SCSF pipeline',
-      '47 REST API endpoints',
+      '52 REST API endpoints',
       'LLM Gateway with privacy interception',
       'WhatsApp & webhook connectors',
       'All 6 industry namespaces',
       '10+ chat format exports',
       'Quality evaluation (6 metrics)',
+      'E2B cloud sandboxes (BYOK)',
+      'Instant demo containers',
       'Community support via GitHub'
     ]
   },
@@ -39,9 +41,10 @@ export const plans: Plans = [
       'Dedicated seed engineering workshops',
       'Custom domain namespace setup',
       'Compliance audit documentation',
-      'Custom connector development'
+      'Custom connector development',
+      'Opik evaluation sandboxes'
     ],
-    extraFeatures: ['Priority support & SLA', 'On-premise deployment', 'Custom LLM provider integration'],
+    extraFeatures: ['Priority support & SLA', 'On-premise deployment', 'Custom LLM provider integration', 'Managed sandbox infrastructure'],
     isPopular: true
   },
   {

@@ -67,7 +67,7 @@ const tabs = [
 
 const stats = [
   { value: 0, suffix: '%', label: 'PII in final output', decimalPlaces: 0 },
-  { value: 47, suffix: '', label: 'API endpoints', decimalPlaces: 0 },
+  { value: 52, suffix: '', label: 'API endpoints', decimalPlaces: 0 },
   { value: 6, suffix: '', label: 'Regulated industries', decimalPlaces: 0 },
   { value: 5, suffix: '', label: 'Privacy layers', decimalPlaces: 0 }
 ]

@@ -18,6 +18,7 @@ from uncase.api.routers.health import router as health_router
 from uncase.api.routers.imports import router as imports_router
 from uncase.api.routers.organizations import router as organizations_router
 from uncase.api.routers.providers import router as providers_router
+from uncase.api.routers.sandbox import router as sandbox_router
 from uncase.api.routers.seeds import router as seeds_router
 from uncase.api.routers.templates import router as templates_router
 from uncase.api.routers.tools import router as tools_router
@@ -74,6 +75,7 @@ def create_app() -> FastAPI:
     application.include_router(seeds_router)
     application.include_router(generation_router)
     application.include_router(providers_router)
+    application.include_router(sandbox_router)
     application.include_router(connectors_router)
     application.include_router(gateway_router)
 

@@ -47,3 +47,11 @@ class GenerateResponse(BaseModel):
     conversations: list[Conversation] = Field(..., description="Generated synthetic conversations")
     reports: list[QualityReport] | None = Field(default=None, description="Quality reports if evaluate_after was True")
     generation_summary: GenerationSummary = Field(..., description="Summary statistics")
+
+
+class SandboxStatusResponse(BaseModel):
+    """Response for sandbox availability check."""
+
+    enabled: bool = Field(..., description="Whether E2B sandbox is configured and enabled")
+    max_parallel: int = Field(..., description="Max concurrent sandboxes allowed")
+    template_id: str = Field(..., description="E2B template ID in use")

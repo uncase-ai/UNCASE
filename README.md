@@ -17,7 +17,7 @@
   <a href="https://docs.astral.sh/ruff/"><img src="https://img.shields.io/badge/code%20style-ruff-000000.svg" alt="Ruff" /></a>
   <a href="#"><img src="https://img.shields.io/badge/tests-309%20passing-brightgreen.svg" alt="Tests" /></a>
   <a href="#"><img src="https://img.shields.io/badge/coverage-73%25-green.svg" alt="Coverage" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/API%20endpoints-47-purple.svg" alt="Endpoints" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/API%20endpoints-52-purple.svg" alt="Endpoints" /></a>
 </p>
 
 ---
@@ -94,6 +94,9 @@ UNCASE is a **complete, privacy-first pipeline** that transforms real conversati
 | PII scanning on ALL traffic | No | No | **Outbound + inbound interception** |
 | 10 fine-tuning export formats | No | 1-2 | **Every major model family** |
 | Tool-use training data | No | No | **Built-in tool simulation** |
+| Cloud sandbox parallel execution | No | No | **E2B MicroVMs, 20 concurrent** |
+| Instant demo containers | No | No | **Per-industry, auto-destroy** |
+| LLM-as-judge evaluation | No | Basic | **Opik in ephemeral sandboxes** |
 | Full pipeline (import to LoRA) | No | Partial | **5 layers, end-to-end** |
 
 ### The Seed Paradigm
@@ -306,6 +309,120 @@ curl -X POST http://localhost:8000/api/v1/tools/buscar_inventario/simulate \
 - `comparar_modelos` — Side-by-side model comparison
 - `consultar_crm` — Customer record lookup
 
+### E2B Cloud Sandboxes — Parallel Generation at Scale
+
+UNCASE can fan out generation across **isolated E2B MicroVMs** — one sandbox per seed, up to 20 in parallel. Each sandbox boots in ~2 seconds, runs a self-contained worker with LiteLLM generation and quality evaluation, and streams progress back in real-time via Server-Sent Events.
+
+```bash
+# Generate with parallel sandboxes (requires E2B_API_KEY + E2B_ENABLED=true)
+curl -X POST http://localhost:8000/api/v1/sandbox \
+  -H "Content-Type: application/json" \
+  -d '{
+    "seeds": [{"seed_id": "auto-001", "dominio": "automotive.sales", ...}],
+    "count_per_seed": 5,
+    "temperature": 0.7,
+    "evaluate_after": true,
+    "max_parallel": 10
+  }'
+
+# Stream real-time progress via SSE
+curl -N http://localhost:8000/api/v1/sandbox/stream \
+  -H "Content-Type: application/json" \
+  -d '{"seeds": [...], "count_per_seed": 3}'
+
+# Check sandbox availability
+curl http://localhost:8000/api/v1/sandbox/status
+```
+
+**How it works:**
+1. Each seed is assigned to its own isolated MicroVM
+2. A self-contained worker script (no `uncase` dependency) runs inside the sandbox
+3. The worker generates conversations via LiteLLM and evaluates quality inline
+4. Results are collected and aggregated; quality reports are returned per seed
+5. When E2B is not configured, the system **automatically falls back** to local sequential generation
+
+**Key characteristics:**
+- **Isolation**: Each sandbox runs independently — failures don't cascade
+- **Speed**: ~2s boot time per MicroVM, parallel execution across all seeds
+- **Cost**: $0.05/min per sandbox at [e2b.dev](https://e2b.dev)
+- **Graceful fallback**: Works without E2B — just slower (sequential local generation)
+
+### Instant Demo Containers
+
+Spin up a **fully configured UNCASE instance** for any industry vertical in seconds — no installation, no configuration, no deployment:
+
+```bash
+# Create a demo sandbox for automotive sales
+curl -X POST http://localhost:8000/api/v1/sandbox/demo \
+  -H "Content-Type: application/json" \
+  -d '{
+    "domain": "automotive.sales",
+    "ttl_minutes": 30,
+    "preload_seeds": 5,
+    "language": "es"
+  }'
+
+# Response includes:
+# - api_url: "https://<sandbox-id>.e2b.dev:8000"
+# - docs_url: "https://<sandbox-id>.e2b.dev:8000/docs"
+# - expires_at: "2026-02-24T12:30:00Z"
+```
+
+**6 industry demos available:**
+
+| Domain | Roles | Use Case |
+|---|---|---|
+| `automotive.sales` | Sales rep + Customer | Vehicle purchase consultation |
+| `medical.consultation` | Physician + Patient | Medical intake to treatment plan |
+| `legal.advisory` | Attorney + Client | Legal consultation and strategy |
+| `finance.advisory` | Financial advisor + Client | Investment assessment |
+| `industrial.support` | Tech specialist + Operator | Equipment diagnostics |
+| `education.tutoring` | Tutor + Student | Academic tutoring session |
+
+Each demo sandbox includes:
+- Pre-loaded industry-specific seeds
+- Running FastAPI server with Swagger docs
+- Auto-destruction after TTL expires (5-60 minutes)
+- Full UNCASE API available at the sandbox URL
+
+### Opik Evaluation Sandboxes
+
+Run **LLM-as-judge evaluations** inside ephemeral sandboxes using [Opik](https://github.com/comet-ml/opik). Evaluate generated conversations with three metrics — hallucination, coherence, and relevance — without maintaining a persistent Opik server:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/sandbox/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "conversations": [...],
+    "seeds": [...],
+    "experiment_name": "automotive-eval-001",
+    "model": "claude-sonnet-4-20250514",
+    "ttl_minutes": 60,
+    "run_hallucination_check": true,
+    "run_coherence_check": true,
+    "run_relevance_check": true,
+    "export_before_destroy": true
+  }'
+```
+
+**Three evaluation metrics:**
+
+| Metric | Method | What It Measures |
+|---|---|---|
+| Hallucination | Opik `Hallucination` | Factual grounding — 0.0 = clean, 1.0 = hallucinated |
+| Coherence | Opik `GEval` | Dialogic consistency and logical flow |
+| Relevance | Opik `GEval` | Whether responses address the conversation context |
+
+**Lifecycle:**
+1. Boot an E2B sandbox with Opik + LiteLLM installed
+2. Upload conversations and seeds
+3. Run evaluation with LLM-as-judge metrics
+4. Collect per-conversation scores and aggregate summary
+5. **Export all traces and experiment data** before sandbox destruction
+6. Return results with both Opik scores and UNCASE composite scores
+
+The ephemeral pattern means **zero infrastructure overhead** — no persistent Opik server, no database maintenance. Every evaluation run gets a fresh, isolated environment.
+
 ### MCP Server (Model Context Protocol)
 
 UNCASE exposes tools directly to Claude Code, AI agents, and any MCP-compatible client:
@@ -355,9 +472,10 @@ A Next.js 16 dashboard provides a visual interface for the entire SCSF pipeline:
   │       └──────────────┴───────────┬┴────────────┴────────────┘               │
   │                                  │                                           │
   │  ┌───────────────────────────────▼──────────────────────────────────────┐    │
-  │  │  API Layer — 47 endpoints across 11 routers                          │    │
+  │  │  API Layer — 52 endpoints across 12 routers                          │    │
   │  │  /health  /seeds  /generate  /evaluations  /templates  /tools        │    │
   │  │  /providers  /connectors  /gateway  /organizations  /import          │    │
+  │  │  /sandbox (generate, stream, demo, evaluate)                         │    │
   │  └───────────────────────────────┬──────────────────────────────────────┘    │
   │                                  │                                           │
   │  ┌───────────────────────────────▼──────────────────────────────────────┐    │
@@ -370,6 +488,12 @@ A Next.js 16 dashboard provides a visual interface for the entire SCSF pipeline:
   │  │ PII &    │ Parser & │  Quality   │ Synth    │ LoRA     │                 │
   │  │ Privacy  │ Validate │  Evaluate  │ Generate │ Pipeline │                 │
   │  └──────────┴──────────┴────────────┴──────────┴──────────┘                 │
+  │                                  │                                           │
+  │  ┌───────────────────────────────▼──────────────────────────────────────┐    │
+  │  │  Sandbox Layer (optional — E2B Cloud)                                │    │
+  │  │  E2BSandboxOrchestrator  │  DemoSandboxOrchestrator                  │    │
+  │  │  OpikSandboxRunner       │  SandboxExporter                          │    │
+  │  └───────────────────────────────┬──────────────────────────────────────┘    │
   │                                  │                                           │
   │  ┌───────────────────────────────▼──────────────────────────────────────┐    │
   │  │  Infrastructure                                                       │    │
@@ -398,7 +522,7 @@ uncase/
 │   ├── main.py                 # App factory, CORS, lifespan
 │   ├── middleware.py           # Exception handlers
 │   ├── deps.py                 # Dependency injection
-│   └── routers/                # 11 routers, 47 endpoints
+│   └── routers/                # 12 routers, 52 endpoints
 │       ├── health.py           #   GET /health, GET /health/db
 │       ├── seeds.py            #   CRUD /api/v1/seeds
 │       ├── generation.py       #   POST /api/v1/generate
@@ -409,7 +533,8 @@ uncase/
 │       ├── connectors.py       #   /api/v1/connectors (whatsapp, webhook, pii)
 │       ├── gateway.py          #   POST /api/v1/gateway/chat
 │       ├── organizations.py    #   CRUD /api/v1/organizations + API keys
-│       └── imports.py          #   POST /api/v1/import/{csv,jsonl}
+│       ├── imports.py          #   POST /api/v1/import/{csv,jsonl}
+│       └── sandbox.py          #   /api/v1/sandbox (generate, stream, demo, evaluate)
 ├── cli/                        # Typer CLI (seed, template, tool, import, evaluate)
 ├── connectors/                 # Data source connectors
 │   ├── base.py                 # Abstract BaseConnector
@@ -444,6 +569,14 @@ uncase/
 ├── db/                         # PostgreSQL async (SQLAlchemy + asyncpg)
 │   ├── models/                 # 6 tables across 3 migrations
 │   └── engine.py               # Async engine lifecycle
+├── sandbox/                    # E2B cloud sandbox execution
+│   ├── schemas.py              # 20+ Pydantic models for sandbox lifecycle
+│   ├── e2b_client.py           # E2BSandboxOrchestrator (fan-out, SSE streaming)
+│   ├── worker.py               # Self-contained script running inside sandboxes
+│   ├── demo.py                 # DemoSandboxOrchestrator (6 industry verticals)
+│   ├── opik_runner.py          # OpikSandboxRunner (LLM-as-judge evaluation)
+│   ├── exporter.py             # SandboxExporter (artifact persistence)
+│   └── template_builder.py     # Custom E2B template Dockerfile generation
 ├── mcp/                        # Model Context Protocol server
 └── config.py                   # Pydantic-settings configuration
 ```
@@ -516,6 +649,8 @@ pip install uncase                       # Core framework
 pip install "uncase[dev]"                # + development (pytest, ruff, mypy)
 pip install "uncase[ml]"                 # + machine learning (transformers, peft, trl, torch)
 pip install "uncase[privacy]"            # + enhanced PII detection (SpaCy + Presidio)
+pip install "uncase[sandbox]"            # + E2B cloud sandbox parallel generation
+pip install "uncase[evaluation]"         # + Opik LLM-as-judge evaluation
 pip install "uncase[all]"                # Everything
 ```
 
@@ -547,7 +682,9 @@ docker compose --profile gpu up -d
 | `[dev]` | pytest, ruff, mypy, factory-boy, pre-commit | Running tests, contributing |
 | `[ml]` | transformers, peft, trl, torch, mlflow, accelerate, bitsandbytes | LoRA fine-tuning |
 | `[privacy]` | spacy, presidio-analyzer, presidio-anonymizer | Enhanced NER-based PII detection |
-| `[all]` | dev + ml + privacy | Full installation |
+| `[sandbox]` | e2b, e2b-code-interpreter | E2B cloud sandbox parallel generation |
+| `[evaluation]` | opik | Opik LLM-as-judge evaluation in sandboxes |
+| `[all]` | dev + ml + privacy + sandbox + evaluation | Full installation |
 
 ---
 
@@ -692,8 +829,9 @@ make clean         # Remove build artifacts
 | **gateway** | `/api/v1/gateway` | 1 | Universal LLM chat proxy |
 | **organizations** | `/api/v1/organizations` | 7 | Org CRUD + API key management |
 | **import** | `/api/v1/import` | 2 | CSV and JSONL file import |
+| **sandbox** | `/api/v1/sandbox` | 5 | E2B sandbox generation, SSE streaming, demos, Opik evaluation |
 
-**Total: 47 endpoints** across 11 routers.
+**Total: 52 endpoints** across 12 routers.
 
 Interactive documentation available at:
 - **Swagger UI**: `http://localhost:8000/docs`
@@ -717,6 +855,11 @@ Interactive documentation available at:
 | `MLFLOW_TRACKING_URI` | `http://localhost:5000` | MLflow tracking server |
 | `UNCASE_PII_CONFIDENCE_THRESHOLD` | `0.85` | PII detection confidence (0.0-1.0) |
 | `UNCASE_DP_EPSILON` | `8.0` | Differential privacy budget |
+| `E2B_API_KEY` | -- | E2B sandbox API key (from e2b.dev) |
+| `E2B_TEMPLATE_ID` | `base` | E2B sandbox template ID |
+| `E2B_MAX_PARALLEL` | `5` | Max concurrent sandboxes (1-20) |
+| `E2B_SANDBOX_TIMEOUT` | `300` | Sandbox timeout in seconds (30-600) |
+| `E2B_ENABLED` | `false` | Enable E2B sandbox support |
 
 ---
 
@@ -725,7 +868,7 @@ Interactive documentation available at:
 ### What's Built and Working
 
 - **309 tests passing**, 73% code coverage
-- **47 REST API endpoints** across 11 routers
+- **52 REST API endpoints** across 12 routers
 - **5 SCSF layers** (4 complete, 1 scaffolded)
 - **10 chat template** export formats with tool-use support
 - **6 quality metrics** with automated pass/fail certification
@@ -733,6 +876,10 @@ Interactive documentation available at:
 - **LLM gateway** with privacy interception on all traffic
 - **Provider registry** with Fernet-encrypted key storage
 - **Data connectors** for WhatsApp, webhook, CSV, JSONL
+- **E2B cloud sandboxes** for parallel generation (up to 20 concurrent)
+- **Instant demo containers** for 6 industry verticals
+- **Opik evaluation sandboxes** with LLM-as-judge metrics
+- **SSE streaming** for real-time sandbox progress
 - **Full-stack dashboard** with 18 routes (Next.js 16)
 - **MCP server** for AI agent integration
 - **CLI** with 20+ commands
@@ -743,8 +890,10 @@ Interactive documentation available at:
 
 - **Layer 4: LoRA Pipeline** — Dataset preparation from certified conversations, LoRA/QLoRA fine-tuning via transformers + peft + trl, DP-SGD with epsilon <= 8.0, MLflow experiment tracking, extraction attack testing
 - **Multi-domain expansion** — Domain-specific tools and templates for healthcare, legal, finance
-- **Streaming generation** — SSE-based real-time progress for long generation runs
+- **Training sandboxes** — LoRA fine-tuning inside E2B sandboxes with GPU support
+- **Persistent Opik dashboard** — Long-running Opik instances for cross-experiment comparison
 - **Batch processing queue** — Async job queue for large-scale generation
+- **Frontend sandbox page** — Visual sandbox management, demo launcher, and evaluation results
 - **Frontend models page** — Visual provider management and connection testing
 - **Frontend connectors page** — Visual connector configuration and import history
 
@@ -758,18 +907,18 @@ Interactive documentation available at:
   COMPLETED                          IN PROGRESS                    PLANNED
   ─────────                          ───────────                    ───────
 
-  Phase 0: Infrastructure            Phase 5: LoRA Pipeline         Phase 6: Multi-Domain
+  Phase 0: Infrastructure            Phase 6: LoRA Pipeline         Phase 7: Multi-Domain
   ├─ Database + migrations           ├─ Dataset preparation         ├─ Healthcare tools
   ├─ Organization management         ├─ LoRA/QLoRA training         ├─ Legal tools
   ├─ API key auth                    ├─ DP-SGD (ε ≤ 8.0)           ├─ Finance tools
   └─ MCP server                      ├─ MLflow tracking             └─ Manufacturing tools
                                      └─ Extraction attack tests
-  Phase 1: Parse & Template                                         Phase 7: Scale
-  ├─ 10 chat templates               Phase 5.5: Frontend           ├─ Async job queue
-  ├─ CSV/JSONL parsers               ├─ Models page                ├─ Rate limiting
-  ├─ Tool framework (5 tools)        ├─ Connectors page            ├─ Streaming generation
-  └─ Format auto-detection           └─ Provider selector          └─ Horizontal scaling
-
+  Phase 1: Parse & Template                                         Phase 8: Scale
+  ├─ 10 chat templates               Phase 6.5: Frontend           ├─ Async job queue
+  ├─ CSV/JSONL parsers               ├─ Sandbox dashboard          ├─ Rate limiting
+  ├─ Tool framework (5 tools)        ├─ Models page                ├─ Training sandboxes (GPU)
+  └─ Format auto-detection           ├─ Connectors page            └─ Horizontal scaling
+                                     └─ Provider selector
   Phase 2: Quality Engine
   ├─ ROUGE-L metric
   ├─ Factual fidelity
@@ -790,6 +939,15 @@ Interactive documentation available at:
   ├─ WhatsApp connector
   ├─ Webhook connector
   └─ Universal chat proxy
+
+  Phase 5: E2B Cloud Sandboxes
+  ├─ Parallel generation (20 concurrent)
+  ├─ Self-contained sandbox workers
+  ├─ SSE real-time streaming
+  ├─ Instant demo containers (6 verticals)
+  ├─ Opik evaluation sandboxes
+  ├─ Artifact export before destruction
+  └─ Graceful local fallback
 ```
 
 ---

@@ -152,3 +152,27 @@ class LLMConfigurationError(UNCASEError):
 
     status_code = 503
     detail = "LLM provider not configured"
+
+
+# -- Sandbox --
+
+
+class SandboxError(UNCASEError):
+    """E2B sandbox execution failed."""
+
+    status_code = 500
+    detail = "Sandbox execution failed"
+
+
+class SandboxNotConfiguredError(UNCASEError):
+    """E2B sandbox is not configured or enabled."""
+
+    status_code = 503
+    detail = "E2B sandbox not configured. Set E2B_API_KEY and E2B_ENABLED=true."
+
+
+class SandboxTimeoutError(SandboxError):
+    """E2B sandbox execution timed out."""
+
+    status_code = 504
+    detail = "Sandbox execution timed out"

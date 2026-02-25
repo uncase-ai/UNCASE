@@ -17,7 +17,7 @@ import DottedSheet from '@/assets/svg/dotted-sheet'
 
 const stats = [
   { value: 0, suffix: '%', description: 'PII in final output', decimalPlaces: 0 },
-  { value: 47, suffix: '', description: 'API endpoints', decimalPlaces: 0 },
+  { value: 52, suffix: '', description: 'API endpoints', decimalPlaces: 0 },
   { value: 6, suffix: '', description: 'Regulated industries', decimalPlaces: 0 },
   { value: 309, suffix: '', description: 'Tests passing', decimalPlaces: 0 }
 ] as const

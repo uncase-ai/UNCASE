@@ -1,6 +1,6 @@
 'use client'
 
-import { BuildingIcon, CheckCircle2Icon, GlobeIcon, NetworkIcon, UsersIcon } from 'lucide-react'
+import { BuildingIcon, CheckCircle2Icon, CloudIcon, GlobeIcon, NetworkIcon, UsersIcon } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -115,7 +115,7 @@ const roadmapData = [
           </div>
           <h3 className='text-lg font-semibold'>Layer 4 + Full REST API</h3>
           <p className='text-muted-foreground text-sm leading-relaxed'>
-            LoRA/QLoRA fine-tuning with DP-SGD privacy guarantees. 47 REST API endpoints covering the complete
+            LoRA/QLoRA fine-tuning with DP-SGD privacy guarantees. 52 REST API endpoints covering the complete
             pipeline. Docker Compose deployment with PostgreSQL and MLflow.
           </p>
           <div className='flex flex-wrap gap-1.5'>
@@ -123,7 +123,7 @@ const roadmapData = [
               DP-SGD
             </Badge>
             <Badge variant='outline' className='text-xs'>
-              47 endpoints
+              52 endpoints
             </Badge>
             <Badge variant='outline' className='text-xs'>
               Docker
@@ -136,13 +136,13 @@ const roadmapData = [
   {
     title: 'Q1 2026 — Gateway & Connectors',
     content: (
-      <Card className='max-w-sm border-primary/30 shadow-none'>
+      <Card className='max-w-sm shadow-none'>
         <CardContent className='space-y-3'>
           <div className='flex items-center gap-2'>
-            <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg'>
+            <div className='bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 flex size-10 items-center justify-center rounded-lg'>
               <NetworkIcon className='size-5' />
             </div>
-            <Badge className='bg-primary/10 text-primary'>Current</Badge>
+            <Badge className='bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'>Completed</Badge>
           </div>
           <h3 className='text-lg font-semibold'>LLM Gateway & Connector Hub</h3>
           <p className='text-muted-foreground text-sm leading-relaxed'>
@@ -158,6 +158,38 @@ const roadmapData = [
             </Badge>
             <Badge variant='outline' className='text-xs'>
               Privacy Interceptor
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  },
+  {
+    title: 'Q1 2026 — E2B Cloud Sandboxes',
+    content: (
+      <Card className='max-w-sm border-primary/30 shadow-none'>
+        <CardContent className='space-y-3'>
+          <div className='flex items-center gap-2'>
+            <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg'>
+              <CloudIcon className='size-5' />
+            </div>
+            <Badge className='bg-primary/10 text-primary'>Current</Badge>
+          </div>
+          <h3 className='text-lg font-semibold'>Parallel Sandboxes & Instant Demos</h3>
+          <p className='text-muted-foreground text-sm leading-relaxed'>
+            E2B MicroVM parallel generation — one sandbox per seed, up to 20 concurrent. Instant demo containers for 6
+            industry verticals. Opik LLM-as-judge evaluation sandboxes. SSE real-time streaming. Artifact export before
+            auto-destruction.
+          </p>
+          <div className='flex flex-wrap gap-1.5'>
+            <Badge variant='outline' className='text-xs'>
+              E2B sandboxes
+            </Badge>
+            <Badge variant='outline' className='text-xs'>
+              Demo containers
+            </Badge>
+            <Badge variant='outline' className='text-xs'>
+              Opik evaluation
             </Badge>
           </div>
         </CardContent>

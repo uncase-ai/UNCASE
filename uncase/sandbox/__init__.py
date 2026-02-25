@@ -1,0 +1,45 @@
+"""E2B sandbox module for parallel generation, demos, and evaluation."""
+
+from uncase.sandbox.e2b_client import E2BSandboxOrchestrator
+from uncase.sandbox.schemas import (
+    DemoSandboxRequest,
+    DemoSandboxResponse,
+    ExportArtifact,
+    OpikConversationResult,
+    OpikEvaluationRequest,
+    OpikEvaluationResponse,
+    OpikEvaluationSummary,
+    OpikMetricResult,
+    SandboxConfig,
+    SandboxExportResult,
+    SandboxGenerateRequest,
+    SandboxGenerateResponse,
+    SandboxGenerationSummary,
+    SandboxJob,
+    SandboxJobStatus,
+    SandboxProgress,
+    SandboxSeedResult,
+    SandboxTemplate,
+)
+
+__all__ = [
+    "DemoSandboxRequest",
+    "DemoSandboxResponse",
+    "E2BSandboxOrchestrator",
+    "ExportArtifact",
+    "OpikConversationResult",
+    "OpikEvaluationRequest",
+    "OpikEvaluationResponse",
+    "OpikEvaluationSummary",
+    "OpikMetricResult",
+    "SandboxConfig",
+    "SandboxExportResult",
+    "SandboxGenerateRequest",
+    "SandboxGenerateResponse",
+    "SandboxGenerationSummary",
+    "SandboxJob",
+    "SandboxJobStatus",
+    "SandboxProgress",
+    "SandboxSeedResult",
+    "SandboxTemplate",
+]

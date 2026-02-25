@@ -1,4 +1,4 @@
-import { ShieldCheckIcon, BrainCircuitIcon, LayersIcon, ZapIcon, NetworkIcon, PlugIcon } from 'lucide-react'
+import { ShieldCheckIcon, BrainCircuitIcon, LayersIcon, ZapIcon, NetworkIcon, PlugIcon, CloudIcon } from 'lucide-react'
 
 import { type Features } from '@/components/blocks/benefits/benefits'
 
@@ -35,7 +35,7 @@ export const benefits: Features = [
     icon: <LayersIcon />,
     title: 'Modular 5-Layer Pipeline',
     description:
-      'Each layer delivers value independently. Start with seed engineering, add parsing, quality evaluation, synthetic generation, and LoRA training incrementally. 47 API endpoints cover the full lifecycle — no big-bang deployment needed.',
+      'Each layer delivers value independently. Start with seed engineering, add parsing, quality evaluation, synthetic generation, and LoRA training incrementally. 52 API endpoints cover the full lifecycle — no big-bang deployment needed.',
     image: '/images/logo/whitepaper-architecture.png'
   },
   {
@@ -44,5 +44,12 @@ export const benefits: Features = [
     description:
       'LoRA adapters of 50-150 MB instead of 28 GB base models. Training in 2-8 hours on a single A100. Infrastructure cost: $15-$45 USD per specialized adapter. Fine-tuning is no longer a luxury — it is accessible to any organization.',
     image: '/images/logo/whitepaper-foundations.png'
+  },
+  {
+    icon: <CloudIcon />,
+    title: 'Cloud-Native Parallel Execution',
+    description:
+      'Fan out generation across isolated E2B MicroVMs — one sandbox per seed, up to 20 in parallel. Each sandbox boots in ~2 seconds, runs generation + evaluation, and streams progress in real-time. Spin up instant demo containers for any industry or ephemeral Opik evaluation machines that export results before auto-destruction.',
+    image: '/images/logo/whitepaper-architecture.png'
   }
 ]
