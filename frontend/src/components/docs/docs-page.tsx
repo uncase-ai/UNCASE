@@ -558,13 +558,13 @@ export default function DocsPage() {
 
           {/* Language toggle */}
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={() => setLocale(prev => (prev === 'en' ? 'es' : 'en'))}
-            className="text-muted-foreground hover:text-foreground gap-1.5 text-xs"
+            className="gap-2 border-primary/30 bg-primary/5 text-foreground hover:bg-primary/10 hover:border-primary/50 font-medium"
           >
-            <Languages className="size-3.5" />
-            {locale === 'en' ? 'ES' : 'EN'}
+            <Languages className="size-4" />
+            {locale === 'en' ? 'Español' : 'English'}
           </Button>
         </div>
       </div>
