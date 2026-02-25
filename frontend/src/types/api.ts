@@ -108,6 +108,9 @@ export interface Conversation {
   created_at: string
   metadata: Record<string, unknown>
   status?: 'valid' | 'invalid'
+  rating?: number
+  tags?: string[]
+  notes?: string
 }
 
 // ─── Templates ───

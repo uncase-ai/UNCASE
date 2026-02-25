@@ -10,9 +10,11 @@ import {
   Bot,
   Check,
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
   Code2,
-  GripVertical,
-  Pencil,
+  Plus,
+  ShieldCheck,
   Trash2,
   User,
   Wrench,
@@ -23,7 +25,7 @@ import type { Conversation, ConversationTurn } from '@/types/api'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
   DialogClose,
@@ -33,6 +35,8 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Rating } from '@/components/ui/rating'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 
@@ -46,16 +50,14 @@ interface ConversationDetailPageProps {
   id: string
 }
 
-type TurnType = 'user' | 'assistant' | 'tool_call' | 'tool_result'
+type MessageRole = 'system' | 'user' | 'assistant' | 'tool_call' | 'tool_result'
 
-interface FlattenedItem {
-  type: TurnType
+interface FlatItem {
+  role: MessageRole
   turnIndex: number
   turn: ConversationTurn
   toolCallIndex?: number
   toolResultIndex?: number
-
-  /** Unique key for React rendering and drag identity */
   key: string
 }
 
@@ -92,41 +94,38 @@ function isAssistantRole(rol: string): boolean {
   )
 }
 
-// ─── Flatten turns into renderable items ───
+function isSystemRole(rol: string): boolean {
+  return rol.toLowerCase() === 'system' || rol.toLowerCase() === 'sistema'
+}
 
-function flattenTurns(turnos: ConversationTurn[]): FlattenedItem[] {
-  const items: FlattenedItem[] = []
+function getMessageRole(turn: ConversationTurn): MessageRole {
+  if (isSystemRole(turn.rol)) return 'system'
+  if (isAssistantRole(turn.rol)) return 'assistant'
+
+  return 'user'
+}
+
+// ─── Flatten turns ───
+
+function flattenTurns(turnos: ConversationTurn[]): FlatItem[] {
+  const items: FlatItem[] = []
 
   for (let i = 0; i < turnos.length; i++) {
     const turn = turnos[i]
-    const baseType: TurnType = isAssistantRole(turn.rol) ? 'assistant' : 'user'
+    const role = getMessageRole(turn)
 
-    // Main message bubble
-    items.push({
-      type: baseType,
-      turnIndex: i,
-      turn,
-      key: `turn-${turn.turno}-msg`
-    })
+    items.push({ role, turnIndex: i, turn, key: `turn-${turn.turno}-msg` })
 
-    // Tool calls as separate items (visually grouped under the turn)
     if (turn.tool_calls) {
       for (let tc = 0; tc < turn.tool_calls.length; tc++) {
-        items.push({
-          type: 'tool_call',
-          turnIndex: i,
-          turn,
-          toolCallIndex: tc,
-          key: `turn-${turn.turno}-tc-${tc}`
-        })
+        items.push({ role: 'tool_call', turnIndex: i, turn, toolCallIndex: tc, key: `turn-${turn.turno}-tc-${tc}` })
       }
     }
 
-    // Tool results as separate items
     if (turn.tool_results) {
       for (let tr = 0; tr < turn.tool_results.length; tr++) {
         items.push({
-          type: 'tool_result',
+          role: 'tool_result',
           turnIndex: i,
           turn,
           toolResultIndex: tr,
@@ -139,267 +138,260 @@ function flattenTurns(turnos: ConversationTurn[]): FlattenedItem[] {
   return items
 }
 
-// ─── Style config per turn type ───
+// ─── Style config per role ───
 
-const TURN_STYLES: Record<
-  TurnType,
-  {
-    borderClass: string
-    bgClass: string
-    labelBgClass: string
-    align: 'left' | 'right'
-    icon: typeof Bot
-    iconColorClass: string
-    label: string
-  }
-> = {
+const ROLE_STYLES: Record<MessageRole, { label: string; labelClass: string; bgClass: string; borderClass: string; icon: typeof Bot; iconClass: string }> = {
+  system: {
+    label: 'SYSTEM',
+    labelClass: 'text-violet-700 dark:text-violet-300',
+    bgClass: 'bg-violet-50/60 dark:bg-violet-950/20',
+    borderClass: 'border-violet-200 dark:border-violet-800/50',
+    icon: ShieldCheck,
+    iconClass: 'text-violet-500 dark:text-violet-400'
+  },
   user: {
-    borderClass: 'border-l-blue-500',
-    bgClass: 'bg-blue-50 dark:bg-blue-950/30',
-    labelBgClass: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
-    align: 'right',
+    label: 'USER',
+    labelClass: 'text-sky-700 dark:text-sky-300',
+    bgClass: 'bg-sky-50/50 dark:bg-sky-950/20',
+    borderClass: 'border-sky-200 dark:border-sky-800/50',
     icon: User,
-    iconColorClass: 'text-blue-600 dark:text-blue-400',
-    label: 'User'
+    iconClass: 'text-sky-500 dark:text-sky-400'
   },
   assistant: {
-    borderClass: 'border-l-gray-400',
-    bgClass: 'bg-muted/60',
-    labelBgClass: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
-    align: 'left',
+    label: 'ASSISTANT',
+    labelClass: 'text-zinc-600 dark:text-zinc-300',
+    bgClass: 'bg-zinc-50/60 dark:bg-zinc-900/40',
+    borderClass: 'border-zinc-200 dark:border-zinc-700/50',
     icon: Bot,
-    iconColorClass: 'text-gray-500 dark:text-gray-400',
-    label: 'Assistant'
+    iconClass: 'text-zinc-500 dark:text-zinc-400'
   },
   tool_call: {
-    borderClass: 'border-l-amber-500',
-    bgClass: 'bg-amber-50/70 dark:bg-amber-950/20',
-    labelBgClass: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
-    align: 'left',
+    label: 'TOOL CALL',
+    labelClass: 'text-amber-700 dark:text-amber-300',
+    bgClass: 'bg-amber-50/50 dark:bg-amber-950/20',
+    borderClass: 'border-amber-200 dark:border-amber-800/50',
     icon: Wrench,
-    iconColorClass: 'text-amber-600 dark:text-amber-400',
-    label: 'Tool Call'
+    iconClass: 'text-amber-500 dark:text-amber-400'
   },
   tool_result: {
-    borderClass: 'border-l-emerald-500',
-    bgClass: 'bg-emerald-50/70 dark:bg-emerald-950/20',
-    labelBgClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300',
-    align: 'left',
+    label: 'TOOL RESULT',
+    labelClass: 'text-teal-700 dark:text-teal-300',
+    bgClass: 'bg-teal-50/50 dark:bg-teal-950/20',
+    borderClass: 'border-teal-200 dark:border-teal-800/50',
     icon: Code2,
-    iconColorClass: 'text-emerald-600 dark:text-emerald-400',
-    label: 'Tool Result'
+    iconClass: 'text-teal-500 dark:text-teal-400'
   }
 }
 
-// ─── TurnBubble component ───
+// ─── Parse tool_call blocks from content ───
 
-function TurnBubble({
+function parseToolCallsFromContent(content: string): { textParts: string[]; toolBlocks: string[] } {
+  const regex = /<tool_call>([\s\S]*?)<\/tool_call>/g
+  const textParts: string[] = []
+  const toolBlocks: string[] = []
+  let lastIndex = 0
+  let match = regex.exec(content)
+
+  while (match !== null) {
+    const before = content.slice(lastIndex, match.index).trim()
+
+    if (before) textParts.push(before)
+    toolBlocks.push(match[1].trim())
+    lastIndex = match.index + match[0].length
+    match = regex.exec(content)
+  }
+
+  const after = content.slice(lastIndex).trim()
+
+  if (after) textParts.push(after)
+  if (textParts.length === 0 && toolBlocks.length === 0) textParts.push(content)
+
+  return { textParts, toolBlocks }
+}
+
+// ─── Helpers ───
+
+function getToolCallNames(conv: Conversation): string[] {
+  const names = new Set<string>()
+
+  for (const t of conv.turnos) {
+    for (const h of t.herramientas_usadas) names.add(h)
+
+    if (t.tool_calls) {
+      for (const tc of t.tool_calls) names.add(tc.tool_name)
+    }
+  }
+
+  return [...names]
+}
+
+// ─── Message bubble (click-to-edit) ───
+
+function MessageBubble({
   item,
-  editing,
+  isEditing,
   editValue,
-  onEditStart,
-  onEditCancel,
-  onEditSave,
+  onClickToEdit,
   onEditChange,
-  isDragging,
-  isDropTarget,
-  onDragStart,
-  onDragOver,
-  onDragEnd,
-  onDrop
+  onEditSave,
+  onEditCancel
 }: {
-  item: FlattenedItem
-  editing: boolean
+  item: FlatItem
+  isEditing: boolean
   editValue: string
-  onEditStart: () => void
-  onEditCancel: () => void
+  onClickToEdit: () => void
+  onEditChange: (v: string) => void
   onEditSave: () => void
-  onEditChange: (value: string) => void
-  isDragging: boolean
-  isDropTarget: boolean
-  onDragStart: (e: React.DragEvent) => void
-  onDragOver: (e: React.DragEvent) => void
-  onDragEnd: (e: React.DragEvent) => void
-  onDrop: (e: React.DragEvent) => void
+  onEditCancel: () => void
 }) {
-  const style = TURN_STYLES[item.type]
-  const IconComponent = style.icon
-  const { turn } = item
+  const style = ROLE_STYLES[item.role]
+  const Icon = style.icon
+  const isMainMsg = item.role === 'user' || item.role === 'assistant' || item.role === 'system'
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const hasTools = (turn.tool_calls?.length ?? 0) > 0 || (turn.tool_results?.length ?? 0) > 0
-  const isMainMessage = item.type === 'user' || item.type === 'assistant'
+  const handleTextareaChange = (v: string) => {
+    onEditChange(v)
+
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'
+    }
+  }
+
+  // Tool call rendering
+  if (item.role === 'tool_call' && item.toolCallIndex !== undefined) {
+    const tc = item.turn.tool_calls![item.toolCallIndex]
+
+    return <ToolCallBlock toolName={tc.tool_name} toolCallId={tc.tool_call_id} args={tc.arguments} />
+  }
+
+  // Tool result rendering
+  if (item.role === 'tool_result' && item.toolResultIndex !== undefined) {
+    const tr = item.turn.tool_results![item.toolResultIndex]
+
+    return <ToolResultBlock toolName={tr.tool_name} status={tr.status} result={tr.result} durationMs={tr.duration_ms} />
+  }
+
+  const { textParts, toolBlocks } = parseToolCallsFromContent(item.turn.contenido)
 
   return (
-    <div className="relative">
-      {/* Drop target indicator above */}
-      {isDropTarget && (
-        <div className="absolute -top-1.5 right-0 left-0 z-10 h-0.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50" />
-      )}
+    <div className={cn('rounded-lg border p-3', style.bgClass, style.borderClass)}>
+      <div className="mb-2 flex items-center gap-2">
+        <Icon className={cn('size-3.5', style.iconClass)} />
+        <span className={cn('text-[11px] font-bold uppercase tracking-wide', style.labelClass)}>
+          {style.label}
+        </span>
+        <span className="font-mono text-[10px] text-muted-foreground">#{item.turn.turno}</span>
+      </div>
 
-      <div
-        draggable={isMainMessage}
-        onDragStart={onDragStart}
-        onDragOver={onDragOver}
-        onDragEnd={onDragEnd}
-        onDrop={onDrop}
-        className={cn(
-          'group relative flex gap-3 transition-opacity duration-200',
-          style.align === 'right' ? 'flex-row-reverse' : 'flex-row',
-          isDragging && 'opacity-40',
-          isMainMessage && 'cursor-grab active:cursor-grabbing'
-        )}
-      >
-        {/* Drag handle (only for main messages) */}
-        {isMainMessage && (
-          <div
-            className={cn(
-              'flex shrink-0 items-center opacity-0 transition-opacity group-hover:opacity-100',
-              style.align === 'right' ? 'order-first' : ''
-            )}
-          >
-            <GripVertical className="size-4 text-muted-foreground/50" />
+      {isEditing ? (
+        <div className="space-y-2">
+          <Textarea
+            ref={textareaRef}
+            value={editValue}
+            onChange={e => handleTextareaChange(e.target.value)}
+            className="min-h-20 resize-none border-primary/30 bg-background text-sm focus-visible:ring-primary/20"
+            autoFocus
+            onKeyDown={e => { if (e.key === 'Escape') onEditCancel() }}
+          />
+          <div className="flex justify-end gap-1.5">
+            <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" onClick={onEditCancel}>
+              Cancel
+            </Button>
+            <Button size="sm" className="h-7 gap-1 text-xs" onClick={onEditSave}>
+              <Check className="size-3" />
+              Apply
+            </Button>
           </div>
-        )}
-
-        {/* Icon avatar */}
+        </div>
+      ) : (
         <div
           className={cn(
-            'flex size-8 shrink-0 items-center justify-center rounded-full border',
-            item.type === 'tool_call' && 'border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/40',
-            item.type === 'tool_result' &&
-              'border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950/40',
-            item.type === 'user' && 'border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-950/40',
-            item.type === 'assistant' && 'border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-800'
+            'cursor-text rounded-md px-1 py-0.5 -mx-1 -my-0.5 transition-colors',
+            isMainMsg && 'hover:bg-foreground/5'
           )}
+          onClick={isMainMsg ? onClickToEdit : undefined}
         >
-          <IconComponent className={cn('size-4', style.iconColorClass)} />
-        </div>
+          {textParts.map((text, i) => (
+            <p key={`text-${i}`} className="whitespace-pre-wrap text-sm leading-relaxed">{text}</p>
+          ))}
 
-        {/* Content area */}
-        <div className={cn('max-w-[75%] space-y-1.5', style.align === 'right' ? 'items-end' : 'items-start')}>
-          {/* Header row: role label + turn number + edit button */}
-          <div className={cn('flex items-center gap-2', style.align === 'right' && 'flex-row-reverse')}>
-            <span
-              className={cn('inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold', style.labelBgClass)}
-            >
-              {isMainMessage ? turn.rol : style.label}
-            </span>
-            <span className="rounded bg-muted px-1 py-0.5 font-mono text-[10px] text-muted-foreground">
-              #{turn.turno}
-            </span>
-            {isMainMessage && !editing && (
-              <button
-                onClick={onEditStart}
-                className="rounded p-0.5 text-muted-foreground/40 transition-colors hover:text-foreground"
-              >
-                <Pencil className="size-3" />
-              </button>
-            )}
-          </div>
-
-          {/* Render by type */}
-          {isMainMessage && editing ? (
-            <div className="space-y-2">
-              <Textarea
-                value={editValue}
-                onChange={e => onEditChange(e.target.value)}
-                className="min-h-20 text-sm"
-                autoFocus
-              />
-              <div className="flex gap-1">
-                <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={onEditSave}>
-                  <Check className="size-3" />
-                  Save
-                </Button>
-                <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" onClick={onEditCancel}>
-                  <X className="size-3" />
-                  Cancel
-                </Button>
+          {toolBlocks.map((block, i) => (
+            <div key={`tool-inline-${i}`} className="mt-2">
+              <div className="rounded-md border border-amber-200 bg-amber-50/60 p-2 dark:border-amber-800/50 dark:bg-amber-950/30">
+                <div className="mb-1 flex items-center gap-1.5">
+                  <Wrench className="size-3 text-amber-600 dark:text-amber-400" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                    Tool Call
+                  </span>
+                </div>
+                <pre className="overflow-x-auto text-[11px] leading-relaxed text-amber-900 dark:text-amber-200">
+                  {block}
+                </pre>
               </div>
             </div>
-          ) : isMainMessage ? (
-            <>
-              <div
-                className={cn(
-                  'rounded-lg border-l-[3px] px-3 py-2.5 text-sm leading-relaxed',
-                  style.borderClass,
-                  style.bgClass,
-                  item.type === 'user' && 'text-blue-900 dark:text-blue-100'
-                )}
-              >
-                {turn.contenido}
-              </div>
-              {/* Inline tool tags when no expanded tool_calls */}
-              {turn.herramientas_usadas.length > 0 && !hasTools && (
-                <div className="flex flex-wrap gap-1">
-                  {turn.herramientas_usadas.map(h => (
-                    <Badge key={h} variant="outline" className="text-[10px]">
-                      {h}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : item.type === 'tool_call' && item.toolCallIndex !== undefined ? (
-            <ToolCallCard toolCall={turn.tool_calls![item.toolCallIndex]} borderClass={style.borderClass} bgClass={style.bgClass} />
-          ) : item.type === 'tool_result' && item.toolResultIndex !== undefined ? (
-            <ToolResultCard toolResult={turn.tool_results![item.toolResultIndex]} borderClass={style.borderClass} bgClass={style.bgClass} />
-          ) : null}
+          ))}
+
+          {item.turn.herramientas_usadas.length > 0 && !item.turn.tool_calls?.length && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {item.turn.herramientas_usadas.map(h => (
+                <Badge key={h} variant="outline" className="text-[10px]">
+                  <Wrench className="mr-0.5 size-2.5" />{h}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </div>
   )
 }
 
-// ─── Tool Call sub-card ───
+// ─── Tool call block ───
 
-function ToolCallCard({
-  toolCall,
-  borderClass,
-  bgClass
-}: {
-  toolCall: NonNullable<ConversationTurn['tool_calls']>[number]
-  borderClass: string
-  bgClass: string
-}) {
+function ToolCallBlock({ toolName, toolCallId, args }: { toolName: string; toolCallId: string; args: Record<string, unknown> }) {
+  const [expanded, setExpanded] = useState(false)
+
   return (
-    <div className={cn('rounded-lg border-l-[3px] px-3 py-2', borderClass, bgClass)}>
-      <div className="flex items-center gap-1.5">
+    <div className="ml-6 rounded-lg border border-amber-200 bg-amber-50/40 dark:border-amber-800/50 dark:bg-amber-950/20">
+      <button onClick={() => setExpanded(!expanded)} className="flex w-full items-center gap-2 px-3 py-2 text-left">
+        {expanded ? <ChevronDown className="size-3 text-amber-600 dark:text-amber-400" /> : <ChevronRight className="size-3 text-amber-600 dark:text-amber-400" />}
         <Wrench className="size-3 text-amber-600 dark:text-amber-400" />
-        <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">{toolCall.tool_name}</span>
-        <span className="font-mono text-[10px] text-muted-foreground">({toolCall.tool_call_id.slice(0, 8)})</span>
-      </div>
-      <pre className="mt-1.5 overflow-x-auto rounded bg-amber-100/50 p-2 text-[11px] text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-        {JSON.stringify(toolCall.arguments, null, 2)}
-      </pre>
+        <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">{toolName}</span>
+        <span className="font-mono text-[10px] text-muted-foreground">({toolCallId.slice(0, 8)})</span>
+      </button>
+      {expanded && (
+        <div className="border-t border-amber-200/60 px-3 py-2 dark:border-amber-800/40">
+          <pre className="overflow-x-auto text-[11px] leading-relaxed text-amber-900 dark:text-amber-200">
+            {JSON.stringify(args, null, 2)}
+          </pre>
+        </div>
+      )}
     </div>
   )
 }
 
-// ─── Tool Result sub-card ───
+// ─── Tool result block ───
 
-function ToolResultCard({
-  toolResult,
-  borderClass,
-  bgClass
-}: {
-  toolResult: NonNullable<ConversationTurn['tool_results']>[number]
-  borderClass: string
-  bgClass: string
-}) {
+function ToolResultBlock({ toolName, status, result, durationMs }: { toolName: string; status: 'success' | 'error' | 'timeout'; result: Record<string, unknown> | string; durationMs?: number }) {
+  const [expanded, setExpanded] = useState(false)
+
   return (
-    <div className={cn('rounded-lg border-l-[3px] px-3 py-2', borderClass, bgClass)}>
-      <div className="flex items-center gap-1.5">
-        <Code2 className="size-3 text-emerald-600 dark:text-emerald-400" />
-        <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">{toolResult.tool_name}</span>
-        <StatusBadge variant={toolResult.status === 'success' ? 'success' : 'error'}>{toolResult.status}</StatusBadge>
-        {toolResult.duration_ms !== undefined && (
-          <span className="font-mono text-[10px] text-muted-foreground">{toolResult.duration_ms}ms</span>
-        )}
-      </div>
-      <pre className="mt-1.5 overflow-x-auto rounded bg-emerald-100/50 p-2 text-[11px] text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200">
-        {typeof toolResult.result === 'string' ? toolResult.result : JSON.stringify(toolResult.result, null, 2)}
-      </pre>
+    <div className="ml-6 rounded-lg border border-teal-200 bg-teal-50/40 dark:border-teal-800/50 dark:bg-teal-950/20">
+      <button onClick={() => setExpanded(!expanded)} className="flex w-full items-center gap-2 px-3 py-2 text-left">
+        {expanded ? <ChevronDown className="size-3 text-teal-600 dark:text-teal-400" /> : <ChevronRight className="size-3 text-teal-600 dark:text-teal-400" />}
+        <Code2 className="size-3 text-teal-600 dark:text-teal-400" />
+        <span className="text-xs font-semibold text-teal-700 dark:text-teal-300">{toolName}</span>
+        <StatusBadge variant={status === 'success' ? 'success' : 'error'} className="text-[10px]">{status}</StatusBadge>
+        {durationMs !== undefined && <span className="font-mono text-[10px] text-muted-foreground">{durationMs}ms</span>}
+      </button>
+      {expanded && (
+        <div className="border-t border-teal-200/60 px-3 py-2 dark:border-teal-800/40">
+          <pre className="overflow-x-auto text-[11px] leading-relaxed text-teal-900 dark:text-teal-200">
+            {typeof result === 'string' ? result : JSON.stringify(result, null, 2)}
+          </pre>
+        </div>
+      )}
     </div>
   )
 }
@@ -415,15 +407,11 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
     return all.find(c => c.conversation_id === id) ?? null
   })
 
-  const [showMeta, setShowMeta] = useState(false)
   const [editingTurn, setEditingTurn] = useState<number | null>(null)
   const [editValue, setEditValue] = useState('')
   const [showDelete, setShowDelete] = useState(false)
-
-  // Drag-and-drop state
-  const [dragIndex, setDragIndex] = useState<number | null>(null)
-  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null)
-  const dragCounter = useRef(0)
+  const [showMeta, setShowMeta] = useState(false)
+  const [newTag, setNewTag] = useState('')
 
   const persistConversation = useCallback(
     (updated: Conversation) => {
@@ -444,7 +432,6 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
   const handleEditStart = useCallback(
     (turnIndex: number) => {
       if (!conversation) return
-
       setEditingTurn(turnIndex)
       setEditValue(conversation.turnos[turnIndex].contenido)
     },
@@ -457,7 +444,6 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
     const updatedTurnos = [...conversation.turnos]
 
     updatedTurnos[editingTurn] = { ...updatedTurnos[editingTurn], contenido: editValue }
-
     persistConversation({ ...conversation, turnos: updatedTurnos })
     setEditingTurn(null)
     setEditValue('')
@@ -468,11 +454,10 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
     setEditValue('')
   }, [])
 
-  // ─── Status & delete handlers ───
+  // ─── Status & delete ───
 
   const handleToggleStatus = useCallback(() => {
     if (!conversation) return
-
     const current = conversation.status ?? 'valid'
 
     persistConversation({ ...conversation, status: current === 'valid' ? 'invalid' : 'valid' })
@@ -486,61 +471,24 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
     router.push('/dashboard/conversations')
   }, [id, router])
 
-  // ─── Drag-and-drop handlers (operates on turn indices) ───
+  // ─── Tags ───
 
-  const handleDragStart = useCallback(
-    (turnIndex: number) => (e: React.DragEvent) => {
-      setDragIndex(turnIndex)
-      dragCounter.current = 0
-      e.dataTransfer.effectAllowed = 'move'
-      e.dataTransfer.setData('text/plain', String(turnIndex))
-    },
-    []
-  )
+  const addTag = () => {
+    if (!conversation) return
+    const tag = newTag.trim()
 
-  const handleDragOver = useCallback(
-    (turnIndex: number) => (e: React.DragEvent) => {
-      e.preventDefault()
-      e.dataTransfer.dropEffect = 'move'
+    if (!tag) return
+    const tags = conversation.tags ?? []
 
-      if (dragIndex !== null && turnIndex !== dragIndex) {
-        setDropTargetIndex(turnIndex)
-      }
-    },
-    [dragIndex]
-  )
+    if (tags.includes(tag)) return
+    persistConversation({ ...conversation, tags: [...tags, tag] })
+    setNewTag('')
+  }
 
-  const handleDrop = useCallback(
-    (turnIndex: number) => (e: React.DragEvent) => {
-      e.preventDefault()
-      setDropTargetIndex(null)
-      dragCounter.current = 0
-
-      if (!conversation || dragIndex === null || dragIndex === turnIndex) {
-        setDragIndex(null)
-
-        return
-      }
-
-      const newTurnos = [...conversation.turnos]
-      const [moved] = newTurnos.splice(dragIndex, 1)
-
-      newTurnos.splice(turnIndex, 0, moved)
-
-      // Re-number turno fields sequentially
-      const renumbered = newTurnos.map((t, i) => ({ ...t, turno: i + 1 }))
-
-      persistConversation({ ...conversation, turnos: renumbered })
-      setDragIndex(null)
-    },
-    [conversation, dragIndex, persistConversation]
-  )
-
-  const handleDragEnd = useCallback(() => {
-    setDragIndex(null)
-    setDropTargetIndex(null)
-    dragCounter.current = 0
-  }, [])
+  const removeTag = (tag: string) => {
+    if (!conversation) return
+    persistConversation({ ...conversation, tags: (conversation.tags ?? []).filter(t => t !== tag) })
+  }
 
   // ─── Render ───
 
@@ -564,41 +512,18 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
 
   const status = conversation.status ?? 'valid'
   const flatItems = flattenTurns(conversation.turnos)
+  const toolNames = getToolCallNames(conversation)
+  const userCount = conversation.turnos.filter(t => !isAssistantRole(t.rol) && !isSystemRole(t.rol)).length
+  const assistantCount = conversation.turnos.filter(t => isAssistantRole(t.rol)).length
+  const tags = conversation.tags ?? []
 
   return (
     <div className="space-y-4">
       <PageHeader
         title={`Conversation ${conversation.conversation_id.slice(0, 12)}...`}
-        description={`${conversation.turnos.length} turns — ${conversation.dominio} — ${conversation.es_sintetica ? 'Synthetic' : 'Real'}`}
+        description={`${conversation.turnos.length} messages — ${conversation.dominio} — ${conversation.es_sintetica ? 'Synthetic' : 'Real'}`}
         actions={
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              onClick={handleToggleStatus}
-            >
-              {status === 'valid' ? (
-                <>
-                  <Ban className="size-3" />
-                  Mark Invalid
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="size-3" />
-                  Mark Valid
-                </>
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              onClick={() => setShowDelete(true)}
-            >
-              <Trash2 className="size-3" />
-              Delete
-            </Button>
             <Button variant="outline" size="sm" onClick={() => setShowMeta(!showMeta)}>
               {showMeta ? 'Hide' : 'Show'} Metadata
             </Button>
@@ -611,55 +536,138 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
         }
       />
 
-      {/* Status banner when invalid */}
+      {/* Summary bar */}
+      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+        <StatusBadge variant={status === 'valid' ? 'success' : 'warning'} dot={false}>
+          {status === 'valid' ? 'Valid' : 'Invalid'}
+        </StatusBadge>
+        <span className="flex items-center gap-1"><User className="size-3" /> {userCount} user</span>
+        <span className="flex items-center gap-1"><Bot className="size-3" /> {assistantCount} assistant</span>
+        {toolNames.length > 0 && (
+          <span className="flex items-center gap-1">
+            <Wrench className="size-3" /> {toolNames.length} tool{toolNames.length > 1 ? 's' : ''}
+          </span>
+        )}
+        <span className="font-mono">{conversation.idioma}</span>
+      </div>
+
+      {/* Invalid banner */}
       {status === 'invalid' && (
-        <div className="flex items-center gap-2 rounded-lg border border-dashed px-4 py-2.5">
-          <Ban className="size-4 shrink-0 text-muted-foreground" />
-          <p className="text-xs text-muted-foreground">
-            This conversation is marked as <span className="font-medium">invalid</span> and will be excluded from
-            exports and evaluations.
-          </p>
-          <Button variant="outline" size="sm" className="ml-auto h-7 gap-1 text-xs" onClick={handleToggleStatus}>
-            <CheckCircle2 className="size-3" />
+        <div className="flex items-center gap-2 rounded-lg border px-4 py-2.5 bg-destructive/5">
+          <Ban className="size-3.5 text-destructive/70" />
+          <span className="text-xs text-destructive/80">
+            Marked as invalid — excluded from exports and evaluations.
+          </span>
+          <Button variant="outline" size="sm" className="ml-auto h-6 text-[10px]" onClick={handleToggleStatus}>
             Restore
           </Button>
         </div>
       )}
 
       <div className="flex gap-4">
-        {/* Chat view */}
-        <div className="flex-1 space-y-3">
+        {/* Messages */}
+        <div className="flex-1 space-y-2">
           {flatItems.map(item => {
-            const isMainMsg = item.type === 'user' || item.type === 'assistant'
+            const isMainMsg = item.role === 'user' || item.role === 'assistant' || item.role === 'system'
 
             return (
-              <TurnBubble
+              <MessageBubble
                 key={item.key}
                 item={item}
-                editing={isMainMsg && editingTurn === item.turnIndex}
+                isEditing={isMainMsg && editingTurn === item.turnIndex}
                 editValue={editValue}
-                onEditStart={() => handleEditStart(item.turnIndex)}
-                onEditCancel={handleEditCancel}
-                onEditSave={handleEditSave}
+                onClickToEdit={() => handleEditStart(item.turnIndex)}
                 onEditChange={setEditValue}
-                isDragging={isMainMsg && dragIndex === item.turnIndex}
-                isDropTarget={isMainMsg && dropTargetIndex === item.turnIndex}
-                onDragStart={isMainMsg ? handleDragStart(item.turnIndex) : (e: React.DragEvent) => e.preventDefault()}
-                onDragOver={isMainMsg ? handleDragOver(item.turnIndex) : (e: React.DragEvent) => e.preventDefault()}
-                onDrop={isMainMsg ? handleDrop(item.turnIndex) : (e: React.DragEvent) => e.preventDefault()}
-                onDragEnd={handleDragEnd}
+                onEditSave={handleEditSave}
+                onEditCancel={handleEditCancel}
               />
             )
           })}
+
+          {/* Review section */}
+          <Separator className="my-4" />
+
+          <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
+            {/* Tags */}
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground">Tags</label>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                {tags.map(tag => (
+                  <Badge key={tag} variant="secondary" className="gap-1 pr-1">
+                    {tag}
+                    <button onClick={() => removeTag(tag)} className="rounded-full p-0.5 hover:bg-foreground/10">
+                      <X className="size-2.5" />
+                    </button>
+                  </Badge>
+                ))}
+                <div className="flex items-center gap-1">
+                  <Input
+                    value={newTag}
+                    onChange={e => setNewTag(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') addTag() }}
+                    placeholder="+ tag"
+                    className="h-6 w-20 border-dashed px-2 text-[11px]"
+                  />
+                  {newTag && (
+                    <Button size="sm" variant="ghost" className="h-6 px-1" onClick={addTag}>
+                      <Plus className="size-3" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Rating */}
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground">Rating</label>
+              <div className="mt-1">
+                <Rating
+                  value={conversation.rating ?? 0}
+                  onValueChange={v => persistConversation({ ...conversation, rating: v })}
+                  variant="yellow"
+                  size={18}
+                />
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground">Notes</label>
+              <Textarea
+                value={conversation.notes ?? ''}
+                onChange={e => persistConversation({ ...conversation, notes: e.target.value })}
+                placeholder="Review notes..."
+                className="mt-1 min-h-16 resize-none text-sm"
+              />
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 py-2">
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => persistConversation({ ...conversation, status: 'valid' })}>
+              <CheckCircle2 className="size-3.5" />
+              Validate
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={handleToggleStatus}>
+              {status === 'valid' ? <><Ban className="size-3.5" /> Mark Invalid</> : <><CheckCircle2 className="size-3.5" /> Mark Valid</>}
+            </Button>
+            <div className="flex-1" />
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-destructive hover:bg-destructive/10"
+              onClick={() => setShowDelete(true)}
+            >
+              <Trash2 className="size-3.5" />
+              Delete
+            </Button>
+          </div>
         </div>
 
         {/* Metadata sidebar */}
         {showMeta && (
           <Card className="hidden w-80 shrink-0 lg:block">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Metadata</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-xs">
+            <CardContent className="space-y-3 p-4 text-xs">
               <div>
                 <span className="text-muted-foreground">Conversation ID</span>
                 <p className="font-mono">{conversation.conversation_id}</p>
@@ -693,9 +701,7 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
                 <span className="text-muted-foreground">Roles</span>
                 <div className="mt-1 flex flex-wrap gap-1">
                   {[...new Set(conversation.turnos.map(t => t.rol))].map(r => (
-                    <Badge key={r} variant="secondary" className="text-[10px]">
-                      {r}
-                    </Badge>
+                    <Badge key={r} variant="secondary" className="text-[10px]">{r}</Badge>
                   ))}
                 </div>
               </div>
@@ -713,7 +719,7 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
         )}
       </div>
 
-      {/* Delete confirmation dialog */}
+      {/* Delete dialog */}
       <Dialog open={showDelete} onOpenChange={setShowDelete}>
         <DialogContent>
           <DialogHeader>
@@ -726,9 +732,7 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button variant="destructive" onClick={handleDelete}>
-              Delete
-            </Button>
+            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
