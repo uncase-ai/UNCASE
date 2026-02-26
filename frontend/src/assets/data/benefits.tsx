@@ -8,28 +8,28 @@ export const benefits: Features = [
     title: 'Privacy by Design, Not by Patch',
     description:
       'No real patient, client, or user data ever transits through the pipeline. Seeds capture reasoning patterns and domain structure — never conversations. Every LLM call passes through a Privacy Interceptor that scans for PII in real-time. Compliant with GDPR, HIPAA, LFPDPPP, AI Act, and CCPA from day one.',
-    image: '/images/logo/whitepaper-privacy.png'
+    image: '/images/logo/screenshot-create-seed.gif'
   },
   {
     icon: <BrainCircuitIcon />,
     title: 'Expert Knowledge, Infinitely Scaled',
     description:
       'Transform decades of specialized expertise into abstract seed structures that train AI models. Your best professionals become seed engineers — their knowledge generates thousands of high-quality synthetic conversations without exposing privileged information.',
-    image: '/images/logo/whitepaper-foundations.png'
+    image: '/images/logo/screenshot-pipeline.png'
   },
   {
     icon: <NetworkIcon />,
     title: 'Any LLM Provider, One Gateway',
     description:
       'Route synthetic generation through Claude, GPT, Gemini, Qwen, LLaMA, or any LiteLLM-compatible provider. The built-in Provider Registry stores encrypted API keys, and the Gateway proxies every request with automatic privacy interception — audit, warn, or block.',
-    image: '/images/logo/whitepaper-architecture.png'
+    image: '/images/logo/screenshot-quick-actions.png'
   },
   {
     icon: <PlugIcon />,
     title: 'Connect Any Data Source',
     description:
       'Ingest conversations from WhatsApp exports, webhooks, CRM systems, transcriptions, and more. The Connector Hub normalizes everything into UNCASE format — ready for seed engineering and synthetic generation at scale.',
-    image: '/images/logo/whitepaper-cover.png'
+    image: '/images/logo/screenshot-upload-document.gif'
   },
   {
     icon: <LayersIcon />,
