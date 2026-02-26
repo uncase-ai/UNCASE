@@ -75,4 +75,3 @@ USER uncase
 EXPOSE ${PORT:-8000}
 
 ENTRYPOINT ["/app/entrypoint.sh"]
-CMD uvicorn uncase.api.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers ${WORKERS:-4}
