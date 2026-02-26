@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Link from 'next/link'
 import {
@@ -11,7 +11,9 @@ import {
   ChevronDown,
   ChevronRight,
   Code2,
+  Keyboard,
   MessageSquare,
+  MousePointerClick,
   Plus,
   Save,
   ShieldCheck,
@@ -22,7 +24,7 @@ import {
   X
 } from 'lucide-react'
 
-import type { Conversation, ConversationTurn } from '@/types/api'
+import type { Conversation, ConversationTurn, ToolDefinition } from '@/types/api'
 import { SUPPORTED_DOMAINS } from '@/types/api'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -50,6 +52,7 @@ import { StatusBadge } from '../status-badge'
 // ─── Local store ───
 
 const STORE_KEY = 'uncase-conversations'
+const ONBOARDING_KEY = 'uncase-conversations-onboarding-seen'
 
 function loadConversations(): Conversation[] {
   if (typeof window === 'undefined') return []
@@ -145,7 +148,10 @@ function flattenTurns(turnos: ConversationTurn[]): FlatItem[] {
 
 // ─── Style config per role ───
 
-const ROLE_STYLES: Record<MessageRole, { label: string; labelClass: string; bgClass: string; borderClass: string; icon: typeof Bot; iconClass: string }> = {
+const ROLE_STYLES: Record<
+  MessageRole,
+  { label: string; labelClass: string; bgClass: string; borderClass: string; icon: typeof Bot; iconClass: string }
+> = {
   system: {
     label: 'SYSTEM',
     labelClass: 'text-violet-700 dark:text-violet-300',
@@ -188,6 +194,80 @@ const ROLE_STYLES: Record<MessageRole, { label: string; labelClass: string; bgCl
   }
 }
 
+// ─── Built-in tools catalog (fallback when API unavailable) ───
+
+const BUILTIN_TOOLS: { name: string; domain: string }[] = [
+  { name: 'buscar_inventario', domain: 'automotive.sales' },
+  { name: 'cotizar_vehiculo', domain: 'automotive.sales' },
+  { name: 'verificar_disponibilidad', domain: 'automotive.sales' },
+  { name: 'solicitar_financiamiento', domain: 'automotive.sales' },
+  { name: 'agendar_servicio', domain: 'automotive.sales' },
+  { name: 'consultar_historial_medico', domain: 'medical.consultation' },
+  { name: 'buscar_medicamentos', domain: 'medical.consultation' },
+  { name: 'agendar_cita', domain: 'medical.consultation' },
+  { name: 'verificar_laboratorio', domain: 'medical.consultation' },
+  { name: 'validar_seguro', domain: 'medical.consultation' },
+  { name: 'buscar_jurisprudencia', domain: 'legal.advisory' },
+  { name: 'consultar_expediente', domain: 'legal.advisory' },
+  { name: 'verificar_plazos', domain: 'legal.advisory' },
+  { name: 'buscar_legislacion', domain: 'legal.advisory' },
+  { name: 'calcular_honorarios', domain: 'legal.advisory' },
+  { name: 'consultar_portafolio', domain: 'finance.advisory' },
+  { name: 'analizar_riesgo', domain: 'finance.advisory' },
+  { name: 'consultar_mercado', domain: 'finance.advisory' },
+  { name: 'verificar_cumplimiento', domain: 'finance.advisory' },
+  { name: 'simular_inversion', domain: 'finance.advisory' },
+  { name: 'diagnosticar_equipo', domain: 'industrial.support' },
+  { name: 'consultar_inventario_partes', domain: 'industrial.support' },
+  { name: 'programar_mantenimiento', domain: 'industrial.support' },
+  { name: 'buscar_manual_tecnico', domain: 'industrial.support' },
+  { name: 'registrar_incidencia', domain: 'industrial.support' },
+  { name: 'buscar_curriculum', domain: 'education.tutoring' },
+  { name: 'evaluar_progreso', domain: 'education.tutoring' },
+  { name: 'generar_ejercicio', domain: 'education.tutoring' },
+  { name: 'buscar_recurso_educativo', domain: 'education.tutoring' },
+  { name: 'programar_sesion', domain: 'education.tutoring' }
+]
+
+// ─── Tool autocomplete hook ───
+
+function useToolAutocomplete({
+  domain,
+  conversations,
+  apiTools
+}: {
+  domain: string
+  conversations: Conversation[]
+  apiTools: ToolDefinition[] | null
+}) {
+  return useMemo(() => {
+    // Priority 1: API-fetched tools for this domain
+    if (apiTools && apiTools.length > 0) {
+      return apiTools.filter(t => t.domains.includes(domain) || t.domains.length === 0).map(t => t.name)
+    }
+
+    // Priority 2: tools already used in conversations for this domain
+    const used = new Set<string>()
+
+    for (const c of conversations) {
+      if (c.dominio !== domain) continue
+
+      for (const t of c.turnos) {
+        for (const h of t.herramientas_usadas) used.add(h)
+
+        if (t.tool_calls) {
+          for (const tc of t.tool_calls) used.add(tc.tool_name)
+        }
+      }
+    }
+
+    if (used.size > 0) return [...used].sort()
+
+    // Priority 3: built-in tools for this domain
+    return BUILTIN_TOOLS.filter(t => t.domain === domain).map(t => t.name)
+  }, [domain, conversations, apiTools])
+}
+
 // ─── Conversation summary helper ───
 
 function buildSummary(conv: Conversation): string {
@@ -215,6 +295,57 @@ function getToolCallNames(conv: Conversation): string[] {
   }
 
   return [...names]
+}
+
+// ─── Tool autocomplete dropdown ───
+
+function ToolAutocompleteDropdown({
+  tools,
+  filter,
+  position,
+  selectedIndex,
+  onSelect
+}: {
+  tools: string[]
+  filter: string
+  position: { top: number; left: number }
+  selectedIndex: number
+  onSelect: (tool: string) => void
+}) {
+  const filtered = useMemo(() => {
+    if (!filter) return tools
+
+    const q = filter.toLowerCase()
+
+    return tools.filter(t => t.toLowerCase().includes(q))
+  }, [tools, filter])
+
+  if (filtered.length === 0) return null
+
+  return (
+    <div
+      className="fixed z-50 max-h-48 w-64 overflow-y-auto rounded-md border bg-popover p-1 shadow-md"
+      style={{ top: position.top, left: position.left }}
+    >
+      <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground">Insert tool call</div>
+      {filtered.map((tool, i) => (
+        <button
+          key={tool}
+          className={cn(
+            'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-xs transition-colors',
+            i === selectedIndex ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'
+          )}
+          onMouseDown={e => {
+            e.preventDefault()
+            onSelect(tool)
+          }}
+        >
+          <Wrench className="size-3 shrink-0 text-amber-500" />
+          <span className="truncate font-mono">{tool}</span>
+        </button>
+      ))}
+    </div>
+  )
 }
 
 // ─── Conversation card in the list ───
@@ -255,7 +386,9 @@ function ConversationCard({
               </Badge>
             ))}
             {tools.length > 2 && (
-              <Badge variant="secondary" className="text-[10px]">+{tools.length - 2}</Badge>
+              <Badge variant="secondary" className="text-[10px]">
+                +{tools.length - 2}
+              </Badge>
             )}
             <StatusBadge variant={status === 'valid' ? 'success' : 'warning'} dot={false} className="text-[10px]">
               {status === 'valid' ? 'OK' : 'Invalid'}
@@ -278,7 +411,7 @@ function ConversationCard({
   )
 }
 
-// ─── Message bubble (click-to-edit) ───
+// ─── Message bubble (click-to-edit with tool autocomplete) ───
 
 function MessageBubble({
   item,
@@ -287,7 +420,8 @@ function MessageBubble({
   onClickToEdit,
   onEditChange,
   onEditSave,
-  onEditCancel
+  onEditCancel,
+  availableTools
 }: {
   item: FlatItem
   isEditing: boolean
@@ -296,11 +430,53 @@ function MessageBubble({
   onEditChange: (v: string) => void
   onEditSave: () => void
   onEditCancel: () => void
+  availableTools: string[]
 }) {
   const style = ROLE_STYLES[item.role]
   const Icon = style.icon
   const isMainMsg = item.role === 'user' || item.role === 'assistant' || item.role === 'system'
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Tool autocomplete state
+  const [showToolMenu, setShowToolMenu] = useState(false)
+  const [toolFilter, setToolFilter] = useState('')
+  const [toolMenuPos, setToolMenuPos] = useState({ top: 0, left: 0 })
+  const [toolSelectedIdx, setToolSelectedIdx] = useState(0)
+  const triggerPosRef = useRef<number>(0)
+
+  // Filtered tools for the dropdown
+  const filteredTools = useMemo(() => {
+    if (!toolFilter) return availableTools
+
+    const q = toolFilter.toLowerCase()
+
+    return availableTools.filter(t => t.toLowerCase().includes(q))
+  }, [availableTools, toolFilter])
+
+  const insertToolCall = useCallback(
+    (toolName: string) => {
+      const cursorPos = textareaRef.current?.selectionStart ?? editValue.length
+      const before = editValue.slice(0, triggerPosRef.current)
+      const after = editValue.slice(cursorPos)
+      const snippet = `<tool_call>\n{"name": "${toolName}", "arguments": {}}\n</tool_call>`
+
+      onEditChange(before + snippet + after)
+      setShowToolMenu(false)
+      setToolFilter('')
+      setToolSelectedIdx(0)
+
+      // Focus back and position cursor inside arguments
+      requestAnimationFrame(() => {
+        if (textareaRef.current) {
+          const newCursorPos = before.length + snippet.length - 16 // inside {}
+
+          textareaRef.current.focus()
+          textareaRef.current.setSelectionRange(newCursorPos, newCursorPos)
+        }
+      })
+    },
+    [editValue, onEditChange]
+  )
 
   // Auto-resize textarea
   const handleTextareaChange = (v: string) => {
@@ -312,17 +488,94 @@ function MessageBubble({
     }
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Escape') {
+      if (showToolMenu) {
+        setShowToolMenu(false)
+        setToolFilter('')
+
+        return
+      }
+
+      onEditCancel()
+
+      return
+    }
+
+    if (showToolMenu) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setToolSelectedIdx(i => (i + 1) % Math.max(filteredTools.length, 1))
+
+        return
+      }
+
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setToolSelectedIdx(i => (i - 1 + filteredTools.length) % Math.max(filteredTools.length, 1))
+
+        return
+      }
+
+      if ((e.key === 'Enter' || e.key === 'Tab') && filteredTools.length > 0) {
+        e.preventDefault()
+        insertToolCall(filteredTools[toolSelectedIdx] ?? filteredTools[0])
+
+        return
+      }
+    }
+  }
+
+  const handleInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    const ta = e.currentTarget
+    const val = ta.value
+    const pos = ta.selectionStart
+
+    // Detect "<" typed at cursor position
+    if (pos > 0 && val[pos - 1] === '<' && availableTools.length > 0) {
+      // Check it's not inside an existing tag
+      const before = val.slice(0, pos - 1)
+      const openTags = (before.match(/</g) || []).length
+      const closeTags = (before.match(/>/g) || []).length
+
+      if (openTags <= closeTags) {
+        triggerPosRef.current = pos - 1
+        setToolFilter('')
+        setToolSelectedIdx(0)
+
+        // Calculate position for the dropdown
+        const rect = ta.getBoundingClientRect()
+
+        setToolMenuPos({
+          top: rect.top + Math.min(ta.scrollHeight, 120),
+          left: rect.left + 16
+        })
+        setShowToolMenu(true)
+
+        return
+      }
+    }
+
+    // Update filter while menu is open
+    if (showToolMenu) {
+      const typed = val.slice(triggerPosRef.current + 1, pos)
+
+      // Close if user typed a space or backspaced past trigger
+      if (pos <= triggerPosRef.current || typed.includes(' ') || typed.includes('\n')) {
+        setShowToolMenu(false)
+        setToolFilter('')
+      } else {
+        setToolFilter(typed)
+        setToolSelectedIdx(0)
+      }
+    }
+  }
+
   // Tool call rendering
   if (item.role === 'tool_call' && item.toolCallIndex !== undefined) {
     const tc = item.turn.tool_calls![item.toolCallIndex]
 
-    return (
-      <ToolCallBlock
-        toolName={tc.tool_name}
-        toolCallId={tc.tool_call_id}
-        args={tc.arguments}
-      />
-    )
+    return <ToolCallBlock toolName={tc.tool_name} toolCallId={tc.tool_call_id} args={tc.arguments} />
   }
 
   // Tool result rendering
@@ -330,12 +583,7 @@ function MessageBubble({
     const tr = item.turn.tool_results![item.toolResultIndex]
 
     return (
-      <ToolResultBlock
-        toolName={tr.tool_name}
-        status={tr.status}
-        result={tr.result}
-        durationMs={tr.duration_ms}
-      />
+      <ToolResultBlock toolName={tr.tool_name} status={tr.status} result={tr.result} durationMs={tr.duration_ms} />
     )
   }
 
@@ -347,25 +595,41 @@ function MessageBubble({
       {/* Role label */}
       <div className="mb-2 flex items-center gap-2">
         <Icon className={cn('size-3.5', style.iconClass)} />
-        <span className={cn('text-[11px] font-bold uppercase tracking-wide', style.labelClass)}>
-          {style.label}
-        </span>
+        <span className={cn('text-[11px] font-bold uppercase tracking-wide', style.labelClass)}>{style.label}</span>
         <span className="font-mono text-[10px] text-muted-foreground">#{item.turn.turno}</span>
       </div>
 
       {/* Content — click to edit */}
       {isEditing ? (
-        <div className="space-y-2">
+        <div className="relative space-y-2">
           <Textarea
             ref={textareaRef}
             value={editValue}
             onChange={e => handleTextareaChange(e.target.value)}
+            onInput={handleInput}
+            onKeyDown={handleKeyDown}
+            onBlur={() => {
+              // Delay to allow dropdown clicks
+              setTimeout(() => setShowToolMenu(false), 150)
+            }}
             className="min-h-20 resize-none border-primary/30 bg-background text-sm focus-visible:ring-primary/20"
             autoFocus
-            onKeyDown={e => {
-              if (e.key === 'Escape') onEditCancel()
-            }}
           />
+          {availableTools.length > 0 && !showToolMenu && (
+            <p className="text-[10px] text-muted-foreground">
+              Type <kbd className="rounded border bg-muted px-1 py-0.5 font-mono text-[9px]">&lt;</kbd> to insert a
+              tool call
+            </p>
+          )}
+          {showToolMenu && (
+            <ToolAutocompleteDropdown
+              tools={availableTools}
+              filter={toolFilter}
+              position={toolMenuPos}
+              selectedIndex={toolSelectedIdx}
+              onSelect={insertToolCall}
+            />
+          )}
           <div className="flex justify-end gap-1.5">
             <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" onClick={onEditCancel}>
               Cancel
@@ -452,9 +716,7 @@ function InlineToolCallBlock({ content }: { content: string }) {
           Tool Call
         </span>
       </div>
-      <pre className="overflow-x-auto text-[11px] leading-relaxed text-amber-900 dark:text-amber-200">
-        {content}
-      </pre>
+      <pre className="overflow-x-auto text-[11px] leading-relaxed text-amber-900 dark:text-amber-200">{content}</pre>
     </div>
   )
 }
@@ -474,10 +736,7 @@ function ToolCallBlock({
 
   return (
     <div className="ml-6 rounded-lg border border-amber-200 bg-amber-50/40 dark:border-amber-800/50 dark:bg-amber-950/20">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center gap-2 px-3 py-2 text-left"
-      >
+      <button onClick={() => setExpanded(!expanded)} className="flex w-full items-center gap-2 px-3 py-2 text-left">
         {expanded ? (
           <ChevronDown className="size-3 text-amber-600 dark:text-amber-400" />
         ) : (
@@ -515,10 +774,7 @@ function ToolResultBlock({
 
   return (
     <div className="ml-6 rounded-lg border border-teal-200 bg-teal-50/40 dark:border-teal-800/50 dark:bg-teal-950/20">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center gap-2 px-3 py-2 text-left"
-      >
+      <button onClick={() => setExpanded(!expanded)} className="flex w-full items-center gap-2 px-3 py-2 text-left">
         {expanded ? (
           <ChevronDown className="size-3 text-teal-600 dark:text-teal-400" />
         ) : (
@@ -579,10 +835,7 @@ function ReviewPanel({
           {tags.map(tag => (
             <Badge key={tag} variant="secondary" className="gap-1 pr-1">
               {tag}
-              <button
-                onClick={() => removeTag(tag)}
-                className="rounded-full p-0.5 hover:bg-foreground/10"
-              >
+              <button onClick={() => removeTag(tag)} className="rounded-full p-0.5 hover:bg-foreground/10">
                 <X className="size-2.5" />
               </button>
             </Badge>
@@ -591,7 +844,9 @@ function ReviewPanel({
             <Input
               value={newTag}
               onChange={e => setNewTag(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') addTag() }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') addTag()
+              }}
               placeholder="+ tag"
               className="h-6 w-20 border-dashed px-2 text-[11px]"
             />
@@ -608,12 +863,7 @@ function ReviewPanel({
       <div>
         <label className="text-xs font-semibold text-muted-foreground">Rating</label>
         <div className="mt-1">
-          <Rating
-            value={rating}
-            onValueChange={v => onUpdate({ rating: v })}
-            variant="yellow"
-            size={18}
-          />
+          <Rating value={rating} onValueChange={v => onUpdate({ rating: v })} variant="yellow" size={18} />
         </div>
       </div>
 
@@ -631,14 +881,110 @@ function ReviewPanel({
   )
 }
 
+// ─── Onboarding dialog ───
+
+function OnboardingDialog() {
+  const [open, setOpen] = useState(() => {
+    if (typeof window === 'undefined') return false
+
+    return !localStorage.getItem(ONBOARDING_KEY)
+  })
+
+  const dismiss = () => {
+    setOpen(false)
+    localStorage.setItem(ONBOARDING_KEY, '1')
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={v => {
+        if (!v) dismiss()
+      }}
+    >
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <MessageSquare className="size-5" />
+            Conversation Editor
+          </DialogTitle>
+          <DialogDescription>Quick guide to editing conversations</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3 py-2">
+          <div className="flex items-start gap-3">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sky-100 dark:bg-sky-900/40">
+              <MousePointerClick className="size-4 text-sky-600 dark:text-sky-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Click to edit</p>
+              <p className="text-xs text-muted-foreground">
+                Click any message to edit its content inline. Press{' '}
+                <kbd className="rounded border bg-muted px-1 font-mono text-[10px]">Esc</kbd> to cancel.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/40">
+              <Keyboard className="size-4 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Insert tool calls</p>
+              <p className="text-xs text-muted-foreground">
+                While editing, type{' '}
+                <kbd className="rounded border bg-muted px-1 font-mono text-[10px]">&lt;</kbd> to open the tool picker
+                and insert a tool call block.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-900/30">
+              <Star className="size-4 text-amber-500" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Rate &amp; tag</p>
+              <p className="text-xs text-muted-foreground">
+                Use the star rating, tags, and notes at the bottom of the detail panel to organize and review
+                conversations.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
+              <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Validate or reject</p>
+              <p className="text-xs text-muted-foreground">
+                Mark conversations as valid or invalid. Invalid conversations are excluded from exports and evaluations.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button onClick={dismiss} size="sm">
+            Got it
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 // ─── Detail panel ───
 
 function DetailPanel({
   conversation,
+  availableTools,
   onPersist,
   onDelete
 }: {
   conversation: Conversation
+  availableTools: string[]
   onPersist: (updated: Conversation) => void
   onDelete: () => void
 }) {
@@ -676,7 +1022,7 @@ function DetailPanel({
 
   const handleToggleStatus = () => {
     const current = conversation.status ?? 'valid'
-    const next = current === 'valid' ? 'invalid' as const : 'valid' as const
+    const next = current === 'valid' ? ('invalid' as const) : ('valid' as const)
 
     onPersist({ ...conversation, ...pendingChanges, status: next })
   }
@@ -709,10 +1055,12 @@ function DetailPanel({
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-lg font-semibold">
-              Conversation <span className="font-mono text-base">{conversation.conversation_id.slice(0, 12)}...</span>
+              Conversation{' '}
+              <span className="font-mono text-base">{conversation.conversation_id.slice(0, 12)}...</span>
             </h2>
             <p className="text-sm text-muted-foreground">
-              {conversation.turnos.length} messages &middot; {conversation.dominio} &middot; {conversation.es_sintetica ? 'Synthetic' : 'Real'}
+              {conversation.turnos.length} messages &middot; {conversation.dominio} &middot;{' '}
+              {conversation.es_sintetica ? 'Synthetic' : 'Real'}
             </p>
           </div>
           <div className="flex items-center gap-1.5">
@@ -735,13 +1083,18 @@ function DetailPanel({
               <Wrench className="size-3" /> {toolNames.length} tool{toolNames.length > 1 ? 's' : ''}
             </span>
           )}
+          {availableTools.length > 0 && (
+            <span className="flex items-center gap-1 rounded bg-muted px-1.5 py-0.5">
+              <Code2 className="size-3" /> {availableTools.length} available
+            </span>
+          )}
           <span className="font-mono">{conversation.idioma}</span>
         </div>
       </div>
 
       {/* Invalid banner */}
       {status === 'invalid' && (
-        <div className="flex items-center gap-2 border-b px-4 py-2 bg-destructive/5">
+        <div className="flex items-center gap-2 border-b bg-destructive/5 px-4 py-2">
           <Ban className="size-3.5 text-destructive/70" />
           <span className="text-xs text-destructive/80">
             Marked as invalid — excluded from exports and evaluations.
@@ -768,6 +1121,7 @@ function DetailPanel({
                 onEditChange={setEditValue}
                 onEditSave={handleEditSave}
                 onEditCancel={handleEditCancel}
+                availableTools={availableTools}
               />
             )
           })}
@@ -780,35 +1134,24 @@ function DetailPanel({
 
         {/* Action buttons */}
         <div className="mt-3 flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5"
-            onClick={handleValidate}
-          >
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleValidate}>
             <CheckCircle2 className="size-3.5" />
             Validate
           </Button>
-          <Button
-            size="sm"
-            className="gap-1.5"
-            onClick={handleSave}
-            disabled={!hasPendingChanges}
-          >
+          <Button size="sm" className="gap-1.5" onClick={handleSave} disabled={!hasPendingChanges}>
             <Save className="size-3.5" />
             Save
           </Button>
           <div className="flex-1" />
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5"
-            onClick={handleToggleStatus}
-          >
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleToggleStatus}>
             {status === 'valid' ? (
-              <><Ban className="size-3.5" /> Mark Invalid</>
+              <>
+                <Ban className="size-3.5" /> Mark Invalid
+              </>
             ) : (
-              <><CheckCircle2 className="size-3.5" /> Mark Valid</>
+              <>
+                <CheckCircle2 className="size-3.5" /> Mark Valid
+              </>
             )}
           </Button>
           <Button
@@ -836,7 +1179,13 @@ function DetailPanel({
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button variant="destructive" onClick={() => { setShowDelete(false); onDelete() }}>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setShowDelete(false)
+                onDelete()
+              }}
+            >
               Delete
             </Button>
           </DialogFooter>
@@ -877,7 +1226,9 @@ function Pagination({
       >
         Previous
       </Button>
-      <span>{start}-{end} of {total}</span>
+      <span>
+        {start}-{end} of {total}
+      </span>
       <Button
         variant="ghost"
         size="sm"
@@ -903,13 +1254,30 @@ export function ConversationsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [page, setPage] = useState(0)
 
-  const persist = useCallback(
-    (updated: Conversation[]) => {
-      setConversations(updated)
-      saveConversations(updated)
-    },
-    []
-  )
+  // Try to load tools from API (best-effort, non-blocking)
+  const [apiTools, setApiTools] = useState<ToolDefinition[] | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    import('@/lib/api/tools')
+      .then(mod => mod.fetchTools())
+      .then(res => {
+        if (!cancelled && res.data) setApiTools(res.data)
+      })
+      .catch(() => {
+        // API unavailable — will use fallback tools
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const persist = useCallback((updated: Conversation[]) => {
+    setConversations(updated)
+    saveConversations(updated)
+  }, [])
 
   const filtered = useMemo(() => {
     let result = conversations
@@ -958,6 +1326,10 @@ export function ConversationsPage() {
     [selectedId, conversations]
   )
 
+  // Resolve available tools for the selected conversation's domain
+  const selectedDomain = selectedConversation?.dominio ?? ''
+  const availableTools = useToolAutocomplete({ domain: selectedDomain, conversations, apiTools })
+
   const handlePersistConversation = useCallback(
     (updated: Conversation) => {
       const all = conversations.map(c => (c.conversation_id === updated.conversation_id ? updated : c))
@@ -972,16 +1344,19 @@ export function ConversationsPage() {
       const all = conversations.filter(c => c.conversation_id !== id)
 
       persist(all)
+
       if (selectedId === id) setSelectedId(null)
     },
     [conversations, persist, selectedId]
   )
 
   // Reset page when filters change
-  const handleFilterChange = <T,>(setter: (v: T) => void) => (v: T) => {
-    setter(v)
-    setPage(0)
-  }
+  const handleFilterChange =
+    <T,>(setter: (v: T) => void) =>
+    (v: T) => {
+      setter(v)
+      setPage(0)
+    }
 
   if (conversations.length === 0) {
     return (
@@ -1005,6 +1380,8 @@ export function ConversationsPage() {
 
   return (
     <div className="flex h-[calc(100vh-6rem)] flex-col">
+      <OnboardingDialog />
+
       <PageHeader
         title="Conversations"
         description={`${conversations.length} conversations${invalidCount > 0 ? ` (${invalidCount} invalid)` : ''}`}
@@ -1029,7 +1406,9 @@ export function ConversationsPage() {
                 <SelectContent>
                   <SelectItem value="all">All Domains</SelectItem>
                   {SUPPORTED_DOMAINS.map(d => (
-                    <SelectItem key={d} value={d}>{d.split('.').pop()}</SelectItem>
+                    <SelectItem key={d} value={d}>
+                      {d.split('.').pop()}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -1062,7 +1441,8 @@ export function ConversationsPage() {
                   <SelectItem value="0">Unrated</SelectItem>
                   {[1, 2, 3, 4, 5].map(r => (
                     <SelectItem key={r} value={String(r)}>
-                      {'★'.repeat(r)}{'☆'.repeat(5 - r)}
+                      {'★'.repeat(r)}
+                      {'☆'.repeat(5 - r)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1098,6 +1478,7 @@ export function ConversationsPage() {
             <DetailPanel
               key={selectedConversation.conversation_id}
               conversation={selectedConversation}
+              availableTools={availableTools}
               onPersist={handlePersistConversation}
               onDelete={() => handleDeleteConversation(selectedConversation.conversation_id)}
             />

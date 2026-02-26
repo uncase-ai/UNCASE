@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -21,7 +21,7 @@ import {
   X
 } from 'lucide-react'
 
-import type { Conversation, ConversationTurn } from '@/types/api'
+import type { Conversation, ConversationTurn, ToolDefinition } from '@/types/api'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -225,7 +225,113 @@ function getToolCallNames(conv: Conversation): string[] {
   return [...names]
 }
 
-// ─── Message bubble (click-to-edit) ───
+// ─── Built-in tools (fallback) ───
+
+const BUILTIN_TOOLS: { name: string; domain: string }[] = [
+  { name: 'buscar_inventario', domain: 'automotive.sales' },
+  { name: 'cotizar_vehiculo', domain: 'automotive.sales' },
+  { name: 'verificar_disponibilidad', domain: 'automotive.sales' },
+  { name: 'solicitar_financiamiento', domain: 'automotive.sales' },
+  { name: 'agendar_servicio', domain: 'automotive.sales' },
+  { name: 'consultar_historial_medico', domain: 'medical.consultation' },
+  { name: 'buscar_medicamentos', domain: 'medical.consultation' },
+  { name: 'agendar_cita', domain: 'medical.consultation' },
+  { name: 'verificar_laboratorio', domain: 'medical.consultation' },
+  { name: 'validar_seguro', domain: 'medical.consultation' },
+  { name: 'buscar_jurisprudencia', domain: 'legal.advisory' },
+  { name: 'consultar_expediente', domain: 'legal.advisory' },
+  { name: 'verificar_plazos', domain: 'legal.advisory' },
+  { name: 'buscar_legislacion', domain: 'legal.advisory' },
+  { name: 'calcular_honorarios', domain: 'legal.advisory' },
+  { name: 'consultar_portafolio', domain: 'finance.advisory' },
+  { name: 'analizar_riesgo', domain: 'finance.advisory' },
+  { name: 'consultar_mercado', domain: 'finance.advisory' },
+  { name: 'verificar_cumplimiento', domain: 'finance.advisory' },
+  { name: 'simular_inversion', domain: 'finance.advisory' },
+  { name: 'diagnosticar_equipo', domain: 'industrial.support' },
+  { name: 'consultar_inventario_partes', domain: 'industrial.support' },
+  { name: 'programar_mantenimiento', domain: 'industrial.support' },
+  { name: 'buscar_manual_tecnico', domain: 'industrial.support' },
+  { name: 'registrar_incidencia', domain: 'industrial.support' },
+  { name: 'buscar_curriculum', domain: 'education.tutoring' },
+  { name: 'evaluar_progreso', domain: 'education.tutoring' },
+  { name: 'generar_ejercicio', domain: 'education.tutoring' },
+  { name: 'buscar_recurso_educativo', domain: 'education.tutoring' },
+  { name: 'programar_sesion', domain: 'education.tutoring' }
+]
+
+function resolveTools(conv: Conversation, apiTools: ToolDefinition[] | null): string[] {
+  if (apiTools && apiTools.length > 0) {
+    return apiTools.filter(t => t.domains.includes(conv.dominio) || t.domains.length === 0).map(t => t.name)
+  }
+
+  const used = new Set<string>()
+
+  for (const t of conv.turnos) {
+    for (const h of t.herramientas_usadas) used.add(h)
+
+    if (t.tool_calls) {
+      for (const tc of t.tool_calls) used.add(tc.tool_name)
+    }
+  }
+
+  if (used.size > 0) return [...used].sort()
+
+  return BUILTIN_TOOLS.filter(t => t.domain === conv.dominio).map(t => t.name)
+}
+
+// ─── Tool autocomplete dropdown ───
+
+function ToolAutocompleteDropdown({
+  tools,
+  filter,
+  position,
+  selectedIndex,
+  onSelect
+}: {
+  tools: string[]
+  filter: string
+  position: { top: number; left: number }
+  selectedIndex: number
+  onSelect: (tool: string) => void
+}) {
+  const filtered = useMemo(() => {
+    if (!filter) return tools
+
+    const q = filter.toLowerCase()
+
+    return tools.filter(t => t.toLowerCase().includes(q))
+  }, [tools, filter])
+
+  if (filtered.length === 0) return null
+
+  return (
+    <div
+      className="fixed z-50 max-h-48 w-64 overflow-y-auto rounded-md border bg-popover p-1 shadow-md"
+      style={{ top: position.top, left: position.left }}
+    >
+      <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground">Insert tool call</div>
+      {filtered.map((tool, i) => (
+        <button
+          key={tool}
+          className={cn(
+            'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-xs transition-colors',
+            i === selectedIndex ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'
+          )}
+          onMouseDown={e => {
+            e.preventDefault()
+            onSelect(tool)
+          }}
+        >
+          <Wrench className="size-3 shrink-0 text-amber-500" />
+          <span className="truncate font-mono">{tool}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ─── Message bubble (click-to-edit with tool autocomplete) ───
 
 function MessageBubble({
   item,
@@ -234,7 +340,8 @@ function MessageBubble({
   onClickToEdit,
   onEditChange,
   onEditSave,
-  onEditCancel
+  onEditCancel,
+  availableTools
 }: {
   item: FlatItem
   isEditing: boolean
@@ -243,11 +350,50 @@ function MessageBubble({
   onEditChange: (v: string) => void
   onEditSave: () => void
   onEditCancel: () => void
+  availableTools: string[]
 }) {
   const style = ROLE_STYLES[item.role]
   const Icon = style.icon
   const isMainMsg = item.role === 'user' || item.role === 'assistant' || item.role === 'system'
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const [showToolMenu, setShowToolMenu] = useState(false)
+  const [toolFilter, setToolFilter] = useState('')
+  const [toolMenuPos, setToolMenuPos] = useState({ top: 0, left: 0 })
+  const [toolSelectedIdx, setToolSelectedIdx] = useState(0)
+  const triggerPosRef = useRef<number>(0)
+
+  const filteredTools = useMemo(() => {
+    if (!toolFilter) return availableTools
+
+    const q = toolFilter.toLowerCase()
+
+    return availableTools.filter(t => t.toLowerCase().includes(q))
+  }, [availableTools, toolFilter])
+
+  const insertToolCall = useCallback(
+    (toolName: string) => {
+      const cursorPos = textareaRef.current?.selectionStart ?? editValue.length
+      const before = editValue.slice(0, triggerPosRef.current)
+      const after = editValue.slice(cursorPos)
+      const snippet = `<tool_call>\n{"name": "${toolName}", "arguments": {}}\n</tool_call>`
+
+      onEditChange(before + snippet + after)
+      setShowToolMenu(false)
+      setToolFilter('')
+      setToolSelectedIdx(0)
+
+      requestAnimationFrame(() => {
+        if (textareaRef.current) {
+          const newCursorPos = before.length + snippet.length - 16
+
+          textareaRef.current.focus()
+          textareaRef.current.setSelectionRange(newCursorPos, newCursorPos)
+        }
+      })
+    },
+    [editValue, onEditChange]
+  )
 
   const handleTextareaChange = (v: string) => {
     onEditChange(v)
@@ -255,6 +401,81 @@ function MessageBubble({
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
       textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Escape') {
+      if (showToolMenu) {
+        setShowToolMenu(false)
+        setToolFilter('')
+
+        return
+      }
+
+      onEditCancel()
+
+      return
+    }
+
+    if (showToolMenu) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setToolSelectedIdx(i => (i + 1) % Math.max(filteredTools.length, 1))
+
+        return
+      }
+
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setToolSelectedIdx(i => (i - 1 + filteredTools.length) % Math.max(filteredTools.length, 1))
+
+        return
+      }
+
+      if ((e.key === 'Enter' || e.key === 'Tab') && filteredTools.length > 0) {
+        e.preventDefault()
+        insertToolCall(filteredTools[toolSelectedIdx] ?? filteredTools[0])
+
+        return
+      }
+    }
+  }
+
+  const handleInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    const ta = e.currentTarget
+    const val = ta.value
+    const pos = ta.selectionStart
+
+    if (pos > 0 && val[pos - 1] === '<' && availableTools.length > 0) {
+      const before = val.slice(0, pos - 1)
+      const openTags = (before.match(/</g) || []).length
+      const closeTags = (before.match(/>/g) || []).length
+
+      if (openTags <= closeTags) {
+        triggerPosRef.current = pos - 1
+        setToolFilter('')
+        setToolSelectedIdx(0)
+
+        const rect = ta.getBoundingClientRect()
+
+        setToolMenuPos({ top: rect.top + Math.min(ta.scrollHeight, 120), left: rect.left + 16 })
+        setShowToolMenu(true)
+
+        return
+      }
+    }
+
+    if (showToolMenu) {
+      const typed = val.slice(triggerPosRef.current + 1, pos)
+
+      if (pos <= triggerPosRef.current || typed.includes(' ') || typed.includes('\n')) {
+        setShowToolMenu(false)
+        setToolFilter('')
+      } else {
+        setToolFilter(typed)
+        setToolSelectedIdx(0)
+      }
     }
   }
 
@@ -285,15 +506,31 @@ function MessageBubble({
       </div>
 
       {isEditing ? (
-        <div className="space-y-2">
+        <div className="relative space-y-2">
           <Textarea
             ref={textareaRef}
             value={editValue}
             onChange={e => handleTextareaChange(e.target.value)}
+            onInput={handleInput}
+            onKeyDown={handleKeyDown}
+            onBlur={() => { setTimeout(() => setShowToolMenu(false), 150) }}
             className="min-h-20 resize-none border-primary/30 bg-background text-sm focus-visible:ring-primary/20"
             autoFocus
-            onKeyDown={e => { if (e.key === 'Escape') onEditCancel() }}
           />
+          {availableTools.length > 0 && !showToolMenu && (
+            <p className="text-[10px] text-muted-foreground">
+              Type <kbd className="rounded border bg-muted px-1 py-0.5 font-mono text-[9px]">&lt;</kbd> to insert a tool call
+            </p>
+          )}
+          {showToolMenu && (
+            <ToolAutocompleteDropdown
+              tools={availableTools}
+              filter={toolFilter}
+              position={toolMenuPos}
+              selectedIndex={toolSelectedIdx}
+              onSelect={insertToolCall}
+            />
+          )}
           <div className="flex justify-end gap-1.5">
             <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" onClick={onEditCancel}>
               Cancel
@@ -412,6 +649,28 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
   const [showDelete, setShowDelete] = useState(false)
   const [showMeta, setShowMeta] = useState(false)
   const [newTag, setNewTag] = useState('')
+  const [apiTools, setApiTools] = useState<ToolDefinition[] | null>(null)
+
+  // Load tools from API (best-effort)
+  useEffect(() => {
+    let cancelled = false
+
+    import('@/lib/api/tools')
+      .then(mod => mod.fetchTools())
+      .then(res => {
+        if (!cancelled && res.data) setApiTools(res.data)
+      })
+      .catch(() => {})
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const availableTools = useMemo(
+    () => (conversation ? resolveTools(conversation, apiTools) : []),
+    [conversation, apiTools]
+  )
 
   const persistConversation = useCallback(
     (updated: Conversation) => {
@@ -580,6 +839,7 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
                 onEditChange={setEditValue}
                 onEditSave={handleEditSave}
                 onEditCancel={handleEditCancel}
+                availableTools={availableTools}
               />
             )
           })}
