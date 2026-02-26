@@ -1,3 +1,4 @@
+
 <p align="center">
   <img src="frontend/public/images/logo/logo-horizontal.png" alt="UNCASE Logo" height="80" />
 </p>
@@ -19,8 +20,14 @@
   <a href="#"><img src="https://img.shields.io/badge/coverage-73%25-green.svg" alt="Coverage" /></a>
   <a href="#"><img src="https://img.shields.io/badge/API%20endpoints-75+-purple.svg" alt="Endpoints" /></a>
 </p>
+<div align="center">
 
----
+<p> This project is proudly</p>
+  
+  [![SPONSORED BY E2B FOR STARTUPS](https://img.shields.io/badge/SPONSORED%20BY-E2B%20FOR%20STARTUPS-ff8800?style=for-the-badge)](https://e2b.dev/startups)
+  
+</div>
+  
 
 ## The Problem
 
