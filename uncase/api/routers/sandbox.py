@@ -285,7 +285,12 @@ async def create_demo_sandbox(
         preload_seeds=request.preload_seeds,
     )
 
-    from uncase.sandbox.demo import DemoSandboxOrchestrator
+    try:
+        from uncase.sandbox.demo import DemoSandboxOrchestrator
+    except ImportError as exc:
+        raise SandboxNotConfiguredError(
+            "Demo sandboxes require the sandbox extra. Install with: pip install 'uncase[sandbox]'"
+        ) from exc
 
     demo = DemoSandboxOrchestrator(settings=settings)
     return await demo.create_demo(request)
