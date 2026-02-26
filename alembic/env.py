@@ -24,6 +24,11 @@ if config.config_file_name is not None:
 # (Docker, CI, production environments set DATABASE_URL instead of editing alembic.ini)
 database_url = os.environ.get("DATABASE_URL")
 if database_url:
+    # Normalize to asyncpg driver format
+    if database_url.startswith("postgresql://"):
+        database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    elif database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql+asyncpg://", 1)
     config.set_main_option("sqlalchemy.url", database_url)
 
 target_metadata = Base.metadata

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -23,10 +23,14 @@ class UNCASESettings(BaseSettings):
     uncase_log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "DEBUG"
     uncase_default_locale: Literal["es", "en"] = "es"
 
+    # -- Railway / platform environment (fallbacks) --
+    railway_environment: str = ""
+
     # -- API --
     api_port: int = 8000
     api_secret_key: str = "cambiar-en-produccion"
     api_cors_origins: str = "http://localhost:3000,http://localhost:8000"
+    cors_origins: str = ""
 
     # -- Database --
     database_url: str = "postgresql+asyncpg://uncase:uncase@localhost:5432/uncase"
@@ -56,6 +60,29 @@ class UNCASESettings(BaseSettings):
     # -- Directories --
     uncase_models_dir: str = "./models"
     uncase_exports_dir: str = "./exports"
+
+    @model_validator(mode="after")
+    def _normalize_settings(self) -> UNCASESettings:
+        """Normalize env vars for Railway / platform compatibility."""
+        # Fallback: RAILWAY_ENVIRONMENT -> uncase_env
+        if self.uncase_env == "development" and self.railway_environment in (
+            "production",
+            "staging",
+        ):
+            object.__setattr__(self, "uncase_env", self.railway_environment)
+
+        # Fallback: CORS_ORIGINS -> api_cors_origins
+        if self.cors_origins and self.api_cors_origins == "http://localhost:3000,http://localhost:8000":
+            object.__setattr__(self, "api_cors_origins", self.cors_origins)
+
+        # Auto-convert postgresql:// to postgresql+asyncpg://
+        url = self.database_url
+        if url.startswith("postgresql://"):
+            object.__setattr__(self, "database_url", url.replace("postgresql://", "postgresql+asyncpg://", 1))
+        elif url.startswith("postgres://"):
+            object.__setattr__(self, "database_url", url.replace("postgres://", "postgresql+asyncpg://", 1))
+
+        return self
 
     @property
     def is_production(self) -> bool:

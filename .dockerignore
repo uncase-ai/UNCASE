@@ -7,7 +7,8 @@
 .git
 .gitignore
 
-# Landing page (no necesaria para el backend)
+# Frontend (no necesario para el backend)
+frontend/
 shadcn-nextjs-flow-landing-page-1.0.0/
 
 # Documentación
