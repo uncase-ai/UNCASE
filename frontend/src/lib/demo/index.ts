@@ -6,7 +6,8 @@ const STORAGE_KEYS = [
   'uncase-evaluations',
   'uncase-pipeline-jobs',
   'uncase-activity',
-  'uncase-exports'
+  'uncase-exports',
+  'uncase-tools'
 ] as const
 
 export const DEMO_RUNNING_JOB_ID = 'demo-job-003'
@@ -18,14 +19,15 @@ function dispatchStorageEvent(key: string) {
 }
 
 async function loadDemoData() {
-  const [{ DEMO_SEEDS }, { DEMO_CONVERSATIONS }, { DEMO_EVALUATIONS }, { DEMO_PIPELINE_JOBS }, { DEMO_ACTIVITY }, { DEMO_EXPORTS }] =
+  const [{ DEMO_SEEDS }, { DEMO_CONVERSATIONS }, { DEMO_EVALUATIONS }, { DEMO_PIPELINE_JOBS }, { DEMO_ACTIVITY }, { DEMO_EXPORTS }, { DEMO_TOOLS }] =
     await Promise.all([
       import('./seeds'),
       import('./conversations'),
       import('./evaluations'),
       import('./pipeline-jobs'),
       import('./activity'),
-      import('./exports')
+      import('./exports'),
+      import('./tools')
     ])
 
   return [
@@ -34,7 +36,8 @@ async function loadDemoData() {
     ['uncase-evaluations', DEMO_EVALUATIONS],
     ['uncase-pipeline-jobs', DEMO_PIPELINE_JOBS],
     ['uncase-activity', DEMO_ACTIVITY],
-    ['uncase-exports', DEMO_EXPORTS]
+    ['uncase-exports', DEMO_EXPORTS],
+    ['uncase-tools', DEMO_TOOLS]
   ] as [string, unknown][]
 }
 

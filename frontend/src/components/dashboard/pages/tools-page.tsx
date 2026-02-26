@@ -1,14 +1,14 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import Link from 'next/link'
-import { Code2, Loader2, Lock, Plus, Puzzle, Trash2, Unlock } from 'lucide-react'
+import { Cloud, CloudOff, Code2, Loader2, Lock, Plus, Puzzle, RefreshCw, Trash2, Unlock } from 'lucide-react'
 
 import type { CustomToolCreateRequest, ToolDefinition } from '@/types/api'
 import { SUPPORTED_DOMAINS } from '@/types/api'
-import { useApi } from '@/hooks/use-api'
-import { deleteTool, fetchTools, registerTool } from '@/lib/api/tools'
+import { checkApiHealth } from '@/lib/api/client'
+import { deleteTool as deleteToolApi, fetchTools, registerTool as registerToolApi } from '@/lib/api/tools'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -30,6 +30,25 @@ import { EmptyState } from '../empty-state'
 import { PageHeader } from '../page-header'
 import { SearchInput } from '../search-input'
 import { StatusBadge } from '../status-badge'
+
+// ─── Local Storage ───
+const STORE_KEY = 'uncase-tools'
+
+function loadTools(): ToolDefinition[] {
+  if (typeof window === 'undefined') return []
+
+  try {
+    const raw = localStorage.getItem(STORE_KEY)
+
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+function saveTools(tools: ToolDefinition[]) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(tools))
+}
 
 const EXECUTION_MODE_VARIANT: Record<string, 'success' | 'warning' | 'info'> = {
   live: 'success',
@@ -58,9 +77,9 @@ const BUILTIN_PREFIXES = [
 ]
 
 export function ToolsPage() {
-  const { data: tools, loading, error, execute: refetchTools } = useApi<ToolDefinition[]>(
-    useCallback((signal: AbortSignal) => fetchTools(undefined, signal), [])
-  )
+  const [tools, setTools] = useState<ToolDefinition[]>(() => loadTools())
+  const [apiOnline, setApiOnline] = useState<boolean | null>(null)
+  const [syncing, setSyncing] = useState(false)
 
   // Filters
   const [search, setSearch] = useState('')
@@ -85,16 +104,73 @@ export function ToolsPage() {
   const [formCategory, setFormCategory] = useState<string>('')
   const [formExecMode, setFormExecMode] = useState<string>('simulated')
 
+  // Try syncing from API on mount — if it fails, fall back to localStorage data
+  useEffect(() => {
+    let cancelled = false
+
+    async function syncFromApi() {
+      const healthy = await checkApiHealth()
+
+      if (cancelled) return
+
+      setApiOnline(healthy)
+
+      if (!healthy) return
+
+      setSyncing(true)
+      const result = await fetchTools()
+
+      if (cancelled) return
+
+      setSyncing(false)
+
+      if (result.data && result.data.length > 0) {
+        setTools(result.data)
+        saveTools(result.data)
+      }
+    }
+
+    syncFromApi()
+
+    return () => { cancelled = true }
+  }, [])
+
+  // Listen for localStorage changes (e.g. from demo activation)
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      if (e.key === STORE_KEY) {
+        setTools(loadTools())
+      }
+    }
+
+    window.addEventListener('storage', onStorage)
+
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
+  async function handleSync() {
+    setSyncing(true)
+    const result = await fetchTools()
+
+    setSyncing(false)
+
+    if (result.data && result.data.length > 0) {
+      setTools(result.data)
+      saveTools(result.data)
+      setApiOnline(true)
+    } else {
+      setApiOnline(false)
+    }
+  }
+
   // Derive unique categories from existing tools
   const availableCategories = useMemo(() => {
-    if (!tools) return []
     const cats = new Set(tools.map(t => t.category))
 
     return Array.from(cats).sort()
   }, [tools])
 
   const filtered = useMemo(() => {
-    if (!tools) return []
     let result = tools
 
     if (search) {
@@ -119,12 +195,10 @@ export function ToolsPage() {
   }, [tools, search, domainFilter, categoryFilter])
 
   const builtinCount = useMemo(() => {
-    if (!tools) return 0
-
     return tools.filter(t => BUILTIN_PREFIXES.includes(t.name)).length
   }, [tools])
 
-  const customCount = (tools?.length ?? 0) - builtinCount
+  const customCount = tools.length - builtinCount
 
   function isBuiltin(name: string): boolean {
     return BUILTIN_PREFIXES.includes(name)
@@ -201,188 +275,223 @@ export function ToolsPage() {
     }
 
     setSubmitting(true)
-    const result = await registerTool(newTool)
 
-    setSubmitting(false)
+    // Try API first
+    if (apiOnline) {
+      const result = await registerToolApi(newTool)
 
-    if (result.error) {
-      setRegisterError(result.error.message)
+      setSubmitting(false)
+
+      if (result.error) {
+        setRegisterError(result.error.message)
+
+        return
+      }
+
+      setDialogOpen(false)
+      resetForm()
+      handleSync()
 
       return
     }
 
+    // Fallback: save to localStorage only
+    const toolDef: ToolDefinition = {
+      name: newTool.name,
+      description: newTool.description,
+      input_schema: parsedInputSchema,
+      output_schema: parsedOutputSchema,
+      domains: newTool.domains ?? [],
+      category: newTool.category ?? 'query',
+      requires_auth: newTool.requires_auth ?? false,
+      execution_mode: newTool.execution_mode ?? 'simulated',
+      version: newTool.version ?? '1.0.0',
+      metadata: newTool.metadata ?? {}
+    }
+
+    const updated = [...tools, toolDef]
+
+    setTools(updated)
+    saveTools(updated)
+    setSubmitting(false)
     setDialogOpen(false)
     resetForm()
-    refetchTools()
   }
 
   async function handleDelete(toolName: string) {
-    // For custom tools we need to find the tool ID from the custom tools endpoint
-    // The name is used since custom tools have an ID in the response
     setDeleting(true)
-    const result = await deleteTool(toolName)
 
+    // Try API first
+    if (apiOnline) {
+      const result = await deleteToolApi(toolName)
+
+      setDeleting(false)
+      setDeleteTarget(null)
+
+      if (!result.error) {
+        handleSync()
+      }
+
+      return
+    }
+
+    // Fallback: remove from localStorage
+    const updated = tools.filter(t => t.name !== toolName)
+
+    setTools(updated)
+    saveTools(updated)
     setDeleting(false)
     setDeleteTarget(null)
-
-    if (!result.error) {
-      refetchTools()
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <PageHeader title="Tools" description="Tool registry for conversation simulations" />
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="size-6 animate-spin text-muted-foreground" />
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-6">
-        <PageHeader title="Tools" description="Tool registry for conversation simulations" />
-        <EmptyState
-          icon={Puzzle}
-          title="Failed to load tools"
-          description={error.message}
-          action={<Button variant="outline" onClick={() => refetchTools()}>Retry</Button>}
-        />
-      </div>
-    )
   }
 
   return (
     <div className="space-y-4">
       <PageHeader
         title="Tools"
-        description={`${tools?.length ?? 0} tools in registry (${builtinCount} built-in, ${customCount} custom)`}
+        description={`${tools.length} tools in registry (${builtinCount} built-in, ${customCount} custom)`}
         actions={
-          <Dialog open={dialogOpen} onOpenChange={open => { setDialogOpen(open); if (!open) resetForm() }}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="mr-1.5 size-4" />
-                Register Tool
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Register Custom Tool</DialogTitle>
-                <DialogDescription>
-                  Add a new tool definition. Custom tools are persisted to the database and available across sessions.
-                </DialogDescription>
-              </DialogHeader>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSync}
+              disabled={syncing}
+              title={apiOnline ? 'Synced with API' : 'API offline — using local data'}
+            >
+              {syncing ? (
+                <Loader2 className="mr-1.5 size-4 animate-spin" />
+              ) : apiOnline ? (
+                <Cloud className="mr-1.5 size-4 text-emerald-500" />
+              ) : (
+                <CloudOff className="mr-1.5 size-4 text-muted-foreground" />
+              )}
+              {syncing ? 'Syncing...' : 'Sync'}
+            </Button>
+            <Dialog open={dialogOpen} onOpenChange={open => { setDialogOpen(open); if (!open) resetForm() }}>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <Plus className="mr-1.5 size-4" />
+                  Register Tool
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Register Custom Tool</DialogTitle>
+                  <DialogDescription>
+                    Add a new tool definition.{apiOnline
+                      ? ' Custom tools are persisted to the database and available across sessions.'
+                      : ' Tool will be saved locally. Connect the API to persist to the database.'}
+                  </DialogDescription>
+                </DialogHeader>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="tool-name">Name</Label>
-                  <Input
-                    id="tool-name"
-                    value={formName}
-                    onChange={e => setFormName(e.target.value)}
-                    placeholder="e.g. consultar_inventario"
-                  />
-                  <p className="text-[10px] text-muted-foreground">Lowercase snake_case identifier</p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="tool-description">Description</Label>
-                  <Textarea
-                    id="tool-description"
-                    value={formDescription}
-                    onChange={e => setFormDescription(e.target.value)}
-                    placeholder="What this tool does..."
-                    className="min-h-[80px]"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="tool-input-schema">Input Schema (JSON)</Label>
-                  <Textarea
-                    id="tool-input-schema"
-                    value={formInputSchema}
-                    onChange={e => setFormInputSchema(e.target.value)}
-                    className="min-h-[100px] font-mono text-xs"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="tool-output-schema">Output Schema (JSON)</Label>
-                  <Textarea
-                    id="tool-output-schema"
-                    value={formOutputSchema}
-                    onChange={e => setFormOutputSchema(e.target.value)}
-                    className="min-h-[80px] font-mono text-xs"
-                  />
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Domain</Label>
-                    <Select value={formDomain} onValueChange={setFormDomain}>
+                    <Label htmlFor="tool-name">Name</Label>
+                    <Input
+                      id="tool-name"
+                      value={formName}
+                      onChange={e => setFormName(e.target.value)}
+                      placeholder="e.g. consultar_inventario"
+                    />
+                    <p className="text-[10px] text-muted-foreground">Lowercase snake_case identifier</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tool-description">Description</Label>
+                    <Textarea
+                      id="tool-description"
+                      value={formDescription}
+                      onChange={e => setFormDescription(e.target.value)}
+                      placeholder="What this tool does..."
+                      className="min-h-[80px]"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tool-input-schema">Input Schema (JSON)</Label>
+                    <Textarea
+                      id="tool-input-schema"
+                      value={formInputSchema}
+                      onChange={e => setFormInputSchema(e.target.value)}
+                      className="min-h-[100px] font-mono text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tool-output-schema">Output Schema (JSON)</Label>
+                    <Textarea
+                      id="tool-output-schema"
+                      value={formOutputSchema}
+                      onChange={e => setFormOutputSchema(e.target.value)}
+                      className="min-h-[80px] font-mono text-xs"
+                    />
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Domain</Label>
+                      <Select value={formDomain} onValueChange={setFormDomain}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select domain" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SUPPORTED_DOMAINS.map(d => (
+                            <SelectItem key={d} value={d}>
+                              {d}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Category</Label>
+                      <Select value={formCategory} onValueChange={setFormCategory}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CATEGORIES.map(c => (
+                            <SelectItem key={c} value={c}>
+                              {c}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Execution Mode</Label>
+                    <Select value={formExecMode} onValueChange={setFormExecMode}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select domain" />
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {SUPPORTED_DOMAINS.map(d => (
-                          <SelectItem key={d} value={d}>
-                            {d}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="simulated">Simulated</SelectItem>
+                        <SelectItem value="live">Live</SelectItem>
+                        <SelectItem value="mock">Mock</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Category</Label>
-                    <Select value={formCategory} onValueChange={setFormCategory}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CATEGORIES.map(c => (
-                          <SelectItem key={c} value={c}>
-                            {c}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {registerError && (
+                    <p className="text-xs text-destructive">{registerError}</p>
+                  )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Execution Mode</Label>
-                  <Select value={formExecMode} onValueChange={setFormExecMode}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="simulated">Simulated</SelectItem>
-                      <SelectItem value="live">Live</SelectItem>
-                      <SelectItem value="mock">Mock</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {registerError && (
-                  <p className="text-xs text-destructive">{registerError}</p>
-                )}
-              </div>
-
-              <DialogFooter>
-                <Button variant="outline" onClick={() => { setDialogOpen(false); resetForm() }}>
-                  Cancel
-                </Button>
-                <Button onClick={handleRegister} disabled={submitting}>
-                  {submitting && <Loader2 className="mr-1.5 size-4 animate-spin" />}
-                  Register
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => { setDialogOpen(false); resetForm() }}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleRegister} disabled={submitting}>
+                    {submitting && <Loader2 className="mr-1.5 size-4 animate-spin" />}
+                    Register
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         }
       />
 
@@ -419,7 +528,19 @@ export function ToolsPage() {
       </div>
 
       {/* Tool cards grid */}
-      {!tools || filtered.length === 0 ? (
+      {tools.length === 0 ? (
+        <EmptyState
+          icon={Puzzle}
+          title="No tools available"
+          description="Activate demo mode to load built-in tools, or connect the API to sync from the backend."
+          action={
+            <Button variant="outline" size="sm" onClick={handleSync}>
+              <RefreshCw className="mr-1.5 size-4" />
+              Try Sync
+            </Button>
+          }
+        />
+      ) : filtered.length === 0 ? (
         <EmptyState
           icon={Puzzle}
           title="No tools match filters"
