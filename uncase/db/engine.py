@@ -23,13 +23,17 @@ def init_engine(settings: UNCASESettings) -> None:
     """
     global _engine, _session_factory
 
-    _engine = create_async_engine(
-        settings.database_url,
-        echo=not settings.is_production,
-        pool_size=5,
-        max_overflow=10,
-        pool_pre_ping=True,
-    )
+    engine_kwargs: dict[str, object] = {
+        "echo": not settings.is_production,
+    }
+
+    # QueuePool options are not compatible with SQLite (uses StaticPool)
+    if not settings.database_url.startswith("sqlite"):
+        engine_kwargs["pool_size"] = 5
+        engine_kwargs["max_overflow"] = 10
+        engine_kwargs["pool_pre_ping"] = True
+
+    _engine = create_async_engine(settings.database_url, **engine_kwargs)
     _session_factory = async_sessionmaker(
         bind=_engine,
         class_=AsyncSession,

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
@@ -17,6 +19,7 @@ from uncase.api.routers.audit import router as audit_router
 from uncase.api.routers.auth import router as auth_router
 from uncase.api.routers.connectors import router as connectors_router
 from uncase.api.routers.costs import router as costs_router
+from uncase.api.routers.e2b_webhooks import router as e2b_webhooks_router
 from uncase.api.routers.evaluations import router as evaluations_router
 from uncase.api.routers.gateway import router as gateway_router
 from uncase.api.routers.generation import router as generation_router
@@ -41,15 +44,68 @@ from uncase.logging import setup_logging
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
+_WEBHOOK_INTERVAL_SECONDS = 30
+
+
+def _validate_secret_key(settings: UNCASESettings) -> None:
+    """Abort startup if the API secret key is still the default in production."""
+    from uncase.logging import get_logger
+
+    _logger = get_logger("uncase.startup")
+
+    if settings.api_secret_key == "cambiar-en-produccion":  # noqa: S105
+        if settings.is_production:
+            msg = (
+                "FATAL: api_secret_key is still the default value. "
+                "Set API_SECRET_KEY to a strong random secret before running in production."
+            )
+            _logger.error("insecure_secret_key", env=settings.uncase_env)
+            raise SystemExit(msg)
+
+        _logger.warning(
+            "insecure_secret_key",
+            message="Using default api_secret_key. Set API_SECRET_KEY for non-development environments.",
+        )
+
+
+async def _webhook_scheduler() -> None:
+    """Background loop that processes pending webhook deliveries."""
+    from uncase.db.engine import get_async_session
+    from uncase.logging import get_logger
+    from uncase.services.webhook import WebhookService
+
+    _logger = get_logger("uncase.webhook_scheduler")
+
+    while True:
+        await asyncio.sleep(_WEBHOOK_INTERVAL_SECONDS)
+
+        with contextlib.suppress(Exception):
+            async for session in get_async_session():
+                service = WebhookService(session)
+                processed = await service.execute_pending_deliveries()
+
+                if processed:
+                    _logger.debug("webhook_scheduler_tick", processed=processed)
+
+                break
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan: init DB engine on startup, close on shutdown."""
     settings = UNCASESettings()
+    _validate_secret_key(settings)
     setup_logging(log_level=settings.uncase_log_level, json_output=settings.is_production)
     init_engine(settings)
     await _hydrate_tools_from_db()
+
+    webhook_task = asyncio.create_task(_webhook_scheduler())
     yield
+    webhook_task.cancel()
+
+    with contextlib.suppress(asyncio.CancelledError):
+        await webhook_task
+
     await close_engine()
 
 
@@ -171,6 +227,7 @@ def create_app() -> FastAPI:
     application.include_router(knowledge_router)
     application.include_router(usage_router)
     application.include_router(webhooks_router)
+    application.include_router(e2b_webhooks_router)
     application.include_router(audit_router)
     application.include_router(costs_router)
     application.include_router(metrics_router)

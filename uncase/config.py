@@ -31,6 +31,9 @@ class UNCASESettings(BaseSettings):
     # -- Database --
     database_url: str = "postgresql+asyncpg://uncase:uncase@localhost:5432/uncase"
 
+    # -- Redis (rate limiting, optional) --
+    redis_url: str = ""
+
     # -- LLM Providers --
     litellm_api_key: str = ""
     anthropic_api_key: str = ""
@@ -48,6 +51,7 @@ class UNCASESettings(BaseSettings):
     e2b_max_parallel: int = Field(default=5, ge=1, le=20)
     e2b_sandbox_timeout: int = Field(default=300, ge=30, le=600)
     e2b_enabled: bool = False
+    e2b_webhook_secret: str = ""
 
     # -- Directories --
     uncase_models_dir: str = "./models"

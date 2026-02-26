@@ -27,10 +27,7 @@ def _create_jwt(
     secret: str,
     expires_delta: timedelta,
 ) -> str:
-    """Create a signed JWT token.
-
-    Uses PyJWT (jwt) for encoding. Falls back to a simple base64-encoded
-    token if PyJWT is not installed.
+    """Create a signed JWT token using PyJWT (HS256).
 
     Args:
         payload: Token payload data.
@@ -40,6 +37,8 @@ def _create_jwt(
     Returns:
         Encoded JWT string.
     """
+    import jwt
+
     now = datetime.now(UTC)
     token_payload = {
         **payload,
@@ -48,28 +47,11 @@ def _create_jwt(
         "jti": uuid.uuid4().hex,
     }
 
-    try:
-        import jwt
-
-        return jwt.encode(token_payload, secret, algorithm="HS256")
-    except ImportError:
-        # Fallback: simple base64 encoding (NOT suitable for production)
-        import base64
-        import json
-
-        logger.warning("pyjwt_not_installed", message="Using base64 fallback. Install PyJWT for production.")
-        # Convert datetime to ISO strings for JSON serialization
-        serializable = {}
-        for k, v in token_payload.items():
-            if isinstance(v, datetime):
-                serializable[k] = v.isoformat()
-            else:
-                serializable[k] = v
-        return base64.urlsafe_b64encode(json.dumps(serializable).encode()).decode()
+    return jwt.encode(token_payload, secret, algorithm="HS256")
 
 
 def _decode_jwt(token: str, secret: str) -> dict[str, Any]:
-    """Decode and verify a JWT token.
+    """Decode and verify a JWT token using PyJWT (HS256).
 
     Args:
         token: Encoded JWT string.
@@ -81,24 +63,13 @@ def _decode_jwt(token: str, secret: str) -> dict[str, Any]:
     Raises:
         AuthenticationError: If the token is invalid or expired.
     """
+    import jwt
+
     try:
-        import jwt
-
         return jwt.decode(token, secret, algorithms=["HS256"])
-    except ImportError:
-        import base64
-        import json
-
-        try:
-            payload = json.loads(base64.urlsafe_b64decode(token))
-            if "exp" in payload:
-                exp = datetime.fromisoformat(payload["exp"])
-                if exp < datetime.now(UTC):
-                    raise AuthenticationError("Token has expired")
-            return payload  # type: ignore[no-any-return]
-        except (json.JSONDecodeError, Exception) as exc:
-            raise AuthenticationError("Invalid token") from exc
-    except Exception as exc:
+    except jwt.ExpiredSignatureError as exc:
+        raise AuthenticationError("Token has expired") from exc
+    except jwt.InvalidTokenError as exc:
         raise AuthenticationError(f"Invalid token: {exc}") from exc
 
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
 
 import pytest
@@ -17,6 +18,9 @@ from uncase.db.base import Base
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
+# Allow overriding with a real PostgreSQL URL in CI (e.g. TEST_DATABASE_URL)
+_TEST_DB_URL = os.environ.get("TEST_DATABASE_URL", "sqlite+aiosqlite://")
+
 
 @pytest.fixture()
 def settings() -> UNCASESettings:
@@ -24,15 +28,23 @@ def settings() -> UNCASESettings:
     return UNCASESettings(
         uncase_env="development",
         uncase_log_level="DEBUG",
-        database_url="sqlite+aiosqlite://",
+        database_url=_TEST_DB_URL,
         api_secret_key="test-secret",
     )
 
 
 @pytest.fixture()
 async def async_session() -> AsyncGenerator[AsyncSession, None]:
-    """Async session using in-memory SQLite for tests."""
-    engine = create_async_engine("sqlite+aiosqlite://", echo=False)
+    """Async session — uses PostgreSQL if TEST_DATABASE_URL is set, SQLite otherwise."""
+    is_sqlite = _TEST_DB_URL.startswith("sqlite")
+
+    engine_kwargs: dict[str, object] = {"echo": False}
+
+    if not is_sqlite:
+        engine_kwargs["pool_size"] = 5
+        engine_kwargs["max_overflow"] = 10
+
+    engine = create_async_engine(_TEST_DB_URL, **engine_kwargs)
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

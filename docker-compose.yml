@@ -21,9 +21,12 @@ services:
     env_file: .env
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-uncase}:${POSTGRES_PASSWORD:-uncase}@postgres:5432/${POSTGRES_DB:-uncase}
+      - REDIS_URL=redis://redis:6379/0
       - UNCASE_ENV=${UNCASE_ENV:-development}
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
     volumes:
@@ -44,6 +47,21 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-uncase}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Redis (rate limiting, caching) ────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: uncase-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -142,6 +160,8 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  redis_data:
     driver: local
   models_data:
     driver: local

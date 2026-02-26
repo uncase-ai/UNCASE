@@ -1,14 +1,15 @@
 """Rate limiting middleware — per-key request throttling.
 
-Uses an in-memory sliding window counter. For production, swap the
-backend to Redis via the ``UNCASE_RATE_LIMIT_BACKEND`` env var.
+Uses Redis when ``REDIS_URL`` is set, falls back to an in-memory sliding
+window counter otherwise.
 """
 
 from __future__ import annotations
 
+import os
 import time
 from collections import defaultdict
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import structlog
 from fastapi.responses import JSONResponse
@@ -41,6 +42,13 @@ EXEMPT_PATHS: frozenset[str] = frozenset(
         "/api/v1/health/detailed",
     }
 )
+
+
+class RateLimitBackend(Protocol):
+    """Protocol for rate limit backends."""
+
+    def reset(self) -> None: ...
+    def is_allowed(self, key: str, limit: int, window: int) -> tuple[bool, int, int]: ...
 
 
 class _SlidingWindowCounter:
@@ -82,7 +90,56 @@ class _SlidingWindowCounter:
         return True, remaining - 1, window
 
 
-_counter = _SlidingWindowCounter()
+class _RedisCounter:
+    """Redis-backed sliding window rate limiter using sorted sets."""
+
+    def __init__(self, redis_url: str) -> None:
+        from redis import Redis
+
+        self._redis: Redis = Redis.from_url(redis_url, decode_responses=True)
+        logger.info("rate_limit_backend", backend="redis", url=redis_url.split("@")[-1])
+
+    def reset(self) -> None:
+        """Flush all rate limit keys (used in tests)."""
+        for key in self._redis.scan_iter("rl:*"):
+            self._redis.delete(key)
+
+    def is_allowed(self, key: str, limit: int, window: int) -> tuple[bool, int, int]:
+        """Check rate limit using a Redis sorted set with timestamps as scores."""
+        now = time.time()
+        cutoff = now - window
+        rkey = f"rl:{key}"
+
+        pipe = self._redis.pipeline(transaction=True)
+        pipe.zremrangebyscore(rkey, "-inf", cutoff)
+        pipe.zcard(rkey)
+        pipe.zadd(rkey, {f"{now}": now})
+        pipe.expire(rkey, window)
+        results = pipe.execute()
+
+        current: int = results[1]
+        remaining = max(0, limit - current)
+
+        if current >= limit:
+            return False, 0, window
+
+        return True, remaining - 1, window
+
+
+def _create_backend() -> RateLimitBackend:
+    """Create the appropriate rate limit backend based on environment."""
+    redis_url = os.environ.get("REDIS_URL", "")
+
+    if redis_url:
+        try:
+            return _RedisCounter(redis_url)
+        except Exception:
+            logger.warning("redis_rate_limit_fallback", message="Redis unavailable, using in-memory counter.")
+
+    return _SlidingWindowCounter()
+
+
+_counter: RateLimitBackend = _create_backend()
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):

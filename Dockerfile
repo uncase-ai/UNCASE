@@ -38,8 +38,10 @@ RUN --mount=type=cache,target=/root/.cache/uv \
         uv sync --frozen --no-install-project; \
     fi
 
-# Copiar código fuente e instalar el paquete
+# Copiar código fuente, Alembic migrations, and entrypoint
 COPY uncase/ ./uncase/
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen
 
@@ -60,6 +62,11 @@ RUN groupadd --gid 1000 uncase && \
 # Copiar entorno virtual desde builder
 COPY --from=builder --chown=uncase:uncase /build/.venv /app/.venv
 COPY --from=builder --chown=uncase:uncase /build/uncase /app/uncase
+COPY --from=builder --chown=uncase:uncase /build/alembic /app/alembic
+COPY --from=builder --chown=uncase:uncase /build/alembic.ini /app/alembic.ini
+
+# Copiar entrypoint
+COPY --chown=uncase:uncase entrypoint.sh /app/entrypoint.sh
 
 # Asegurar que el venv está en el PATH
 ENV PATH="/app/.venv/bin:$PATH"
@@ -72,4 +79,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD ["python", "-c", "import httpx; r = httpx.get('http://localhost:8000/health'); r.raise_for_status()"]
 
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["uvicorn", "uncase.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
