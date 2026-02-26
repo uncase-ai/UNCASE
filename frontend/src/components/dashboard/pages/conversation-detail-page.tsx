@@ -82,25 +82,32 @@ function saveAllConversations(conversations: Conversation[]) {
 }
 
 // ─── Role detection helpers ───
+// Must stay in sync with the backend _ROLE_MAP used across all templates.
+
+const ASSISTANT_ROLES = new Set([
+  'asistente', 'assistant', 'agente', 'agent', 'vendedor', 'gpt', 'bot', 'model'
+])
+
+const SYSTEM_ROLES = new Set(['system', 'sistema'])
+
+const TOOL_ROLES = new Set(['herramienta', 'tool', 'function'])
 
 function isAssistantRole(rol: string): boolean {
-  const lower = rol.toLowerCase()
-
-  return (
-    lower.includes('asistente') ||
-    lower.includes('assistant') ||
-    lower.includes('agente') ||
-    lower.includes('agent')
-  )
+  return ASSISTANT_ROLES.has(rol.toLowerCase())
 }
 
 function isSystemRole(rol: string): boolean {
-  return rol.toLowerCase() === 'system' || rol.toLowerCase() === 'sistema'
+  return SYSTEM_ROLES.has(rol.toLowerCase())
+}
+
+function isToolRole(rol: string): boolean {
+  return TOOL_ROLES.has(rol.toLowerCase())
 }
 
 function getMessageRole(turn: ConversationTurn): MessageRole {
   if (isSystemRole(turn.rol)) return 'system'
   if (isAssistantRole(turn.rol)) return 'assistant'
+  if (isToolRole(turn.rol)) return 'tool_result'
 
   return 'user'
 }
@@ -772,7 +779,7 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
   const status = conversation.status ?? 'valid'
   const flatItems = flattenTurns(conversation.turnos)
   const toolNames = getToolCallNames(conversation)
-  const userCount = conversation.turnos.filter(t => !isAssistantRole(t.rol) && !isSystemRole(t.rol)).length
+  const userCount = conversation.turnos.filter(t => !isAssistantRole(t.rol) && !isSystemRole(t.rol) && !isToolRole(t.rol)).length
   const assistantCount = conversation.turnos.filter(t => isAssistantRole(t.rol)).length
   const tags = conversation.tags ?? []
 

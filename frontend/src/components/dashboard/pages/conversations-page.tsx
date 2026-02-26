@@ -85,20 +85,27 @@ export function appendConversations(newConvs: Conversation[]) {
 }
 
 // ─── Role helpers ───
+// Must stay in sync with the backend _ROLE_MAP used across all templates
+// (chatml.py, llama.py, mistral.py, etc.) and the JSONL parser role maps.
+
+const ASSISTANT_ROLES = new Set([
+  'asistente', 'assistant', 'agente', 'agent', 'vendedor', 'gpt', 'bot', 'model'
+])
+
+const SYSTEM_ROLES = new Set(['system', 'sistema'])
+
+const TOOL_ROLES = new Set(['herramienta', 'tool', 'function'])
 
 function isAssistantRole(rol: string): boolean {
-  const lower = rol.toLowerCase()
-
-  return (
-    lower.includes('asistente') ||
-    lower.includes('assistant') ||
-    lower.includes('agente') ||
-    lower.includes('agent')
-  )
+  return ASSISTANT_ROLES.has(rol.toLowerCase())
 }
 
 function isSystemRole(rol: string): boolean {
-  return rol.toLowerCase() === 'system' || rol.toLowerCase() === 'sistema'
+  return SYSTEM_ROLES.has(rol.toLowerCase())
+}
+
+function isToolRole(rol: string): boolean {
+  return TOOL_ROLES.has(rol.toLowerCase())
 }
 
 type MessageRole = 'system' | 'user' | 'assistant' | 'tool_call' | 'tool_result'
@@ -106,8 +113,54 @@ type MessageRole = 'system' | 'user' | 'assistant' | 'tool_call' | 'tool_result'
 function getMessageRole(turn: ConversationTurn): MessageRole {
   if (isSystemRole(turn.rol)) return 'system'
   if (isAssistantRole(turn.rol)) return 'assistant'
+  if (isToolRole(turn.rol)) return 'tool_result'
 
   return 'user'
+}
+
+// ─── Format compatibility ───
+// Maps template names to the OSS models they target.
+
+interface FormatInfo {
+  template: string
+  label: string
+  models: string[]
+}
+
+const FORMAT_CATALOG: FormatInfo[] = [
+  { template: 'chatml', label: 'ChatML', models: ['Qwen', 'Yi', 'OpenChat'] },
+  { template: 'llama', label: 'Llama', models: ['Llama 3', 'CodeLlama'] },
+  { template: 'mistral', label: 'Mistral', models: ['Mistral', 'Mixtral'] },
+  { template: 'alpaca', label: 'Alpaca', models: ['Alpaca', 'Vicuna'] },
+  { template: 'openai_api', label: 'OpenAI', models: ['GPT-4', 'GPT-3.5'] },
+  { template: 'qwen', label: 'Qwen', models: ['Qwen 2.5'] },
+  { template: 'nemotron', label: 'Nemotron', models: ['Nemotron'] },
+  { template: 'moonshot', label: 'Moonshot', models: ['Kimi'] },
+]
+
+/**
+ * Determine which templates a conversation is compatible with based on its
+ * structure (has system prompt, has tool calls, turn count).
+ */
+function getCompatibleFormats(conv: Conversation): FormatInfo[] {
+  const hasToolCalls = conv.turnos.some(t => t.tool_calls && t.tool_calls.length > 0)
+  const multiTurn = conv.turnos.filter(t => !isSystemRole(t.rol)).length > 2
+  const compatible: FormatInfo[] = []
+
+  for (const fmt of FORMAT_CATALOG) {
+    if (fmt.template === 'alpaca' && multiTurn) continue
+
+    compatible.push(fmt)
+  }
+
+  // If conversation uses tool calls, only keep formats that support them
+  if (hasToolCalls) {
+    return compatible.filter(f =>
+      ['chatml', 'openai_api', 'mistral', 'qwen', 'nemotron', 'moonshot'].includes(f.template)
+    )
+  }
+
+  return compatible
 }
 
 // ─── Flatten turns ───
@@ -281,7 +334,7 @@ function buildSummary(conv: Conversation): string {
 
   if (turns.length === 0) return 'Empty conversation'
 
-  const userTurns = turns.filter(t => !isAssistantRole(t.rol) && !isSystemRole(t.rol))
+  const userTurns = turns.filter(t => !isAssistantRole(t.rol) && !isSystemRole(t.rol) && !isToolRole(t.rol))
   const firstUser = userTurns[0]
 
   if (!firstUser) return turns[0].contenido.slice(0, 120)
@@ -1051,8 +1104,9 @@ function DetailPanel({
 
   // Conversation summary
   const toolNames = getToolCallNames(conversation)
-  const userCount = conversation.turnos.filter(t => !isAssistantRole(t.rol) && !isSystemRole(t.rol)).length
+  const userCount = conversation.turnos.filter(t => !isAssistantRole(t.rol) && !isSystemRole(t.rol) && !isToolRole(t.rol)).length
   const assistantCount = conversation.turnos.filter(t => isAssistantRole(t.rol)).length
+  const compatibleFormats = getCompatibleFormats(conversation)
 
   return (
     <div className="flex h-full flex-col">
@@ -1096,6 +1150,23 @@ function DetailPanel({
           )}
           <span className="font-mono">{conversation.idioma}</span>
         </div>
+
+        {/* Format compatibility */}
+        {compatibleFormats.length > 0 && (
+          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] font-medium text-muted-foreground">Compatible:</span>
+            {compatibleFormats.map(fmt => (
+              <Badge
+                key={fmt.template}
+                variant="outline"
+                className="gap-1 border-emerald-300 bg-emerald-50/50 text-[10px] text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
+                title={fmt.models.join(', ')}
+              >
+                {fmt.label}
+              </Badge>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Invalid banner */}
