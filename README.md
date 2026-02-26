@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="frontend/public/images/logo/logo-horizontal.png" alt="UNCASE Logo" height="80" />
+  <img src="frontend/public/images/logo/logo-big.png" alt="UNCASE Logo" height="100" />
 </p>
 
 <p align="center">
