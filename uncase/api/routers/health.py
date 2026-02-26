@@ -4,6 +4,7 @@ from typing import Annotated
 
 import structlog
 from fastapi import APIRouter, Depends
+from fastapi.responses import RedirectResponse
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +14,12 @@ from uncase.api.deps import get_db
 router = APIRouter(tags=["system"])
 
 logger = structlog.get_logger(__name__)
+
+
+@router.get("/", include_in_schema=False)
+async def root() -> RedirectResponse:
+    """Redirect root to health check."""
+    return RedirectResponse(url="/health")
 
 
 @router.get("/health")
