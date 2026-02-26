@@ -31,8 +31,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 COPY pyproject.toml uv.lock* README.md ./
 
 # Instalar dependencias (sin el paquete aún)
-RUN --mount=type=cache,id=uv-cache,target=/root/.cache/uv \
-    if [ -n "${INSTALL_EXTRAS}" ]; then \
+RUN if [ -n "${INSTALL_EXTRAS}" ]; then \
         uv sync --frozen --no-install-project --extra ${INSTALL_EXTRAS}; \
     else \
         uv sync --frozen --no-install-project; \
@@ -42,8 +41,7 @@ RUN --mount=type=cache,id=uv-cache,target=/root/.cache/uv \
 COPY uncase/ ./uncase/
 COPY alembic/ ./alembic/
 COPY alembic.ini ./
-RUN --mount=type=cache,id=uv-cache,target=/root/.cache/uv \
-    uv sync --frozen
+RUN uv sync --frozen
 
 # ── Stage 2: Runtime ─────────────────────────────────────────
 FROM ${BASE_IMAGE} AS runtime
