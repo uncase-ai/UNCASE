@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
 import { cn } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 import { dataFlowSteps } from '@/assets/data/pipeline'
 
@@ -35,6 +36,7 @@ function formatValue(value: string | number | boolean) {
 
 const PipelineDataFlow = () => {
   const [activeStep, setActiveStep] = useState(0)
+  const isMobile = useIsMobile()
 
   return (
     <section id='data-flow' className='py-8 sm:py-16 lg:py-24'>
@@ -94,9 +96,9 @@ const PipelineDataFlow = () => {
               <AnimatePresence mode='wait'>
                 <motion.div
                   key={activeStep}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
+                  initial={isMobile ? { opacity: 0 } : { opacity: 0, y: 12 }}
+                  animate={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                  exit={isMobile ? { opacity: 0 } : { opacity: 0, y: -12 }}
                   transition={{ duration: 0.25, ease: 'easeInOut' }}
                 >
                   {/* Step title inside card */}

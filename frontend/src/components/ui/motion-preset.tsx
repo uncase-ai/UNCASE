@@ -13,6 +13,8 @@ import {
   type Variant
 } from 'motion/react'
 
+import { useIsMobile } from '@/hooks/use-mobile'
+
 type MotionComponent = keyof typeof motion
 
 interface MotionPresetProps {
@@ -43,24 +45,6 @@ interface MotionPresetProps {
 }
 
 const motionComponents = motion as any
-
-function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState(false)
-
-  React.useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)')
-
-    setIsMobile(mq.matches)
-
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
-
-    mq.addEventListener('change', handler)
-
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-
-  return isMobile
-}
 
 function MotionPreset({
   ref,

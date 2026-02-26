@@ -396,14 +396,16 @@ const HeroSection = () => {
           delay={0.8}
           className='sticky bottom-10 z-15 flex justify-center transition-all duration-500 ease-in-out'
         >
-          <div className='bg-primary text-primary-foreground mt-2 flex items-center gap-10 rounded-xl px-3.5 py-2 shadow-lg'>
+          <div className='bg-primary text-primary-foreground mt-2 flex items-center gap-4 rounded-xl px-3.5 py-2 shadow-lg sm:gap-10'>
             <div className='flex items-center gap-2 font-medium'>
-              <FlowLogo className='size-8 rounded-full shadow-[0_20px_25px_-8px_var(--primary-foreground),0_8px_10px_-6px_var(--primary-foreground)]' />
-              {scrollProgress < 20 && <span>Layer 0: Seed Engine ready</span>}
-              {scrollProgress >= 20 && scrollProgress < 30 && <span>Layer 1: Parsing conversations</span>}
-              {scrollProgress >= 30 && scrollProgress < 40 && <span>Layer 2: Quality validated</span>}
-              {scrollProgress >= 40 && scrollProgress < 50 && <span>Layer 3: Generating synthetic data</span>}
-              {scrollProgress >= 50 && <span>Layer 4: LoRA adapter trained</span>}
+              <FlowLogo className='hidden size-8 rounded-full shadow-[0_20px_25px_-8px_var(--primary-foreground),0_8px_10px_-6px_var(--primary-foreground)] sm:block' />
+              <span className='whitespace-nowrap text-sm sm:text-base'>
+                {scrollProgress < 20 && 'Layer 0: Seed Engine ready'}
+                {scrollProgress >= 20 && scrollProgress < 30 && 'Layer 1: Parsing conversations'}
+                {scrollProgress >= 30 && scrollProgress < 40 && 'Layer 2: Quality validated'}
+                {scrollProgress >= 40 && scrollProgress < 50 && 'Layer 3: Generating synthetic data'}
+                {scrollProgress >= 50 && 'Layer 4: LoRA adapter trained'}
+              </span>
             </div>
             {scrollProgress >= 50 ? (
               <CircleCheckIcon className='size-4.5' />

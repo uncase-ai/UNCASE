@@ -13,6 +13,7 @@ import { NumberTicker } from '@/components/ui/number-ticker'
 import RegularUpdatesRippleBg from '@/components/blocks/features/regular-updates-ripple-bg'
 
 import Logo from '@/assets/svg/flow-logo'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 export type NotificationCard = {
   id: string
@@ -53,8 +54,11 @@ const notificationsList: NotificationCard[] = [
 const RegularUpdatesCard = () => {
   const [notifications, setNotifications] = useState<NotificationCard[]>(notificationsList)
   const [activeIndex, setActiveIndex] = useState<NotificationCard>(notificationsList[0])
+  const isMobile = useIsMobile()
 
   useEffect(() => {
+    if (isMobile) return
+
     const interval = setInterval(() => {
       setNotifications(prevCards => {
         const newArray = [...prevCards]
@@ -67,7 +71,7 @@ const RegularUpdatesCard = () => {
     }, 2000)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [isMobile])
 
   return (
     <Card className='gap-12 shadow-none'>
@@ -124,14 +128,23 @@ const RegularUpdatesCard = () => {
               transformOrigin: 'bottom center',
               zIndex: notifications.length - index
             }}
-            animate={{
-              y: (index - 2) * 8,
-              scale: 1 - index * 0.1,
-              opacity: 1 - index * 0.25,
-              x: '-50%'
-            }}
+            animate={
+              isMobile
+                ? {
+                    y: (index - 2) * 8,
+                    scale: 1 - index * 0.1,
+                    opacity: 1 - index * 0.25,
+                    x: '-50%'
+                  }
+                : {
+                    y: (index - 2) * 8,
+                    scale: 1 - index * 0.1,
+                    opacity: 1 - index * 0.25,
+                    x: '-50%'
+                  }
+            }
             transition={{
-              duration: 0.5,
+              duration: isMobile ? 0 : 0.5,
               ease: 'easeInOut'
             }}
           >

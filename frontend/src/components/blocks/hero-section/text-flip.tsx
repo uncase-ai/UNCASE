@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 
 import { cn } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 const TextFlip = ({
   words = ['Healthcare', 'Finance', 'Legal', 'Automotive', 'Education', 'Manufacturing'],
@@ -14,6 +15,7 @@ const TextFlip = ({
   duration?: number
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -24,22 +26,14 @@ const TextFlip = ({
   }, [words, duration])
 
   return (
-    <motion.span
-      layout
-      className='bg-background/5 relative inline-flex w-fit overflow-hidden rounded-md border px-3 py-0.5 backdrop-blur-md'
-    >
+    <motion.span className='bg-background/5 relative inline-flex min-w-36 justify-center overflow-hidden rounded-md border px-3 py-0.5 backdrop-blur-md sm:min-w-48'>
       <AnimatePresence mode='popLayout'>
         <motion.span
           key={currentIndex}
-          initial={{ y: -40, filter: 'blur(10px)' }}
-          animate={{
-            y: 0,
-            filter: 'blur(0px)'
-          }}
-          exit={{ y: 50, filter: 'blur(10px)', opacity: 0 }}
-          transition={{
-            duration: 0.5
-          }}
+          initial={isMobile ? { opacity: 0 } : { y: -40, filter: 'blur(10px)' }}
+          animate={isMobile ? { opacity: 1 } : { y: 0, filter: 'blur(0px)' }}
+          exit={isMobile ? { opacity: 0 } : { y: 50, filter: 'blur(10px)', opacity: 0 }}
+          transition={{ duration: isMobile ? 0.3 : 0.5 }}
           className={cn('inline-block whitespace-nowrap')}
         >
           {words[currentIndex]}
