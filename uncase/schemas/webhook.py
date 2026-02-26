@@ -9,7 +9,10 @@ WEBHOOK_EVENTS = [
     "conversation_generated",
     "evaluation_completed",
     "knowledge_uploaded",
+    "sandbox_started",
     "sandbox_completed",
+    "sandbox_error",
+    "sandbox_expired",
     "gateway_call",
     "test.webhook",
 ]
