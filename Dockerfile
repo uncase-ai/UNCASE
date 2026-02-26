@@ -20,7 +20,8 @@ ARG INSTALL_EXTRAS=""
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy
+    UV_LINK_MODE=copy \
+    UV_PROJECT_ENVIRONMENT=/app/.venv
 
 WORKDIR /build
 
@@ -58,7 +59,7 @@ RUN groupadd --gid 1000 uncase && \
     useradd --uid 1000 --gid uncase --shell /bin/bash --create-home uncase
 
 # Copiar entorno virtual desde builder
-COPY --from=builder --chown=uncase:uncase /build/.venv /app/.venv
+COPY --from=builder --chown=uncase:uncase /app/.venv /app/.venv
 COPY --from=builder --chown=uncase:uncase /build/uncase /app/uncase
 COPY --from=builder --chown=uncase:uncase /build/alembic /app/alembic
 COPY --from=builder --chown=uncase:uncase /build/alembic.ini /app/alembic.ini
