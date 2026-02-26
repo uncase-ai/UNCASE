@@ -23,7 +23,7 @@ import {
   X
 } from 'lucide-react'
 
-import type { Conversation, QualityReport, SeedSchema } from '@/types/api'
+import type { Conversation, QualityReport, SeedSchema, ToolDefinition } from '@/types/api'
 import { SUPPORTED_DOMAINS } from '@/types/api'
 import { checkApiHealth } from '@/lib/api/client'
 import { createEmptySeed, createSeedApi, deleteSeedApi, fetchSeeds, validateSeed } from '@/lib/api/seeds'
@@ -78,10 +78,50 @@ function saveSeeds(seeds: SeedSchema[]) {
   localStorage.setItem(STORE_KEY, JSON.stringify(seeds))
 }
 
-const TONES = ['profesional', 'informal', 'tecnico', 'empatico'] as const
+const TONES_EN = ['professional', 'informal', 'technical', 'empathetic', 'friendly', 'formal', 'persuasive'] as const
+const TONES_ES = ['profesional', 'informal', 'tecnico', 'empatico', 'amigable', 'formal', 'persuasivo'] as const
 const LANGUAGES = ['es', 'en'] as const
 const ANONYMIZATION_METHODS = ['presidio', 'regex', 'spacy', 'manual', 'none'] as const
 const TOTAL_STEPS = 6
+
+const OBJECTIVE_EXAMPLES: Record<string, { en: string; es: string }> = {
+  'automotive.sales': {
+    en: 'Customer negotiating a certified pre-owned SUV with financing options and trade-in evaluation',
+    es: 'Cliente negociando una SUV seminueva certificada con opciones de financiamiento y avaluo de unidad'
+  },
+  'medical.consultation': {
+    en: 'Patient describing recurring headaches; doctor orders lab work and discusses preventive measures',
+    es: 'Paciente describiendo dolores de cabeza recurrentes; doctor ordena estudios y discute medidas preventivas'
+  },
+  'legal.advisory': {
+    en: 'Client consulting about breach of contract claim — lawyer reviews evidence and explains litigation options',
+    es: 'Cliente consultando sobre demanda por incumplimiento de contrato — abogado revisa evidencia y explica opciones'
+  },
+  'finance.advisory': {
+    en: 'Client reviewing retirement portfolio rebalancing with risk assessment and tax implications',
+    es: 'Cliente revisando rebalanceo de portafolio de retiro con evaluacion de riesgo e implicaciones fiscales'
+  },
+  'industrial.support': {
+    en: 'Operator reporting error code E-47 on CNC machine; technician runs remote diagnostics and schedules maintenance',
+    es: 'Operador reportando codigo de error E-47 en maquina CNC; tecnico ejecuta diagnostico remoto y agenda mantenimiento'
+  },
+  'education.tutoring': {
+    en: 'Student struggling with quadratic equations — tutor uses step-by-step examples and adaptive exercises',
+    es: 'Estudiante con dificultades en ecuaciones cuadraticas — tutor usa ejemplos paso a paso y ejercicios adaptativos'
+  }
+}
+
+function loadProjectTools(): ToolDefinition[] {
+  if (typeof window === 'undefined') return []
+
+  try {
+    const raw = localStorage.getItem('uncase-tools')
+
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
 
 const DOMAIN_LABELS: Record<string, string> = {
   'automotive.sales': 'Automotive',
@@ -648,7 +688,18 @@ export function SeedsPage() {
   // ─── Step content renderer ───
   function renderStep() {
     switch (step) {
-      case 1:
+      case 1: {
+        const lang = draft.idioma || 'es'
+        const tones = lang === 'es' ? TONES_ES : TONES_EN
+
+        const objectiveExample = draft.dominio
+          ? (lang === 'es'
+              ? OBJECTIVE_EXAMPLES[draft.dominio]?.es
+              : OBJECTIVE_EXAMPLES[draft.dominio]?.en) || ''
+          : lang === 'es'
+            ? 'Cliente negociando una SUV seminueva con opciones de financiamiento'
+            : 'Customer negotiating a certified pre-owned SUV with financing options'
+
         return (
           <div className="space-y-4">
             <div>
@@ -678,19 +729,29 @@ export function SeedsPage() {
                 Objective
                 <FieldTooltip text="A clear description of what the conversation should achieve. This guides the LLM during generation." />
               </Label>
-              <Input
+              <Textarea
                 value={draft.objetivo || ''}
                 onChange={e => updateDraft({ objetivo: e.target.value })}
-                placeholder="What should this conversation achieve?"
+                placeholder={objectiveExample}
+                className="min-h-[60px]"
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label className="flex items-center gap-1">
                   Language
-                  <FieldTooltip text="The primary language for generated conversations. ISO 639-1 code." />
+                  <FieldTooltip text="The primary language for generated conversations. Tone options will match the selected language." />
                 </Label>
-                <Select value={draft.idioma || 'es'} onValueChange={v => updateDraft({ idioma: v })}>
+                <Select
+                  value={lang}
+                  onValueChange={v => {
+                    const newTones = v === 'es' ? TONES_ES : TONES_EN
+                    const currentToneIdx = (tones as readonly string[]).indexOf(draft.tono || '')
+                    const newTone = currentToneIdx >= 0 ? newTones[currentToneIdx] : newTones[0]
+
+                    updateDraft({ idioma: v, tono: newTone })
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -706,12 +767,12 @@ export function SeedsPage() {
                   Tone
                   <FieldTooltip text="Sets the formality and communication style. Professional for regulated industries, informal for customer support." />
                 </Label>
-                <Select value={draft.tono || 'profesional'} onValueChange={v => updateDraft({ tono: v })}>
+                <Select value={draft.tono || tones[0]} onValueChange={v => updateDraft({ tono: v })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {TONES.map(t => (
+                    {tones.map(t => (
                       <SelectItem key={t} value={t}>{t}</SelectItem>
                     ))}
                   </SelectContent>
@@ -744,6 +805,7 @@ export function SeedsPage() {
             </div>
           </div>
         )
+      }
 
       case 2:
         return (
@@ -854,17 +916,43 @@ export function SeedsPage() {
           </div>
         )
 
-      case 4:
+      case 4: {
+        const allTools = loadProjectTools()
+        const selectedDomain = draft.dominio || ''
+
+        const domainTools = selectedDomain
+          ? allTools.filter(t => t.domains.some(d => d === selectedDomain))
+          : allTools
+
+        const otherTools = selectedDomain
+          ? allTools.filter(t => !t.domains.some(d => d === selectedDomain))
+          : []
+
+        const selectedTools = new Set(draft.parametros_factuales?.herramientas || [])
+
+        function toggleTool(toolName: string) {
+          const current = new Set(draft.parametros_factuales?.herramientas || [])
+
+          if (current.has(toolName)) current.delete(toolName)
+          else current.add(toolName)
+          updateParametros({ herramientas: [...current] })
+        }
+
         return (
           <div className="space-y-4">
             <div>
-              <h3 className="text-sm font-semibold">Step 4: Factual Parameters</h3>
+              <h3 className="text-sm font-semibold">Step 4: Context &amp; Tools</h3>
               <p className="text-xs text-muted-foreground">
-                Domain-specific context, constraints, and available tools. This ensures generated conversations stay factually accurate.
+                Domain-specific context, brand identity, constraints, and available tools for this seed.
               </p>
             </div>
+
+            {/* Context */}
             <div className="space-y-2">
-              <Label>Context</Label>
+              <Label className="flex items-center gap-1">
+                Context
+                <FieldTooltip text="Factual background the generator should know. Include industry specifics, product details, or scenario setup." />
+              </Label>
               <Textarea
                 value={draft.parametros_factuales?.contexto || ''}
                 onChange={e => updateParametros({ contexto: e.target.value })}
@@ -872,6 +960,37 @@ export function SeedsPage() {
                 className="min-h-[80px]"
               />
             </div>
+
+            {/* Assistant Name */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1">
+                Assistant Name
+                <FieldTooltip text="The name the assistant will use to identify itself (e.g. 'Sofia', 'Dr. MediBot'). This prevents the name from being flagged as PII during generation." />
+              </Label>
+              <Input
+                value={draft.parametros_factuales?.nombre_asistente || ''}
+                onChange={e => updateParametros({ nombre_asistente: e.target.value })}
+                placeholder={draft.idioma === 'es' ? 'Ej: Sofia, Asesor Virtual' : 'e.g. Sofia, Virtual Advisor'}
+              />
+            </div>
+
+            {/* Brand Greeting */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1">
+                Brand Greeting
+                <FieldTooltip text="A mandatory opening line or greeting template the assistant must use. Include your brand name or slogan so it appears naturally in generated conversations." />
+              </Label>
+              <Textarea
+                value={draft.parametros_factuales?.saludo_marca || ''}
+                onChange={e => updateParametros({ saludo_marca: e.target.value })}
+                placeholder={draft.idioma === 'es'
+                  ? 'Ej: Bienvenido a AutoMax, soy Sofia, tu asesora virtual. ¿En que puedo ayudarte hoy?'
+                  : 'e.g. Welcome to AutoMax! I\'m Sofia, your virtual advisor. How can I help you today?'}
+                className="min-h-[60px]"
+              />
+            </div>
+
+            {/* Restrictions */}
             <div className="space-y-2">
               <Label>Restrictions</Label>
               {(draft.parametros_factuales?.restricciones || []).map((item, i) => (
@@ -897,33 +1016,95 @@ export function SeedsPage() {
                 <Plus className="mr-1.5 size-4" /> Add Restriction
               </Button>
             </div>
+
+            {/* Tools — Selectable from project tools */}
             <div className="space-y-2">
-              <Label>Tools</Label>
-              {(draft.parametros_factuales?.herramientas || []).map((item, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Input
-                    value={item}
-                    onChange={e => updateParamListItem('herramientas', i, e.target.value)}
-                    placeholder={`Tool ${i + 1}`}
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 shrink-0"
-                    onClick={() => removeFromParamList('herramientas', i)}
-                  >
-                    <X className="size-3.5" />
-                  </Button>
+              <Label className="flex items-center gap-1">
+                Tools
+                <FieldTooltip text="Select tools the assistant can invoke during the conversation. Only selected tools will be available to the generator." />
+              </Label>
+              {allTools.length > 0 ? (
+                <div className="space-y-2">
+                  {domainTools.length > 0 && (
+                    <div className="space-y-1.5">
+                      {selectedDomain && (
+                        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                          {DOMAIN_LABELS[selectedDomain] || selectedDomain} tools
+                        </p>
+                      )}
+                      <div className="max-h-40 space-y-1 overflow-y-auto rounded-md border p-2">
+                        {domainTools.map(tool => (
+                          <label
+                            key={tool.name}
+                            className={cn(
+                              'flex cursor-pointer items-start gap-2 rounded-sm px-2 py-1.5 transition-colors hover:bg-muted/50',
+                              selectedTools.has(tool.name) && 'bg-muted'
+                            )}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedTools.has(tool.name)}
+                              onChange={() => toggleTool(tool.name)}
+                              className="mt-0.5 accent-primary"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-mono text-xs font-medium">{tool.name}</span>
+                                <Badge variant="outline" className="text-[9px]">{tool.category}</Badge>
+                              </div>
+                              <p className="truncate text-[10px] text-muted-foreground">{tool.description}</p>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {otherTools.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Other domains</p>
+                      <div className="max-h-32 space-y-1 overflow-y-auto rounded-md border p-2">
+                        {otherTools.map(tool => (
+                          <label
+                            key={tool.name}
+                            className={cn(
+                              'flex cursor-pointer items-start gap-2 rounded-sm px-2 py-1.5 transition-colors hover:bg-muted/50',
+                              selectedTools.has(tool.name) && 'bg-muted'
+                            )}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedTools.has(tool.name)}
+                              onChange={() => toggleTool(tool.name)}
+                              className="mt-0.5 accent-primary"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-mono text-xs font-medium">{tool.name}</span>
+                                <Badge variant="outline" className="text-[9px]">{tool.domains.join(', ')}</Badge>
+                              </div>
+                              <p className="truncate text-[10px] text-muted-foreground">{tool.description}</p>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {selectedTools.size > 0 && (
+                    <p className="text-[10px] text-muted-foreground">{selectedTools.size} tool{selectedTools.size > 1 ? 's' : ''} selected</p>
+                  )}
                 </div>
-              ))}
-              <Button type="button" variant="outline" size="sm" onClick={() => addToParamList('herramientas')}>
-                <Plus className="mr-1.5 size-4" /> Add Tool
-              </Button>
+              ) : (
+                <div className="rounded-md border border-dashed p-3 text-center">
+                  <Wrench className="mx-auto mb-1 size-4 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">
+                    No tools registered yet. Go to the Tools page to add tools, or they will be loaded from demo data.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )
+      }
 
       case 5:
         return (
@@ -1029,6 +1210,36 @@ export function SeedsPage() {
                   {(!draft.etiquetas || draft.etiquetas.length === 0) && <span className="text-xs text-muted-foreground">No tags</span>}
                 </div>
               </div>
+              {/* Brand identity */}
+              {(draft.parametros_factuales?.nombre_asistente || draft.parametros_factuales?.saludo_marca) && (
+                <div className="grid gap-2 text-sm sm:grid-cols-2">
+                  {draft.parametros_factuales?.nombre_asistente && (
+                    <div>
+                      <span className="text-xs text-muted-foreground">Assistant Name</span>
+                      <p className="font-medium">{draft.parametros_factuales.nombre_asistente}</p>
+                    </div>
+                  )}
+                  {draft.parametros_factuales?.saludo_marca && (
+                    <div className="sm:col-span-2">
+                      <span className="text-xs text-muted-foreground">Brand Greeting</span>
+                      <p className="text-xs italic">&ldquo;{draft.parametros_factuales.saludo_marca}&rdquo;</p>
+                    </div>
+                  )}
+                </div>
+              )}
+              {/* Tools */}
+              {(draft.parametros_factuales?.herramientas || []).length > 0 && (
+                <div>
+                  <span className="text-xs text-muted-foreground">Tools</span>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {(draft.parametros_factuales?.herramientas || []).map((t, i) => (
+                      <Badge key={i} variant="outline" className="font-mono text-[10px]">
+                        <Wrench className="mr-0.5 size-2.5" />{t}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div>
                 <span className="text-xs text-muted-foreground">Expected Flow</span>
                 <div className="mt-1">

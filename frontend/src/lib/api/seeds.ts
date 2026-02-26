@@ -63,6 +63,8 @@ export function createEmptySeed(): Partial<SeedSchema> {
       contexto: '',
       restricciones: [],
       herramientas: [],
+      saludo_marca: '',
+      nombre_asistente: '',
       metadata: {}
     },
     privacidad: {

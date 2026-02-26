@@ -23,6 +23,8 @@ export interface ParametrosFactuales {
   restricciones: string[]
   herramientas: string[]
   herramientas_definidas?: ToolDefinition[]
+  saludo_marca?: string
+  nombre_asistente?: string
   metadata: Record<string, unknown>
 }
 
