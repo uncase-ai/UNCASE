@@ -104,3 +104,47 @@ tests/unit/test_seed_packages.py
 
 # Brand assets (logos, screenshots)
 frontend/public/images/logo uncase/
+
+# ── Website / Landing Page (→ uncase-ai/uncase-private) ────
+# Routes
+frontend/src/app/(pages)/
+frontend/src/app/(auth)/
+frontend/src/app/hero-section-40/
+frontend/src/app/timeline-component-02/
+
+# Components (marketing, auth, layout, blog, docs, pricing)
+frontend/src/components/blocks/
+frontend/src/components/blog/
+frontend/src/components/auth/
+frontend/src/components/layout/
+frontend/src/components/pricing/
+frontend/src/components/docs/
+frontend/src/components/shadcn-studio/
+frontend/src/components/section-separator.tsx
+frontend/src/components/mdx-content.tsx
+frontend/src/components/logo.tsx
+
+# Landing data & content
+frontend/src/assets/data/
+frontend/src/content/
+
+# Blog & image utilities
+frontend/src/lib/posts.ts
+frontend/src/lib/extract-headings.ts
+
+# Marketing images (avatars, blog, brands, hero, benefits, products)
+frontend/public/images/blog/
+frontend/public/images/avatar/
+frontend/public/images/brand-logos/
+frontend/public/images/hero-section/
+frontend/public/images/benefits/
+frontend/public/images/products/
+frontend/public/images/dashboard.webp
+frontend/public/images/dashboard-dark.webp
+frontend/public/images/og-image.png
+
+# Logo files (keep favicon.png for dashboard)
+frontend/public/images/logo/logo*
+frontend/public/images/logo/screenshot-*
+frontend/public/images/logo/whitepaper-*
+frontend/public/images/logo/UNCASE*
