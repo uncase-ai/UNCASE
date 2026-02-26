@@ -89,6 +89,13 @@ class ProviderNotFoundError(UNCASEError):
     detail = "Provider not found"
 
 
+class ConversationNotFoundError(UNCASEError):
+    """Requested conversation does not exist."""
+
+    status_code = 404
+    detail = "Conversation not found"
+
+
 class PluginNotFoundError(UNCASEError):
     """Requested plugin does not exist or is not installed."""
 

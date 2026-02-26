@@ -13,9 +13,11 @@ import {
   CloudOff,
   HelpCircle,
   Info,
+  Loader2,
   Play,
   Plus,
   RefreshCw,
+  Rocket,
   Sprout,
   Star,
   Trash2,
@@ -26,6 +28,7 @@ import {
 import type { Conversation, QualityReport, SeedSchema, ToolDefinition } from '@/types/api'
 import { SUPPORTED_DOMAINS } from '@/types/api'
 import { checkApiHealth } from '@/lib/api/client'
+import { generateConversations } from '@/lib/api/generate'
 import { createEmptySeed, createSeedApi, deleteSeedApi, fetchSeeds, validateSeed } from '@/lib/api/seeds'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -233,7 +236,7 @@ export function SeedsPage() {
   const [detailOpen, setDetailOpen] = useState(false)
 
   // Computed stats from localStorage
-  const seedStats = useMemo(() => {
+  function computeSeedStats() {
     const conversations = loadConversationsForStats()
     const evaluations = loadEvaluationsForStats()
 
@@ -256,8 +259,9 @@ export function SeedsPage() {
     }
 
     return { runCounts, avgQuality }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seeds.length])
+  }
+
+  const [seedStats, setSeedStats] = useState(() => computeSeedStats())
 
   // Toggle favorite
   function toggleFavorite(e: React.MouseEvent, seedId: string) {
@@ -463,6 +467,66 @@ export function SeedsPage() {
     saveSeeds(updated)
     setDetailOpen(false)
     setSelectedSeed(null)
+  }
+
+  // ─── Generate & Evaluate ───
+  const [generating, setGenerating] = useState<string | null>(null)
+  const [generateResult, setGenerateResult] = useState<string | null>(null)
+
+  async function handleGenerateAndEvaluate(seed: SeedSchema) {
+    if (!apiAvailable) {
+      setSyncError('API connection required for generation')
+
+      return
+    }
+
+    setGenerating(seed.seed_id)
+    setGenerateResult(null)
+
+    const { data, error } = await generateConversations({
+      seed,
+      count: 3,
+      temperature: 0.7,
+      evaluate_after: true
+    })
+
+    setGenerating(null)
+
+    if (error) {
+      setSyncError(`Generation failed: ${error.message}`)
+
+      return
+    }
+
+    if (data) {
+      const summary = data.generation_summary
+      const passed = summary.total_passed ?? 0
+      const total = summary.total_generated
+
+      setGenerateResult(
+        `Generated ${total} conversations, ${passed}/${total} passed quality checks (avg score: ${(summary.avg_composite_score ?? 0).toFixed(2)})`
+      )
+
+      // Store generated conversations in localStorage for other pages
+      const { appendConversations } = await import('./conversations-page')
+
+      appendConversations(data.conversations)
+
+      // Store evaluation reports
+      if (data.reports) {
+        try {
+          const existing = JSON.parse(localStorage.getItem('uncase-evaluations') || '[]')
+          const merged = [...existing, ...data.reports]
+
+          localStorage.setItem('uncase-evaluations', JSON.stringify(merged))
+        } catch {
+          // Storage full
+        }
+      }
+
+      // Update run stats
+      setSeedStats(computeSeedStats())
+    }
   }
 
   // ─── Draft update helpers ───
@@ -1405,7 +1469,7 @@ export function SeedsPage() {
               <Card
                 key={seed.seed_id}
                 className="cursor-pointer transition-colors hover:bg-muted/50"
-                onClick={() => { setSelectedSeed(seed); setDetailOpen(true) }}
+                onClick={() => { setSelectedSeed(seed); setGenerateResult(null); setDetailOpen(true) }}
               >
                 <CardContent className="space-y-2.5 p-4">
                   {/* Row 1: Favorite + ID + Domain badge */}
@@ -1514,7 +1578,13 @@ export function SeedsPage() {
             </div>
           )}
 
-          <DialogFooter>
+          {generateResult && selectedSeed && generating === null && (
+            <div className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-300">
+              {generateResult}
+            </div>
+          )}
+
+          <DialogFooter className="flex-row justify-between gap-2 sm:justify-between">
             <Button
               variant="destructive"
               size="sm"
@@ -1522,9 +1592,27 @@ export function SeedsPage() {
             >
               <Trash2 className="mr-1.5 size-4" /> Delete Seed
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setDetailOpen(false)}>
-              Close
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="default"
+                size="sm"
+                disabled={!apiAvailable || generating === selectedSeed?.seed_id}
+                onClick={() => selectedSeed && handleGenerateAndEvaluate(selectedSeed)}
+              >
+                {generating === selectedSeed?.seed_id ? (
+                  <>
+                    <Loader2 className="mr-1.5 size-4 animate-spin" /> Generating...
+                  </>
+                ) : (
+                  <>
+                    <Rocket className="mr-1.5 size-4" /> Generate & Evaluate
+                  </>
+                )}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setDetailOpen(false)}>
+                Close
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

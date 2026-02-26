@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from uncase.db.models.audit import AuditLogModel
+from uncase.db.models.conversation import ConversationModel
 from uncase.db.models.custom_tool import CustomToolModel
 from uncase.db.models.evaluation import EvaluationReportModel
 from uncase.db.models.installed_plugin import InstalledPluginModel
@@ -19,6 +20,7 @@ __all__ = [
     "APIKeyAuditLogModel",
     "APIKeyModel",
     "AuditLogModel",
+    "ConversationModel",
     "CustomToolModel",
     "EvaluationReportModel",
     "InstalledPluginModel",

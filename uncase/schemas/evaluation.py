@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from pydantic import BaseModel, Field
 
 from uncase.schemas.conversation import Conversation  # noqa: TC001
 from uncase.schemas.quality import QualityReport  # noqa: TC001
 from uncase.schemas.seed import SeedSchema  # noqa: TC001
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 
 class EvaluatePair(BaseModel):
@@ -55,3 +60,47 @@ class QualityThresholdsResponse(BaseModel):
         default="Q = min(rouge_l, fidelidad, ttr, coherencia) if privacy=0.0 AND memorization<0.01 else 0.0",
         description="Composite score formula",
     )
+
+
+class EvaluationReportResponse(BaseModel):
+    """Persisted evaluation report from the database."""
+
+    id: str
+    conversation_id: str
+    seed_id: str | None
+    rouge_l: float
+    fidelidad_factual: float
+    diversidad_lexica: float
+    coherencia_dialogica: float
+    privacy_score: float
+    memorizacion: float
+    composite_score: float
+    passed: bool
+    failures: list[str]
+    dominio: str | None
+    organization_id: str | None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class EvaluationReportListResponse(BaseModel):
+    """Paginated list of evaluation reports."""
+
+    items: list[EvaluationReportResponse]
+    total: int
+    page: int
+    page_size: int
+
+
+# Rebuild models that reference TYPE_CHECKING-only imports (datetime)
+def _rebuild_models() -> None:
+    from datetime import datetime as _dt
+
+    ns = {"datetime": _dt}
+    EvaluationReportResponse.model_rebuild(_types_namespace=ns)
+    EvaluationReportListResponse.model_rebuild(_types_namespace=ns)
+
+
+_rebuild_models()
+del _rebuild_models

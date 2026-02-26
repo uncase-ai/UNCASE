@@ -18,6 +18,7 @@ from uncase.api.rate_limit import RateLimitMiddleware
 from uncase.api.routers.audit import router as audit_router
 from uncase.api.routers.auth import router as auth_router
 from uncase.api.routers.connectors import router as connectors_router
+from uncase.api.routers.conversations import router as conversations_router
 from uncase.api.routers.costs import router as costs_router
 from uncase.api.routers.e2b_webhooks import router as e2b_webhooks_router
 from uncase.api.routers.evaluations import router as evaluations_router
@@ -223,6 +224,7 @@ def create_app() -> FastAPI:
     application.include_router(providers_router)
     application.include_router(sandbox_router)
     application.include_router(connectors_router)
+    application.include_router(conversations_router)
     application.include_router(gateway_router)
     application.include_router(knowledge_router)
     application.include_router(usage_router)

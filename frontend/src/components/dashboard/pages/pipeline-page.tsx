@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import Link from 'next/link'
 import {
@@ -9,15 +9,20 @@ import {
   CheckCircle2,
   FlaskConical,
   Library,
+  Loader2,
   Lock,
   PackageOpen,
   Rocket,
   Sprout
 } from 'lucide-react'
 
+import type { JobResponse } from '@/types/api'
+import { fetchJobs, getJobStatusColor } from '@/lib/api/jobs'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Progress } from '@/components/ui/progress'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 import { PageHeader } from '../page-header'
@@ -133,6 +138,26 @@ const STAGES: StageConfig[] = [
 
 export function PipelinePage() {
   const [readiness] = useState(() => STAGES.map(s => s.isReady()))
+  const [recentJobs, setRecentJobs] = useState<JobResponse[]>([])
+
+  // Fetch recent pipeline/generation jobs from backend
+  useEffect(() => {
+    let cancelled = false
+
+    fetchJobs({ page: 1, page_size: 5 })
+      .then(res => {
+        if (!cancelled && res.data) {
+          setRecentJobs(Array.isArray(res.data) ? res.data : (res.data as { items: JobResponse[] }).items ?? [])
+        }
+      })
+      .catch(() => {
+        // API unavailable
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -242,6 +267,44 @@ export function PipelinePage() {
           )
         })}
       </div>
+
+      {/* Recent Jobs */}
+      {recentJobs.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Recent Pipeline Jobs</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {recentJobs.map(job => (
+              <div key={job.id} className="flex items-center gap-3 rounded-md border px-3 py-2">
+                {(job.status === 'running' || job.status === 'pending') && (
+                  <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" />
+                )}
+                {job.status === 'completed' && (
+                  <CheckCircle2 className="size-4 shrink-0 text-green-500" />
+                )}
+                {(job.status === 'failed' || job.status === 'cancelled') && (
+                  <div className="size-4 shrink-0 rounded-full bg-destructive/20" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-medium">
+                    {job.job_type} <span className="text-muted-foreground">#{job.id.slice(0, 8)}</span>
+                  </p>
+                  {job.current_stage && (
+                    <p className="text-[11px] text-muted-foreground">{job.current_stage}</p>
+                  )}
+                </div>
+                <Badge variant="outline" className={cn('text-[10px]', getJobStatusColor(job.status))}>
+                  {job.status}
+                </Badge>
+                {typeof job.progress === 'number' && job.progress > 0 && job.progress < 1 && (
+                  <Progress value={Math.round(job.progress * 100)} className="h-1.5 w-16" />
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Flywheel note */}
       <div className="flex items-center gap-3 rounded-lg border border-dashed px-5 py-3.5">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import Link from 'next/link'
 import {
@@ -26,8 +26,9 @@ import {
   Cell
 } from 'recharts'
 
-import type { QualityReport } from '@/types/api'
+import type { QualityReport, QualityMetrics } from '@/types/api'
 import { QUALITY_THRESHOLDS } from '@/types/api'
+import { fetchEvaluationReports } from '@/lib/api/evaluations'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -77,7 +78,59 @@ function getBucketIndex(score: number): number {
 }
 
 export function EvaluationsPage() {
-  const [evaluations] = useState<QualityReport[]>(() => loadEvaluations())
+  const [evaluations, setEvaluations] = useState<QualityReport[]>(() => loadEvaluations())
+
+  // Sync with backend API on mount
+  useEffect(() => {
+    let cancelled = false
+
+    fetchEvaluationReports({ page: 1, page_size: 100 })
+      .then(res => {
+        if (cancelled) return
+
+        if (res.data && res.data.items.length > 0) {
+          const apiReports: QualityReport[] = res.data.items.map(item => ({
+            conversation_id: item.conversation_id,
+            seed_id: item.seed_id ?? '',
+            metrics: {
+              rouge_l: item.rouge_l,
+              fidelidad_factual: item.fidelidad_factual,
+              diversidad_lexica: item.diversidad_lexica,
+              coherencia_dialogica: item.coherencia_dialogica,
+              privacy_score: item.privacy_score,
+              memorizacion: item.memorizacion
+            } as QualityMetrics,
+            composite_score: item.composite_score,
+            passed: item.passed,
+            failures: item.failures,
+            evaluated_at: item.created_at
+          }))
+
+          // Merge: API data + localStorage-only reports
+          const apiIds = new Set(apiReports.map(r => `${r.conversation_id}-${r.evaluated_at}`))
+          const localOnly = loadEvaluations().filter(
+            r => !apiIds.has(`${r.conversation_id}-${r.evaluated_at}`)
+          )
+          const merged = [...apiReports, ...localOnly]
+
+          setEvaluations(merged)
+
+          // Update localStorage with merged data
+          try {
+            localStorage.setItem(EVALUATIONS_KEY, JSON.stringify(merged))
+          } catch {
+            // Storage full — ignore
+          }
+        }
+      })
+      .catch(() => {
+        // API unavailable — keep localStorage data
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   // ─── Summary stats ───
   const totalEvaluations = evaluations.length

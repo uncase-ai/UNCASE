@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import {
   Activity,
@@ -16,7 +16,9 @@ import {
   Trash2
 } from 'lucide-react'
 
+import type { AuditLogEntry } from '@/types/api'
 import type { ActivityEvent, ActivityType } from '@/types/dashboard'
+import { fetchAuditLogs } from '@/lib/api/audit'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -96,8 +98,63 @@ function timeAgo(date: string): string {
   return new Date(date).toLocaleDateString()
 }
 
+function auditActionToActivityType(action: string): ActivityType {
+  if (action.includes('seed')) return 'seed_created'
+  if (action.includes('import')) return 'conversation_imported'
+  if (action.includes('generat')) return 'conversation_generated'
+  if (action.includes('evaluat')) return 'evaluation_completed'
+  if (action.includes('export')) return 'dataset_exported'
+  if (action.includes('tool')) return 'tool_registered'
+  if (action.includes('key') || action.includes('auth')) return 'api_key_created'
+  if (action.includes('template')) return 'template_rendered'
+  if (action.includes('knowledge')) return 'knowledge_uploaded'
+
+  return 'seed_created'
+}
+
+function auditLogToActivityEvent(log: AuditLogEntry): ActivityEvent {
+  return {
+    id: log.id,
+    type: auditActionToActivityType(log.action),
+    title: `${log.action} ${log.resource_type ?? ''}`.trim(),
+    description: log.detail ?? (`${log.http_method ?? ''} ${log.endpoint ?? ''}`.trim() || undefined),
+    timestamp: log.created_at,
+    metadata: { resource_id: log.resource_id, ip: log.ip_address }
+  }
+}
+
 export function ActivityPage() {
   const [events, setEvents] = useState<ActivityEvent[]>(() => loadActivity())
+
+  // Sync with backend audit API on mount
+  useEffect(() => {
+    let cancelled = false
+
+    fetchAuditLogs({ page: 1, page_size: 100 })
+      .then(res => {
+        if (cancelled) return
+
+        if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+          const auditEvents = res.data.map(auditLogToActivityEvent)
+
+          // Merge: audit data + localStorage-only events
+          const auditIds = new Set(auditEvents.map(e => e.id))
+          const localOnly = loadActivity().filter(e => !auditIds.has(e.id))
+          const merged = [...auditEvents, ...localOnly].sort(
+            (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          ).slice(0, 200)
+
+          setEvents(merged)
+        }
+      })
+      .catch(() => {
+        // API unavailable — keep localStorage data
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const clearHistory = () => {
     localStorage.removeItem(STORE_KEY)

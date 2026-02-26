@@ -26,6 +26,12 @@ import {
 
 import type { Conversation, ConversationTurn, ToolDefinition } from '@/types/api'
 import { SUPPORTED_DOMAINS } from '@/types/api'
+import {
+  fetchConversations as apiFetchConversations,
+  bulkCreateConversations,
+  updateConversationApi,
+  deleteConversationApi
+} from '@/lib/api/conversations'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -1253,6 +1259,7 @@ export function ConversationsPage() {
   const [ratingFilter, setRatingFilter] = useState<string>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [page, setPage] = useState(0)
+  const [apiConnected, setApiConnected] = useState(false)
 
   // Try to load tools from API (best-effort, non-blocking)
   const [apiTools, setApiTools] = useState<ToolDefinition[] | null>(null)
@@ -1267,6 +1274,90 @@ export function ConversationsPage() {
       })
       .catch(() => {
         // API unavailable — will use fallback tools
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Sync with backend API on mount
+  useEffect(() => {
+    let cancelled = false
+
+    apiFetchConversations({ page: 1, page_size: 100 })
+      .then(res => {
+        if (cancelled) return
+
+        if (res.data && res.data.items.length > 0) {
+          const apiConvs: Conversation[] = res.data.items.map(item => ({
+            conversation_id: item.conversation_id,
+            seed_id: item.seed_id ?? '',
+            dominio: item.dominio,
+            idioma: item.idioma,
+            turnos: item.turnos,
+            es_sintetica: item.es_sintetica,
+            created_at: item.created_at,
+            metadata: ((item as unknown as Record<string, unknown>).metadata as Record<string, unknown>) ?? {},
+            status: (item.status as 'valid' | 'invalid') ?? undefined,
+            rating: item.rating ?? undefined,
+            tags: item.tags ?? undefined,
+            notes: item.notes ?? undefined
+          }))
+
+          // Merge: API data takes precedence, keep localStorage-only items
+          const apiIds = new Set(apiConvs.map(c => c.conversation_id))
+          const localOnly = loadConversations().filter(c => !apiIds.has(c.conversation_id))
+          const merged = [...apiConvs, ...localOnly]
+
+          setConversations(merged)
+          saveConversations(merged)
+          setApiConnected(true)
+
+          // Push localStorage-only conversations to API (best-effort)
+          if (localOnly.length > 0) {
+            const payload = localOnly.map(c => ({
+              conversation_id: c.conversation_id,
+              seed_id: c.seed_id || null,
+              dominio: c.dominio,
+              idioma: c.idioma,
+              turnos: c.turnos,
+              es_sintetica: c.es_sintetica,
+              metadata: c.metadata,
+              status: c.status ?? null,
+              rating: c.rating ?? null,
+              tags: c.tags ?? null,
+              notes: c.notes ?? null
+            }))
+
+            bulkCreateConversations(payload).catch(() => {})
+          }
+        } else if (res.data) {
+          // API connected but no data — push localStorage data to API
+          setApiConnected(true)
+          const local = loadConversations()
+
+          if (local.length > 0) {
+            const payload = local.map(c => ({
+              conversation_id: c.conversation_id,
+              seed_id: c.seed_id || null,
+              dominio: c.dominio,
+              idioma: c.idioma,
+              turnos: c.turnos,
+              es_sintetica: c.es_sintetica,
+              metadata: c.metadata,
+              status: c.status ?? null,
+              rating: c.rating ?? null,
+              tags: c.tags ?? null,
+              notes: c.notes ?? null
+            }))
+
+            bulkCreateConversations(payload).catch(() => {})
+          }
+        }
+      })
+      .catch(() => {
+        // API unavailable — use localStorage data
       })
 
     return () => {
@@ -1335,8 +1426,18 @@ export function ConversationsPage() {
       const all = conversations.map(c => (c.conversation_id === updated.conversation_id ? updated : c))
 
       persist(all)
+
+      // Push metadata update to API (best-effort)
+      if (apiConnected) {
+        updateConversationApi(updated.conversation_id, {
+          status: updated.status,
+          rating: updated.rating,
+          tags: updated.tags,
+          notes: updated.notes
+        }).catch(() => {})
+      }
     },
-    [conversations, persist]
+    [conversations, persist, apiConnected]
   )
 
   const handleDeleteConversation = useCallback(
@@ -1346,8 +1447,13 @@ export function ConversationsPage() {
       persist(all)
 
       if (selectedId === id) setSelectedId(null)
+
+      // Delete from API (best-effort)
+      if (apiConnected) {
+        deleteConversationApi(id).catch(() => {})
+      }
     },
-    [conversations, persist, selectedId]
+    [conversations, persist, selectedId, apiConnected]
   )
 
   // Reset page when filters change

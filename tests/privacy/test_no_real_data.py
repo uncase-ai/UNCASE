@@ -26,7 +26,10 @@ SCAN_DIRS = ["tests", "examples"]
 EXCLUDE_PATTERNS = [
     "test_no_real_data.py",  # This file itself
     "test_privacy.py",  # PII detection tests use intentional synthetic PII patterns
+    "test_pii_scanner.py",  # Seeded PII scanner tests use intentional synthetic PII patterns
     "test_evaluator.py",  # Evaluator tests reference synthetic PII for privacy gate checks
+    "test_known_scores.py",  # Known-score evaluator tests use intentional synthetic PII
+    "test_usage_service.py",  # Uses RFC 5737 documentation IPs (192.0.2.x, 198.51.100.x)
     "__pycache__",
     ".pyc",
 ]
@@ -56,7 +59,14 @@ def _scan_file(path: Path) -> list[tuple[str, int, str, str]]:
             matches = re.findall(pattern, line)
             for match in matches:
                 # Exclude common false positives
-                if name == "IP address" and match in ("0.0.0.0", "127.0.0.1", "255.255.255.255"):
+                if name == "IP address" and (
+                    match in ("0.0.0.0", "127.0.0.1", "255.255.255.255")
+                    or match.startswith("192.168.")
+                    or match.startswith("10.")
+                    or match.startswith("172.")
+                    or match.startswith("192.0.2.")
+                    or match.startswith("198.51.100.")
+                ):
                     continue
                 if name == "email address" and ("example.com" in match or "test" in match.lower()):
                     continue

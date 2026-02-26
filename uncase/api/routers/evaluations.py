@@ -6,13 +6,18 @@ from typing import Annotated
 
 import structlog
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from uncase.api.deps import get_db
+from uncase.api.deps import get_db, get_optional_org
+from uncase.db.models.evaluation import EvaluationReportModel
+from uncase.db.models.organization import OrganizationModel
 from uncase.schemas.evaluation import (
     BatchEvaluationResponse,
     EvaluateBatchRequest,
     EvaluateRequest,
+    EvaluationReportListResponse,
+    EvaluationReportResponse,
     QualityThresholdsResponse,
 )
 from uncase.schemas.quality import QualityReport
@@ -81,6 +86,70 @@ async def evaluate_batch(
         failure_summary=result.failure_summary,
         reports=result.reports,
     )
+
+
+@router.get("/reports", response_model=EvaluationReportListResponse)
+async def list_evaluation_reports(
+    session: Annotated[AsyncSession, Depends(get_db)],
+    org: Annotated[OrganizationModel | None, Depends(get_optional_org)],
+    domain: Annotated[str | None, Query(description="Filter by domain")] = None,
+    passed: Annotated[bool | None, Query(description="Filter by pass/fail")] = None,
+    seed_id: Annotated[str | None, Query(description="Filter by seed ID")] = None,
+    page: Annotated[int, Query(ge=1, description="Page number")] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100, description="Items per page")] = 20,
+) -> EvaluationReportListResponse:
+    """List persisted evaluation reports with optional filters."""
+    query = select(EvaluationReportModel)
+    count_query = select(func.count()).select_from(EvaluationReportModel)
+
+    org_id = org.id if org else None
+    if org_id is not None:
+        query = query.where(EvaluationReportModel.organization_id == org_id)
+        count_query = count_query.where(EvaluationReportModel.organization_id == org_id)
+
+    if domain is not None:
+        query = query.where(EvaluationReportModel.dominio == domain)
+        count_query = count_query.where(EvaluationReportModel.dominio == domain)
+
+    if passed is not None:
+        query = query.where(EvaluationReportModel.passed == passed)
+        count_query = count_query.where(EvaluationReportModel.passed == passed)
+
+    if seed_id is not None:
+        query = query.where(EvaluationReportModel.seed_id == seed_id)
+        count_query = count_query.where(EvaluationReportModel.seed_id == seed_id)
+
+    total_result = await session.execute(count_query)
+    total = total_result.scalar_one()
+
+    offset = (page - 1) * page_size
+    query = query.order_by(EvaluationReportModel.created_at.desc()).offset(offset).limit(page_size)
+    result = await session.execute(query)
+    reports = result.scalars().all()
+
+    items = [
+        EvaluationReportResponse(
+            id=r.id,
+            conversation_id=r.conversation_id,
+            seed_id=r.seed_id,
+            rouge_l=r.rouge_l,
+            fidelidad_factual=r.fidelidad_factual,
+            diversidad_lexica=r.diversidad_lexica,
+            coherencia_dialogica=r.coherencia_dialogica,
+            privacy_score=r.privacy_score,
+            memorizacion=r.memorizacion,
+            composite_score=r.composite_score,
+            passed=r.passed,
+            failures=r.failures,
+            dominio=r.dominio,
+            organization_id=r.organization_id,
+            created_at=r.created_at,
+        )
+        for r in reports
+    ]
+
+    logger.info("evaluation_reports_listed", total=total, page=page)
+    return EvaluationReportListResponse(items=items, total=total, page=page, page_size=page_size)
 
 
 @router.get("/thresholds", response_model=QualityThresholdsResponse)
