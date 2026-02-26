@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="frontend/public/images/logo/logo-big.png" alt="UNCASE Logo" height="100" />
+  <img src=".github/assets/logo-horizontal.png" alt="UNCASE" height="80" />
 </p>
 
 <p align="center">
