@@ -86,3 +86,20 @@ Desktop.ini
 *.log
 logs/
 .env*.local
+
+# ── Proprietary / Private (→ uncase-ai/uncase-private) ─────
+# Business docs & internal strategy
+docs/UNCASE-Propuesta-de-Negocio-2026.pdf
+docs/investor-readiness-analysis.md
+docs/plan_de_desarrollo.md
+docs/checklist_validacion.md
+docs/prompt_reproducibilidad.md
+
+# Internal scripts
+scripts/generate_business_proposal.py
+
+# Curated seed packages (proprietary training data)
+uncase/domains/seed_packages/
+
+# Brand assets (logos, screenshots)
+frontend/public/images/logo uncase/
