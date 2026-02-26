@@ -107,37 +107,70 @@ Seeds are **traceable** (every synthetic conversation maps back to its seed), **
 
 ## Quick Start
 
-### 1. Install
+### Option A: Docker (recommended — batteries included)
+
+Docker Compose gives you PostgreSQL, Redis, and the API in one command. Each developer gets **their own local databases** — nothing is shared.
 
 ```bash
-# Option A: Git + uv (recommended)
 git clone https://github.com/uncase-ai/uncase.git
-cd uncase && uv sync
+cd uncase
 
-# Option B: pip
-pip install uncase
-
-# Option C: Docker
-docker compose up -d
-```
-
-### 2. Configure
-
-```bash
+# 1. Configure
 cp .env.example .env
-# Set DATABASE_URL and at least one LLM API key
+# Edit .env → set at least one LLM API key (ANTHROPIC_API_KEY, OPENAI_API_KEY, etc.)
+
+# 2. Start everything (API + PostgreSQL + Redis)
+docker compose up -d
+# → http://localhost:8000/docs  (Swagger UI)
+# → http://localhost:8000/health
+
+# 3. (Optional) Start the dashboard
+cd frontend
+cp .env.example .env
+npm install && npm run dev
+# → http://localhost:3000
 ```
 
-### 3. Start the API
+Migrations run automatically on container startup. Data persists in Docker volumes across restarts. Use `docker compose down` to stop (data kept) or `docker compose down -v` to stop and wipe all data.
+
+### Option B: Local development (uv + your own PostgreSQL)
 
 ```bash
+git clone https://github.com/uncase-ai/uncase.git
+cd uncase
+
+# 1. Install Python dependencies
+uv sync --extra dev           # core + dev tools (ruff, pytest, mypy)
+
+# 2. Configure
+cp .env.example .env
+# Edit .env → set DATABASE_URL to your local PostgreSQL and at least one LLM key.
+# Redis is optional — rate limiting falls back to in-memory without it.
+
+# 3. Run database migrations (required before first start)
+make migrate
+
+# 4. Start the API
 make api
-# → http://localhost:8000/docs (Swagger UI)
+# → http://localhost:8000/docs
+
+# 5. (Optional) Start the dashboard
+cd frontend
+cp .env.example .env
+npm install && npm run dev
+# → http://localhost:3000
 ```
 
-### 4. Register an LLM provider
+### Option C: pip (library usage only)
 
 ```bash
+pip install uncase
+```
+
+### Try it: register a provider and generate conversations
+
+```bash
+# Register an LLM provider
 curl -X POST http://localhost:8000/api/v1/providers \
   -H "Content-Type: application/json" \
   -d '{
@@ -147,11 +180,8 @@ curl -X POST http://localhost:8000/api/v1/providers \
     "default_model": "claude-sonnet-4-20250514",
     "is_default": true
   }'
-```
 
-### 5. Generate synthetic conversations
-
-```bash
+# Generate synthetic conversations from a seed
 curl -X POST http://localhost:8000/api/v1/generate \
   -H "Content-Type: application/json" \
   -d '{
@@ -167,11 +197,8 @@ curl -X POST http://localhost:8000/api/v1/generate \
     "count": 5,
     "evaluate_after": true
   }'
-```
 
-### 6. Export for fine-tuning
-
-```bash
+# Export for fine-tuning
 uncase template export conversations.json llama -o train_data.txt
 ```
 
@@ -223,26 +250,38 @@ See [docs/architecture.md](docs/architecture.md) for the full system diagram, pr
 
 ## Installation Options
 
-```bash
-# Core
-pip install uncase
+### pip extras
 
-# With extras
-pip install "uncase[dev]"          # + pytest, ruff, mypy
-pip install "uncase[ml]"           # + transformers, peft, trl, torch
-pip install "uncase[privacy]"      # + SpaCy, Presidio
-pip install "uncase[sandbox]"      # + E2B cloud sandboxes
-pip install "uncase[evaluation]"   # + Opik LLM-as-judge
-pip install "uncase[all]"          # Everything
+```bash
+pip install uncase                  # Core: FastAPI, Pydantic, LiteLLM, SQLAlchemy
+pip install "uncase[dev]"           # + pytest, ruff, mypy
+pip install "uncase[ml]"            # + transformers, peft, trl, torch
+pip install "uncase[privacy]"       # + SpaCy, Presidio NER
+pip install "uncase[sandbox]"       # + E2B cloud sandboxes
+pip install "uncase[evaluation]"    # + Opik LLM-as-judge
+pip install "uncase[all]"           # Everything
 ```
 
+### Docker Compose profiles
+
 ```bash
-# Docker
-docker compose up -d                              # API + PostgreSQL
-docker compose --profile ml up -d                 # + MLflow
-docker compose --profile gpu up -d                # + GPU
+docker compose up -d                              # API + PostgreSQL + Redis
+docker compose --profile ml up -d                 # + MLflow tracking server
+docker compose --profile gpu up -d                # + API with NVIDIA GPU
 docker compose --profile observability up -d      # + Prometheus + Grafana
 ```
+
+### What you get with Docker Compose
+
+| Service | Port | Profile | Notes |
+|---|---|---|---|
+| API (FastAPI) | 8000 | default | Runs migrations on startup |
+| PostgreSQL 16 | 5432 | default | Local DB per developer (Docker volume) |
+| Redis 7 | 6379 | default | Rate limiting; optional without Docker |
+| MLflow | 5000 | `ml` | Experiment tracking |
+| API + GPU | 8001 | `gpu` | Requires NVIDIA Docker runtime |
+| Prometheus | 9090 | `observability` | Metrics scraping |
+| Grafana | 3001 | `observability` | Dashboards (admin/uncase) |
 
 ---
 
