@@ -29,7 +29,7 @@ class UNCASESettings(BaseSettings):
     # -- API --
     api_port: int = 8000
     api_secret_key: str = "cambiar-en-produccion"
-    api_cors_origins: str = "http://localhost:3000,http://localhost:8000"
+    api_cors_origins: str = "http://localhost:3000,http://localhost:8000,https://uncase.md,https://www.uncase.md,https://app.uncase.md"
     cors_origins: str = ""
 
     # -- Database --

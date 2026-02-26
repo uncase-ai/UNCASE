@@ -317,6 +317,18 @@ class DemoSandboxOrchestrator:
                 timeout=10,
             )
 
+            # Wait for the API to be ready (poll health endpoint)
+            import asyncio
+
+            for _ in range(15):
+                check = await sandbox.commands.run(
+                    "curl -sf http://localhost:8000/health || true",
+                    timeout=5,
+                )
+                if check.stdout and "ok" in check.stdout:
+                    break
+                await asyncio.sleep(2)
+
             # Build URLs
             sandbox_host = getattr(sandbox, "get_host", None)
             host = sandbox_host(8000) if callable(sandbox_host) else f"https://{sandbox.sandbox_id}.e2b.dev:8000"
@@ -371,9 +383,13 @@ def _build_demo_api_script(domain: str, seeds: list[dict[str, object]]) -> str:
     """
     return f'''"""UNCASE Demo API — {domain}"""
 import json
+import random
+import uuid
 import uvicorn
-from fastapi import FastAPI
+from datetime import datetime, timezone
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
 app = FastAPI(
     title="UNCASE Demo — {domain}",
@@ -391,6 +407,12 @@ app.add_middleware(
 
 DEMO_SEEDS = json.loads("""{json.dumps(seeds, ensure_ascii=False)}""")
 
+
+class GenerateRequest(BaseModel):
+    seed_id: str | None = None
+    count: int = Field(default=1, ge=1, le=5)
+
+
 @app.get("/health")
 async def health():
     return {{"status": "ok", "domain": "{domain}", "mode": "demo"}}
@@ -404,7 +426,59 @@ async def get_seed(seed_id: str):
     for seed in DEMO_SEEDS:
         if seed.get("seed_id") == seed_id:
             return seed
-    return {{"error": "Seed not found"}}, 404
+    raise HTTPException(status_code=404, detail="Seed not found")
+
+@app.post("/api/v1/generate")
+async def generate(request: GenerateRequest):
+    seed = None
+    if request.seed_id:
+        for s in DEMO_SEEDS:
+            if s.get("seed_id") == request.seed_id:
+                seed = s
+                break
+    if not seed:
+        seed = DEMO_SEEDS[0] if DEMO_SEEDS else None
+    if not seed:
+        raise HTTPException(status_code=400, detail="No seeds available")
+
+    roles = seed.get("roles", ["agent", "user"])
+    flujo = seed.get("pasos_turnos", {{}}).get("flujo_esperado", ["Start", "End"])
+    conversations = []
+    for _ in range(request.count):
+        turns = []
+        n_turns = random.randint(
+            seed.get("pasos_turnos", {{}}).get("turnos_min", 4),
+            seed.get("pasos_turnos", {{}}).get("turnos_max", 8),
+        )
+        for t in range(n_turns):
+            role = roles[t % len(roles)]
+            step = flujo[min(t, len(flujo) - 1)] if flujo else "conversation"
+            turns.append({{
+                "turno": t + 1,
+                "rol": role,
+                "contenido": f"[Demo] {{step}} — turn {{t + 1}} by {{role}}",
+                "herramientas_usadas": [],
+                "metadata": {{}},
+            }})
+        conversations.append({{
+            "conversation_id": uuid.uuid4().hex[:16],
+            "seed_id": seed.get("seed_id", "unknown"),
+            "dominio": seed.get("dominio", "{domain}"),
+            "idioma": seed.get("idioma", "es"),
+            "turnos": turns,
+            "es_sintetica": True,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "metadata": {{"mode": "demo"}},
+        }})
+    return {{
+        "conversations": conversations,
+        "generation_summary": {{
+            "total_generated": len(conversations),
+            "model_used": "demo-mock",
+            "temperature": 0.7,
+            "duration_seconds": 0.1,
+        }},
+    }}
 
 @app.get("/api/v1/sandbox/info")
 async def sandbox_info():
@@ -412,7 +486,7 @@ async def sandbox_info():
         "mode": "demo",
         "domain": "{domain}",
         "total_seeds": len(DEMO_SEEDS),
-        "features": ["generation", "evaluation"],
+        "features": ["seeds", "generation", "evaluation"],
         "note": "This is a short-lived demo sandbox. Data will be lost when it expires.",
     }}
 

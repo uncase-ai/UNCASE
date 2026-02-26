@@ -439,7 +439,7 @@ def _compute_uncase_composite(turns: list[dict[str, Any]], seed: dict[str, Any])
         return 0.0
 
     all_text = " ".join(t.get("contenido", "") for t in turns)
-    tokens = re.findall(r"\\\\w+", all_text.lower())
+    tokens = re.findall(r"\\w+", all_text.lower())
 
     # TTR
     ttr = len(set(tokens)) / len(tokens) if tokens else 0.0

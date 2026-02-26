@@ -79,6 +79,7 @@ function getBucketIndex(score: number): number {
 
 export function EvaluationsPage() {
   const [evaluations, setEvaluations] = useState<QualityReport[]>(() => loadEvaluations())
+  const [error, setError] = useState<string | null>(null)
 
   // Sync with backend API on mount
   useEffect(() => {
@@ -123,8 +124,10 @@ export function EvaluationsPage() {
           }
         }
       })
-      .catch(() => {
-        // API unavailable — keep localStorage data
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load evaluation reports')
+        }
       })
 
     return () => {
@@ -312,6 +315,11 @@ export function EvaluationsPage() {
           title="Evaluations Overview"
           description="Quality metrics and trends across all evaluations"
         />
+        {error && (
+          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-center">
+            <p className="text-destructive text-sm">{error}</p>
+          </div>
+        )}
         <EmptyState
           icon={BarChart3}
           title="No evaluations yet"
@@ -341,6 +349,12 @@ export function EvaluationsPage() {
           </Button>
         }
       />
+
+      {error && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-center">
+          <p className="text-destructive text-sm">{error}</p>
+        </div>
+      )}
 
       {/* Summary Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

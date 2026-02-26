@@ -32,6 +32,7 @@ def init_engine(settings: UNCASESettings) -> None:
         engine_kwargs["pool_size"] = 5
         engine_kwargs["max_overflow"] = 10
         engine_kwargs["pool_pre_ping"] = True
+        engine_kwargs["pool_recycle"] = 300  # Recycle stale connections every 5 min
 
     _engine = create_async_engine(settings.database_url, **engine_kwargs)
     _session_factory = async_sessionmaker(

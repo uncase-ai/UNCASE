@@ -139,6 +139,7 @@ const STAGES: StageConfig[] = [
 export function PipelinePage() {
   const [readiness] = useState(() => STAGES.map(s => s.isReady()))
   const [recentJobs, setRecentJobs] = useState<JobResponse[]>([])
+  const [error, setError] = useState<string | null>(null)
 
   // Fetch recent pipeline/generation jobs from backend
   useEffect(() => {
@@ -150,8 +151,10 @@ export function PipelinePage() {
           setRecentJobs(Array.isArray(res.data) ? res.data : (res.data as { items: JobResponse[] }).items ?? [])
         }
       })
-      .catch(() => {
-        // API unavailable
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load pipeline jobs')
+        }
       })
 
     return () => {
@@ -165,6 +168,12 @@ export function PipelinePage() {
         title="Pipeline"
         description="End-to-end workflow for producing certified synthetic training data"
       />
+
+      {error && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-center">
+          <p className="text-destructive text-sm">{error}</p>
+        </div>
+      )}
 
       {/* Pipeline stages */}
       <div className="relative">

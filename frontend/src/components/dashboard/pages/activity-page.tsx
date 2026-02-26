@@ -125,6 +125,7 @@ function auditLogToActivityEvent(log: AuditLogEntry): ActivityEvent {
 
 export function ActivityPage() {
   const [events, setEvents] = useState<ActivityEvent[]>(() => loadActivity())
+  const [error, setError] = useState<string | null>(null)
 
   // Sync with backend audit API on mount
   useEffect(() => {
@@ -147,8 +148,10 @@ export function ActivityPage() {
           setEvents(merged)
         }
       })
-      .catch(() => {
-        // API unavailable — keep localStorage data
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load activity logs')
+        }
       })
 
     return () => {
@@ -165,6 +168,11 @@ export function ActivityPage() {
     return (
       <div className="space-y-6">
         <PageHeader title="Activity" description="Recent operations and pipeline events" />
+        {error && (
+          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-center">
+            <p className="text-destructive text-sm">{error}</p>
+          </div>
+        )}
         <EmptyState
           icon={Activity}
           title="No activity yet"
@@ -201,6 +209,12 @@ export function ActivityPage() {
           </Button>
         }
       />
+
+      {error && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-center">
+          <p className="text-destructive text-sm">{error}</p>
+        </div>
+      )}
 
       {Object.entries(grouped).map(([date, dayEvents]) => (
         <div key={date}>

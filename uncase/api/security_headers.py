@@ -27,9 +27,14 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     - Cache-Control (for API responses)
     """
 
+    # Paths that serve external JS/CSS (Swagger UI, ReDoc)
+    _DOC_PATHS: frozenset[str] = frozenset({"/docs", "/redoc", "/openapi.json"})
+
     async def dispatch(self, request: Request, call_next: Callable[..., Response]) -> Response:  # type: ignore[override]
         """Add security headers to the response."""
         response = await call_next(request)  # type: ignore[misc]
+
+        path = request.url.path
 
         # HSTS: force HTTPS in production
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
@@ -43,8 +48,17 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # XSS protection (legacy browsers)
         response.headers["X-XSS-Protection"] = "1; mode=block"
 
-        # Content Security Policy
-        response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none'"
+        # Content Security Policy — relaxed for Swagger UI / ReDoc
+        if path in self._DOC_PATHS:
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                "img-src 'self' data: https://cdn.jsdelivr.net; "
+                "frame-ancestors 'none'"
+            )
+        else:
+            response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none'"
 
         # Referrer policy
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
@@ -53,7 +67,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
 
         # Cache control for API responses
-        if request.url.path.startswith("/api/"):
+        if path.startswith("/api/"):
             response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
             response.headers["Pragma"] = "no-cache"
 
