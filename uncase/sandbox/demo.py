@@ -284,13 +284,20 @@ class DemoSandboxOrchestrator:
 
             job.status = SandboxJobStatus.RUNNING
 
-            # Install UNCASE and start the API inside the sandbox
+            # Install only the packages the demo API script needs
             logger.info("demo_sandbox_installing", job_id=job.job_id)
 
-            await sandbox.commands.run(
-                "pip install uncase fastapi uvicorn litellm pydantic structlog httpx 2>/dev/null",
+            install_result = await sandbox.commands.run(
+                "pip install fastapi uvicorn pydantic",
                 timeout=120,
             )
+            if install_result.exit_code != 0:
+                logger.warning(
+                    "demo_sandbox_pip_install_warning",
+                    job_id=job.job_id,
+                    exit_code=install_result.exit_code,
+                    stderr=install_result.stderr[:500] if install_result.stderr else "",
+                )
 
             # Write demo seeds
             demo_seed = _DEMO_SEEDS.get(request.domain, _DEMO_SEEDS["automotive.sales"])
