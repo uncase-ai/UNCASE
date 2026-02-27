@@ -41,6 +41,7 @@ class UNCASESettings(BaseSettings):
     # -- LLM Providers --
     litellm_api_key: str = ""
     anthropic_api_key: str = ""
+    gemini_api_key: str = ""
 
     # -- MLflow --
     mlflow_tracking_uri: str = "http://localhost:5000"

@@ -50,7 +50,8 @@ class GeneratorService:
     def _resolve_api_key(self) -> str | None:
         """Resolve the API key from settings.
 
-        Returns the first available key from litellm_api_key or anthropic_api_key.
+        Returns the first available key from litellm_api_key, anthropic_api_key,
+        or gemini_api_key.
 
         Raises:
             LLMConfigurationError: If no API key is configured.
@@ -59,6 +60,8 @@ class GeneratorService:
             return self._settings.litellm_api_key
         if self._settings.anthropic_api_key:
             return self._settings.anthropic_api_key
+        if self._settings.gemini_api_key:
+            return self._settings.gemini_api_key
         return None
 
     async def _resolve_from_provider(
@@ -68,17 +71,19 @@ class GeneratorService:
         """Resolve API key, model, and api_base from a registered provider.
 
         Returns:
-            Tuple of (api_key, model, api_base).
+            Tuple of (api_key, model, api_base).  The model name is already
+            normalized with the prefix LiteLLM expects (e.g. ``gemini/``).
         """
         if self._session is None:
             return None, None, None
 
-        from uncase.services.provider import ProviderService
+        from uncase.services.provider import ProviderService, normalize_model_for_litellm
 
         provider_service = ProviderService(session=self._session, settings=self._settings)
         provider = await provider_service._get_or_raise(provider_id)
         api_key = provider_service.decrypt_provider_key(provider)
-        return api_key, provider.default_model, provider.api_base
+        model = normalize_model_for_litellm(provider.default_model, provider.provider_type)
+        return api_key, model, provider.api_base
 
     def _build_config(
         self,

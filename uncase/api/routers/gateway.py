@@ -16,7 +16,7 @@ from uncase.api.deps import get_db, get_settings
 from uncase.config import UNCASESettings
 from uncase.core.privacy.interceptor import PrivacyInterceptor
 from uncase.exceptions import LLMConfigurationError, PIIDetectedError, ProviderNotFoundError
-from uncase.services.provider import ProviderService
+from uncase.services.provider import ProviderService, normalize_model_for_litellm
 
 router = APIRouter(prefix="/api/v1/gateway", tags=["gateway"])
 
@@ -175,7 +175,9 @@ async def chat_proxy(
         messages_to_send.append({"role": msg.role, "content": clean_content})
 
     # 3. Forward to LLM
-    model_to_use = request.model or provider.default_model
+    model_to_use = normalize_model_for_litellm(
+        request.model or provider.default_model, provider.provider_type
+    )
     api_key = provider_service.decrypt_provider_key(provider)
 
     try:
@@ -299,7 +301,9 @@ async def chat_proxy_stream(
         messages_to_send.append({"role": msg.role, "content": clean_content})
 
     # 3. Prepare LLM call
-    model_to_use = request.model or provider.default_model
+    model_to_use = normalize_model_for_litellm(
+        request.model or provider.default_model, provider.provider_type
+    )
     api_key = provider_service.decrypt_provider_key(provider)
 
     async def event_generator() -> AsyncGenerator[str, None]:

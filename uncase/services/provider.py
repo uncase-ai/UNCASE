@@ -29,6 +29,26 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+# LiteLLM model-name prefixes required for API-key based routing.
+# Without these prefixes LiteLLM falls back to Vertex AI / Azure AD
+# which require separate cloud credentials.
+_PROVIDER_MODEL_PREFIXES: dict[str, str] = {
+    "google": "gemini/",
+    "groq": "groq/",
+}
+
+
+def normalize_model_for_litellm(model: str, provider_type: str) -> str:
+    """Ensure the model name has the prefix LiteLLM expects for API-key routing.
+
+    For example, ``gemini-2.0-flash`` becomes ``gemini/gemini-2.0-flash``
+    so LiteLLM uses Google AI Studio (API key) instead of Vertex AI (ADC).
+    """
+    prefix = _PROVIDER_MODEL_PREFIXES.get(provider_type, "")
+    if prefix and not model.startswith(prefix):
+        return f"{prefix}{model}"
+    return model
+
 
 def _get_fernet(settings: UNCASESettings) -> Fernet:
     """Build a Fernet cipher from the app secret key."""
@@ -185,12 +205,14 @@ class ProviderService:
         if provider.api_key_encrypted:
             api_key = self._decrypt_key(provider.api_key_encrypted)
 
+        model = normalize_model_for_litellm(provider.default_model, provider.provider_type)
+
         start = time.monotonic()
         try:
             import litellm
 
             await litellm.acompletion(
-                model=provider.default_model,
+                model=model,
                 messages=[{"role": "user", "content": "ping"}],
                 max_tokens=5,
                 api_key=api_key,
