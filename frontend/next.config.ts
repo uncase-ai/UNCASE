@@ -3,7 +3,8 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   basePath: process.env.BASEPATH ?? '',
   reactStrictMode: true,
-  pageExtensions: ['js', 'jsx', 'ts', 'tsx']
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
+  output: 'standalone'
 }
 
 export default nextConfig

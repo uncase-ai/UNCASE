@@ -124,24 +124,17 @@ cd uncase
 cp .env.example .env
 # Edit .env → set at least one LLM API key (ANTHROPIC_API_KEY, OPENAI_API_KEY, etc.)
 
-# 2. Start everything (API + PostgreSQL + Redis)
+# 2. Start everything (API + PostgreSQL + Redis + Dashboard)
 docker compose up -d
 
-# 3. Verify — all 3 containers should show "healthy" / "running"
+# 3. Verify — all 4 containers should show "healthy" / "running"
 docker compose ps
 curl http://localhost:8000/health        # → {"status": "healthy", ...}
 # Open http://localhost:8000/docs        → Swagger UI
+# Open http://localhost:3000             → Dashboard
 ```
 
 Data persists in Docker volumes across restarts. Use `docker compose down` to stop (data kept) or `docker compose down -v` to stop **and wipe all data**.
-
-```bash
-# 4. (Optional) Start the dashboard
-cd frontend
-cp .env.example .env
-npm install && npm run dev
-# Open http://localhost:3000             → Dashboard
-```
 
 ### Option B: Docker + extras (MLflow, GPU, Observability)
 
@@ -156,6 +149,7 @@ docker compose --profile observability up -d      # + Prometheus + Grafana
 | API (FastAPI) | 8000 | default | Runs migrations on startup |
 | PostgreSQL 16 | **5433** | default | Mapped to 5433 to avoid conflicts with local PG |
 | Redis 7 | 6379 | default | Rate limiting; optional without Docker |
+| Dashboard (Next.js) | 3000 | default | Connects to API at localhost:8000 |
 | MLflow | 5000 | `ml` | Experiment tracking |
 | API + GPU | 8001 | `gpu` | Requires NVIDIA Docker runtime |
 | Prometheus | 9090 | `observability` | Metrics scraping |
@@ -307,7 +301,7 @@ pip install "uncase[all]"           # Everything
 ### Docker Compose profiles
 
 ```bash
-docker compose up -d                              # API + PostgreSQL + Redis
+docker compose up -d                              # API + PostgreSQL + Redis + Dashboard
 docker compose --profile ml up -d                 # + MLflow tracking server
 docker compose --profile gpu up -d                # + API with NVIDIA GPU
 docker compose --profile observability up -d      # + Prometheus + Grafana
@@ -320,6 +314,7 @@ docker compose --profile observability up -d      # + Prometheus + Grafana
 | API (FastAPI) | 8000 | default | Runs migrations on startup |
 | PostgreSQL 16 | **5433** | default | Mapped to 5433 to avoid conflicts with local PG |
 | Redis 7 | 6379 | default | Rate limiting; optional without Docker |
+| Dashboard (Next.js) | 3000 | default | Connects to API at localhost:8000 |
 | MLflow | 5000 | `ml` | Experiment tracking |
 | API + GPU | 8001 | `gpu` | Requires NVIDIA Docker runtime |
 | Prometheus | 9090 | `observability` | Metrics scraping |
