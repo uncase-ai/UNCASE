@@ -284,21 +284,6 @@ class DemoSandboxOrchestrator:
 
             job.status = SandboxJobStatus.RUNNING
 
-            # Install only the packages the demo API script needs
-            logger.info("demo_sandbox_installing", job_id=job.job_id)
-
-            install_result = await sandbox.commands.run(
-                "pip install fastapi uvicorn pydantic",
-                timeout=120,
-            )
-            if install_result.exit_code != 0:
-                logger.warning(
-                    "demo_sandbox_pip_install_warning",
-                    job_id=job.job_id,
-                    exit_code=install_result.exit_code,
-                    stderr=install_result.stderr[:500] if install_result.stderr else "",
-                )
-
             # Write demo seeds
             demo_seed = _DEMO_SEEDS.get(request.domain, _DEMO_SEEDS["automotive.sales"])
             seeds_data = []
@@ -318,23 +303,52 @@ class DemoSandboxOrchestrator:
             api_script = _build_demo_api_script(request.domain, seeds_data)
             await sandbox.files.write("/home/user/demo_api.py", api_script)
 
-            # Start the API in background
+            # Write a bootstrap script that installs deps and starts the API
+            # in one shot — avoids E2B SDK request timeout on long pip installs.
+            bootstrap_script = (
+                "#!/bin/bash\n"
+                "set -e\n"
+                "pip install --no-cache-dir -q fastapi uvicorn pydantic 2>&1\n"
+                "cd /home/user && python demo_api.py > api.log 2>&1\n"
+            )
+            await sandbox.files.write("/home/user/bootstrap.sh", bootstrap_script)
+
+            # Start the bootstrap in the background so we don't block
+            # on the E2B SDK's HTTP request timeout during pip install.
+            logger.info("demo_sandbox_installing", job_id=job.job_id)
             await sandbox.commands.run(
-                "cd /home/user && nohup python demo_api.py > api.log 2>&1 &",
+                "chmod +x /home/user/bootstrap.sh && nohup /home/user/bootstrap.sh &",
                 timeout=10,
             )
 
             # Wait for the API to be ready (poll health endpoint)
             import asyncio
 
-            for _ in range(15):
+            api_ready = False
+            for _ in range(30):
                 check = await sandbox.commands.run(
                     "curl -sf http://localhost:8000/health || true",
                     timeout=5,
                 )
                 if check.stdout and "ok" in check.stdout:
+                    api_ready = True
                     break
-                await asyncio.sleep(2)
+                await asyncio.sleep(3)
+
+            if not api_ready:
+                # Grab bootstrap output to diagnose the failure
+                log_result = await sandbox.commands.run(
+                    "cat /home/user/api.log 2>/dev/null; echo '---'; ps aux 2>/dev/null | head -20",
+                    timeout=5,
+                )
+                log_tail = (log_result.stdout or "")[:1000]
+                logger.error(
+                    "demo_sandbox_api_not_ready",
+                    job_id=job.job_id,
+                    log_tail=log_tail,
+                )
+                msg = f"Demo API did not start within 90s. Log: {log_tail[:300]}"
+                raise SandboxError(msg)
 
             # Build URLs
             sandbox_host = getattr(sandbox, "get_host", None)
