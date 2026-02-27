@@ -12,6 +12,7 @@ from uncase.core.evaluator.metrics.diversity import LexicalDiversityMetric
 from uncase.core.evaluator.metrics.fidelity import FactualFidelityMetric
 from uncase.core.evaluator.metrics.privacy import PrivacyMetric
 from uncase.core.evaluator.metrics.rouge import ROUGELMetric
+from uncase.core.evaluator.metrics.tool_call import ToolCallValidatorMetric
 from uncase.schemas.quality import QualityMetrics, QualityReport, compute_composite_score
 
 if TYPE_CHECKING:
@@ -53,6 +54,7 @@ class ConversationEvaluator(BaseEvaluator):
             FactualFidelityMetric(),
             LexicalDiversityMetric(),
             DialogCoherenceMetric(),
+            ToolCallValidatorMetric(),
             PrivacyMetric(),
         ]
 
@@ -83,6 +85,7 @@ class ConversationEvaluator(BaseEvaluator):
             fidelidad_factual=scores.get("fidelidad_factual", 0.0),
             diversidad_lexica=scores.get("diversidad_lexica", 0.0),
             coherencia_dialogica=scores.get("coherencia_dialogica", 0.0),
+            tool_call_validity=scores.get("tool_call_validity", 1.0),
             privacy_score=scores.get("privacy_score", 0.0),
             memorizacion=scores.get("memorizacion", 0.0),
         )

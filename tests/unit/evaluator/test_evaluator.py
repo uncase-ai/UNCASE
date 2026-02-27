@@ -38,6 +38,7 @@ class TestConversationEvaluator:
         assert report.metrics.fidelidad_factual >= 0.0
         assert report.metrics.diversidad_lexica >= 0.0
         assert report.metrics.coherencia_dialogica >= 0.0
+        assert report.metrics.tool_call_validity >= 0.0
         assert report.metrics.privacy_score >= 0.0
         assert report.metrics.memorizacion >= 0.0
 
@@ -106,6 +107,7 @@ class TestConversationEvaluator:
             "fidelidad_factual",
             "diversidad_lexica",
             "coherencia_dialogica",
+            "tool_call_validity",
             "privacy_score",
             "memorizacion",
         ]:

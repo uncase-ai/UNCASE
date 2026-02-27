@@ -47,6 +47,7 @@ export interface EvaluationReportResponse {
   coherencia_dialogica: number
   privacy_score: number
   memorizacion: number
+  tool_call_validity: number | null
   composite_score: number
   passed: boolean
   failures: string[]

@@ -22,6 +22,7 @@ class TestCompositeScore:
             fidelidad_factual=0.95,
             diversidad_lexica=0.60,
             coherencia_dialogica=0.90,
+            tool_call_validity=1.0,
         )
         score, _, _ = compute_composite_score(metrics)
         assert score == 0.60
@@ -60,12 +61,32 @@ class TestCompositeScore:
             fidelidad_factual=0.90,
             diversidad_lexica=0.55,
             coherencia_dialogica=0.85,
+            tool_call_validity=0.90,
             privacy_score=0.0,
             memorizacion=0.0,
         )
         score, passed, _failures = compute_composite_score(metrics)
         assert passed is True
         assert score == 0.55
+
+    def test_tool_call_validity_below_threshold(self) -> None:
+        metrics = make_quality_metrics(tool_call_validity=0.80)
+        _score, passed, failures = compute_composite_score(metrics)
+        assert passed is False
+        assert any("tool_call_validity" in f for f in failures)
+
+    def test_tool_call_validity_drags_composite_when_lowest(self) -> None:
+        metrics = make_quality_metrics(
+            rouge_l=0.95,
+            fidelidad_factual=0.95,
+            diversidad_lexica=0.95,
+            coherencia_dialogica=0.95,
+            tool_call_validity=0.50,
+        )
+        score, passed, failures = compute_composite_score(metrics)
+        assert score == 0.50
+        assert passed is False
+        assert any("tool_call_validity" in f for f in failures)
 
     def test_memorization_boundary_at_001(self) -> None:
         metrics = make_quality_metrics(memorizacion=0.01)

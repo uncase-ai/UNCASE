@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import random
 import re
 import uuid
 from dataclasses import dataclass
@@ -22,6 +23,7 @@ from uncase.schemas.conversation import Conversation, ConversationTurn
 
 if TYPE_CHECKING:
     from uncase.schemas.quality import QualityReport
+    from uncase.schemas.scenario import ScenarioTemplate
     from uncase.schemas.seed import SeedSchema
 
 logger = structlog.get_logger(__name__)
@@ -82,7 +84,80 @@ _DOMAIN_CONTEXT: dict[str, str] = {
 }
 
 
-def _build_system_prompt(seed: SeedSchema, *, language: str | None = None) -> str:
+def _select_scenario(seed: SeedSchema, *, rng: random.Random | None = None) -> ScenarioTemplate | None:
+    """Pick a scenario from the seed via weighted random selection.
+
+    Returns None if the seed has no scenarios attached.
+    """
+    if not seed.scenarios:
+        return None
+
+    generator = rng or random
+    weights = [s.weight for s in seed.scenarios]
+    selected = generator.choices(seed.scenarios, weights=weights, k=1)[0]
+
+    logger.debug(
+        "scenario_selected",
+        scenario=selected.name,
+        seed_id=seed.seed_id,
+    )
+    return selected
+
+
+def _build_scenario_block(scenario: ScenarioTemplate) -> str:
+    """Build a prompt augmentation block from a scenario template."""
+    lines: list[str] = []
+
+    lines.append("\n## Scenario Archetype")
+    lines.append(f"**Type**: {scenario.name}")
+    lines.append(f"**Intent**: {scenario.intent}")
+
+    if scenario.description:
+        lines.append(f"**Description**: {scenario.description}")
+
+    # Skill level guidance
+    skill_hints = {
+        "basic": (
+            "Keep the conversation simple and focused. 3-6 turns, single topic, "
+            "straightforward resolution. Suitable for basic training examples."
+        ),
+        "intermediate": (
+            "Generate a moderately complex conversation. 6-12 turns, may span "
+            "multiple related topics with natural transitions."
+        ),
+        "advanced": (
+            "Generate a complex, multi-step conversation. 10-20+ turns with "
+            "tool chains, branching logic, edge-case handling, and nuanced "
+            "interpersonal dynamics."
+        ),
+    }
+    lines.append(f"**Complexity**: {scenario.skill_level} — {skill_hints[scenario.skill_level]}")
+
+    if scenario.expected_tool_sequence:
+        tool_seq = " → ".join(scenario.expected_tool_sequence)
+        lines.append(
+            f"\n**Expected tool usage order**: {tool_seq}\n"
+            "The assistant should call these tools in approximately this order "
+            "during the conversation. Adapt naturally — not every call is mandatory "
+            "but the sequence reflects the typical flow."
+        )
+
+    if scenario.edge_case:
+        lines.append(
+            "\n**Edge case scenario**: This is a NON-happy-path conversation. "
+            "The conversation should include realistic complications, boundary "
+            "enforcement, or graceful failure handling as described in the intent."
+        )
+
+    return "\n".join(lines)
+
+
+def _build_system_prompt(
+    seed: SeedSchema,
+    *,
+    language: str | None = None,
+    scenario: ScenarioTemplate | None = None,
+) -> str:
     """Build a detailed system prompt from a SeedSchema.
 
     The prompt instructs the LLM to generate a realistic multi-turn
@@ -92,6 +167,7 @@ def _build_system_prompt(seed: SeedSchema, *, language: str | None = None) -> st
     Args:
         seed: The seed schema to generate from.
         language: Optional language override (ISO 639-1).
+        scenario: Optional scenario template to steer generation.
 
     Returns:
         Complete system prompt string.
@@ -106,8 +182,13 @@ def _build_system_prompt(seed: SeedSchema, *, language: str | None = None) -> st
         role_lines.append(f'  - "{role}": {desc}')
     roles_block = "\n".join(role_lines)
 
-    # Build flow steps
-    flow_lines = [f"  {i + 1}. {step}" for i, step in enumerate(seed.pasos_turnos.flujo_esperado)]
+    # Build flow steps — scenario flow_steps override seed defaults when present
+    flow_source = (
+        scenario.flow_steps
+        if scenario and scenario.flow_steps
+        else seed.pasos_turnos.flujo_esperado
+    )
+    flow_lines = [f"  {i + 1}. {step}" for i, step in enumerate(flow_source)]
     flow_block = "\n".join(flow_lines)
 
     # Build constraints
@@ -136,6 +217,9 @@ def _build_system_prompt(seed: SeedSchema, *, language: str | None = None) -> st
             if td.input_schema:
                 def_lines.append(f"    Input: {json.dumps(td.input_schema, ensure_ascii=False)}")
         tool_defs_block = "\n## Structured Tool Definitions\n" + "\n".join(def_lines)
+
+    # Build scenario block if a scenario is active
+    scenario_block = _build_scenario_block(scenario) if scenario else ""
 
     # Language map for prompt instruction
     lang_names: dict[str, str] = {
@@ -172,6 +256,7 @@ The conversation should follow these stages naturally (not rigidly — allow org
 {constraints_block}
 {tools_block}
 {tool_defs_block}
+{scenario_block}
 
 ## Output Format
 
@@ -517,7 +602,6 @@ class LiteLLMGenerator(BaseGenerator):
             LLMConfigurationError: If LLM provider is not configured.
         """
         language = self._config.language_override or seed.idioma
-        system_prompt = _build_system_prompt(seed, language=language)
         user_prompt = (
             f"Generate a complete synthetic conversation following the specification above. "
             f"Output ONLY a valid JSON array of turn objects. "
@@ -531,6 +615,12 @@ class LiteLLMGenerator(BaseGenerator):
             temp_variation = (i - count / 2) * self._config.temperature_variation
             adjusted_temp = max(0.0, min(2.0, self._config.temperature + temp_variation))
 
+            # Select a scenario for this conversation (if seed has scenarios)
+            scenario = _select_scenario(seed)
+
+            # Build system prompt with scenario context
+            system_prompt = _build_system_prompt(seed, language=language, scenario=scenario)
+
             logger.info(
                 "generating_conversation",
                 index=i + 1,
@@ -539,6 +629,7 @@ class LiteLLMGenerator(BaseGenerator):
                 temperature=round(adjusted_temp, 3),
                 seed_id=seed.seed_id,
                 domain=seed.dominio,
+                scenario=scenario.name if scenario else None,
             )
 
             try:
@@ -550,6 +641,19 @@ class LiteLLMGenerator(BaseGenerator):
 
                 turns = _parse_llm_response(raw_content, seed)
 
+                # Record scenario in conversation metadata for traceability
+                conv_metadata: dict[str, str] = {
+                    "generator": "litellm",
+                    "model": self._config.model,
+                    "temperature": str(round(adjusted_temp, 3)),
+                    "generation_index": str(i),
+                }
+                if scenario:
+                    conv_metadata["scenario"] = scenario.name
+                    conv_metadata["scenario_skill_level"] = scenario.skill_level
+                    if scenario.edge_case:
+                        conv_metadata["edge_case"] = "true"
+
                 conversation = Conversation(
                     conversation_id=uuid.uuid4().hex,
                     seed_id=seed.seed_id,
@@ -557,12 +661,7 @@ class LiteLLMGenerator(BaseGenerator):
                     idioma=language,
                     turnos=turns,
                     es_sintetica=True,
-                    metadata={
-                        "generator": "litellm",
-                        "model": self._config.model,
-                        "temperature": str(round(adjusted_temp, 3)),
-                        "generation_index": str(i),
-                    },
+                    metadata=conv_metadata,
                 )
 
                 conversations.append(conversation)
@@ -617,7 +716,8 @@ class LiteLLMGenerator(BaseGenerator):
             List of improved Conversation objects (single conversation).
         """
         language = self._config.language_override or seed.idioma
-        system_prompt = _build_system_prompt(seed, language=language)
+        scenario = _select_scenario(seed)
+        system_prompt = _build_system_prompt(seed, language=language, scenario=scenario)
 
         # Augment with feedback-driven instructions
         feedback = _build_feedback_augmentation(quality_report)
@@ -643,6 +743,16 @@ class LiteLLMGenerator(BaseGenerator):
         raw_content = await self._call_llm(system_prompt, user_prompt)
         turns = _parse_llm_response(raw_content, seed)
 
+        feedback_metadata: dict[str, str] = {
+            "generator": "litellm",
+            "model": self._config.model,
+            "temperature": str(self._config.temperature),
+            "feedback_from": quality_report.conversation_id,
+            "previous_score": str(quality_report.composite_score),
+        }
+        if scenario:
+            feedback_metadata["scenario"] = scenario.name
+
         conversation = Conversation(
             conversation_id=uuid.uuid4().hex,
             seed_id=seed.seed_id,
@@ -650,13 +760,7 @@ class LiteLLMGenerator(BaseGenerator):
             idioma=language,
             turnos=turns,
             es_sintetica=True,
-            metadata={
-                "generator": "litellm",
-                "model": self._config.model,
-                "temperature": str(self._config.temperature),
-                "feedback_from": quality_report.conversation_id,
-                "previous_score": str(quality_report.composite_score),
-            },
+            metadata=feedback_metadata,
         )
 
         logger.info(

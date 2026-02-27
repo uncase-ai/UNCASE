@@ -138,6 +138,7 @@ async def list_evaluation_reports(
             coherencia_dialogica=r.coherencia_dialogica,
             privacy_score=r.privacy_score,
             memorizacion=r.memorizacion,
+            tool_call_validity=r.tool_call_validity,
             composite_score=r.composite_score,
             passed=r.passed,
             failures=r.failures,

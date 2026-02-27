@@ -206,6 +206,7 @@ export interface QualityMetrics {
   fidelidad_factual: number
   diversidad_lexica: number
   coherencia_dialogica: number
+  tool_call_validity: number
   privacy_score: number
   memorizacion: number
 }
@@ -305,6 +306,7 @@ export interface QualityThresholdsResponse {
   fidelidad_min: number
   diversidad_lexica_min: number
   coherencia_dialogica_min: number
+  tool_call_validity_min: number
   privacy_score_max: number
   memorizacion_max: number
   formula: string
@@ -316,6 +318,7 @@ export const QUALITY_THRESHOLDS = {
   fidelidad_factual: 0.90,
   diversidad_lexica: 0.55,
   coherencia_dialogica: 0.85,
+  tool_call_validity: 0.90,
   privacy_score: 0.0,
   memorizacion: 0.01
 } as const
@@ -700,6 +703,50 @@ export interface JobCost {
 export interface DailyCost {
   date: string
   event_count: number
+}
+
+// ─── Scenario Templates ───
+export type SkillLevel = 'basic' | 'intermediate' | 'advanced'
+
+export interface ScenarioTemplate {
+  name: string
+  description: string
+  domain: string
+  intent: string
+  skill_level: SkillLevel
+  expected_tool_sequence: string[]
+  flow_steps: string[]
+  edge_case: boolean
+  weight: number
+  tags: string[]
+}
+
+export interface ScenarioPackSummary {
+  id: string
+  name: string
+  description: string
+  domain: string
+  version: string
+  scenario_count: number
+  edge_case_count: number
+  skill_levels: string[]
+  tags: string[]
+}
+
+export interface ScenarioPackDetail extends ScenarioPackSummary {
+  scenarios: ScenarioTemplate[]
+}
+
+export interface ScenarioPackListResponse {
+  packs: ScenarioPackSummary[]
+  total: number
+}
+
+export interface ScenarioListResponse {
+  domain: string
+  scenarios: ScenarioTemplate[]
+  total: number
+  filters_applied: Record<string, string>
 }
 
 // ─── Audit Logs ───

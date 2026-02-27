@@ -5,6 +5,7 @@ from __future__ import annotations
 from uncase.schemas.conversation import Conversation, ConversationTurn
 from uncase.schemas.import_result import ImportErrorDetail, ImportResult
 from uncase.schemas.quality import QualityMetrics, QualityReport, compute_composite_score
+from uncase.schemas.scenario import ScenarioPack, ScenarioTemplate
 from uncase.schemas.seed import (
     MetricasCalidad,
     ParametrosFactuales,
@@ -29,6 +30,8 @@ __all__ = [
     "QualityReport",
     "RenderRequest",
     "RenderResponse",
+    "ScenarioPack",
+    "ScenarioTemplate",
     "SeedSchema",
     "TemplateInfo",
     "ToolCall",
