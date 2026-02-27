@@ -114,7 +114,7 @@ Seeds are **traceable** (every synthetic conversation maps back to its seed), **
 
 ### Option A: Docker (recommended — batteries included)
 
-Docker Compose gives you PostgreSQL, Redis, and the API in one command. Each developer gets **their own local databases** — nothing is shared.
+Docker Compose gives you PostgreSQL, Redis, and the API in one command. Each developer gets **their own local databases** — nothing is shared. Migrations run automatically on startup.
 
 ```bash
 git clone https://github.com/uncase-ai/uncase.git
@@ -126,19 +126,44 @@ cp .env.example .env
 
 # 2. Start everything (API + PostgreSQL + Redis)
 docker compose up -d
-# → http://localhost:8000/docs  (Swagger UI)
-# → http://localhost:8000/health
 
-# 3. (Optional) Start the dashboard
+# 3. Verify — all 3 containers should show "healthy" / "running"
+docker compose ps
+curl http://localhost:8000/health        # → {"status": "healthy", ...}
+# Open http://localhost:8000/docs        → Swagger UI
+```
+
+Data persists in Docker volumes across restarts. Use `docker compose down` to stop (data kept) or `docker compose down -v` to stop **and wipe all data**.
+
+```bash
+# 4. (Optional) Start the dashboard
 cd frontend
 cp .env.example .env
 npm install && npm run dev
-# → http://localhost:3000
+# Open http://localhost:3000             → Dashboard
 ```
 
-Migrations run automatically on container startup. Data persists in Docker volumes across restarts. Use `docker compose down` to stop (data kept) or `docker compose down -v` to stop and wipe all data.
+### Option B: Docker + extras (MLflow, GPU, Observability)
 
-### Option B: Local development (uv + your own PostgreSQL)
+```bash
+docker compose --profile ml up -d                 # + MLflow tracking server
+docker compose --profile gpu up -d                # + API with NVIDIA GPU
+docker compose --profile observability up -d      # + Prometheus + Grafana
+```
+
+| Service | Port | Profile | Notes |
+|---|---|---|---|
+| API (FastAPI) | 8000 | default | Runs migrations on startup |
+| PostgreSQL 16 | **5433** | default | Mapped to 5433 to avoid conflicts with local PG |
+| Redis 7 | 6379 | default | Rate limiting; optional without Docker |
+| MLflow | 5000 | `ml` | Experiment tracking |
+| API + GPU | 8001 | `gpu` | Requires NVIDIA Docker runtime |
+| Prometheus | 9090 | `observability` | Metrics scraping |
+| Grafana | 3001 | `observability` | Dashboards (admin/uncase) |
+
+### Option C: Local development (uv + your own PostgreSQL)
+
+Prerequisites: Python 3.11+, [uv](https://docs.astral.sh/uv/), PostgreSQL 16+ running locally.
 
 ```bash
 git clone https://github.com/uncase-ai/uncase.git
@@ -157,16 +182,19 @@ make migrate
 
 # 4. Start the API
 make api
-# → http://localhost:8000/docs
 
-# 5. (Optional) Start the dashboard
+# 5. Verify
+curl http://localhost:8000/health        # → {"status": "healthy", ...}
+# Open http://localhost:8000/docs        → Swagger UI
+
+# 6. (Optional) Start the dashboard
 cd frontend
 cp .env.example .env
 npm install && npm run dev
-# → http://localhost:3000
+# Open http://localhost:3000             → Dashboard
 ```
 
-### Option C: pip (library usage only)
+### Option D: pip (library usage only)
 
 ```bash
 pip install uncase
@@ -206,6 +234,15 @@ curl -X POST http://localhost:8000/api/v1/generate \
 # Export for fine-tuning
 uncase template export conversations.json llama -o train_data.txt
 ```
+
+### Troubleshooting
+
+| Problem | Cause | Fix |
+|---|---|---|
+| `port is already allocated` on 5433 | Another service uses that port | Set `POSTGRES_PORT=5434` in `.env` |
+| `password authentication failed` | Alembic/app connects to the wrong Postgres instance | Verify `DATABASE_URL` port matches `POSTGRES_PORT` in `.env` |
+| Stale data after schema changes | Docker volume has old schema | `docker compose down -v && docker compose up -d` |
+| `InvalidPasswordError` with Alembic | Port 5432 hits a different Postgres (e.g. Supabase) | Default is now 5433; update your `.env` if you still use 5432 |
 
 ---
 
@@ -281,7 +318,7 @@ docker compose --profile observability up -d      # + Prometheus + Grafana
 | Service | Port | Profile | Notes |
 |---|---|---|---|
 | API (FastAPI) | 8000 | default | Runs migrations on startup |
-| PostgreSQL 16 | 5432 | default | Local DB per developer (Docker volume) |
+| PostgreSQL 16 | **5433** | default | Mapped to 5433 to avoid conflicts with local PG |
 | Redis 7 | 6379 | default | Rate limiting; optional without Docker |
 | MLflow | 5000 | `ml` | Experiment tracking |
 | API + GPU | 8001 | `gpu` | Requires NVIDIA Docker runtime |
