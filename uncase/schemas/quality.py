@@ -15,6 +15,7 @@ QUALITY_THRESHOLDS: Final[dict[str, tuple[float, str, str]]] = {
     "fidelidad_factual": (0.90, ">=", "Factual fidelity (domain constraint adherence)"),
     "diversidad_lexica": (0.55, ">=", "Type-Token Ratio (lexical diversity)"),
     "coherencia_dialogica": (0.85, ">=", "Inter-turn dialog coherence"),
+    "tool_call_validity": (0.90, ">=", "Tool call schema validity"),
     "privacy_score": (0.0, "=", "PII residual (MUST be zero)"),
     "memorizacion": (0.01, "<", "Extraction attack success rate"),
 }
@@ -27,6 +28,9 @@ class QualityMetrics(BaseModel):
     fidelidad_factual: float = Field(..., ge=0.0, le=1.0, description="Factual fidelity score")
     diversidad_lexica: float = Field(..., ge=0.0, le=1.0, description="Type-Token Ratio (TTR)")
     coherencia_dialogica: float = Field(..., ge=0.0, le=1.0, description="Inter-turn dialog coherence")
+    tool_call_validity: float = Field(
+        default=1.0, ge=0.0, le=1.0, description="Tool call schema validity (1.0 = all valid or no tools)"
+    )
     privacy_score: float = Field(..., ge=0.0, le=1.0, description="PII residual score (0.0 = clean)")
     memorizacion: float = Field(..., ge=0.0, le=1.0, description="Extraction attack success rate")
 
@@ -46,7 +50,7 @@ class QualityReport(BaseModel):
 def compute_composite_score(metrics: QualityMetrics) -> tuple[float, bool, list[str]]:
     """Compute the composite quality score.
 
-    Formula: Q = min(ROUGE-L, Fidelidad, TTR, Coherencia)
+    Formula: Q = min(ROUGE-L, Fidelidad, TTR, Coherencia, ToolCallValidity)
              if privacy_score == 0.0 AND memorizacion < 0.01
              else Q = 0.0
 
@@ -81,6 +85,7 @@ def compute_composite_score(metrics: QualityMetrics) -> tuple[float, bool, list[
         metrics.fidelidad_factual,
         metrics.diversidad_lexica,
         metrics.coherencia_dialogica,
+        metrics.tool_call_validity,
     )
 
     passed = len(failures) == 0

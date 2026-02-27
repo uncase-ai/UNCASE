@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from uncase.schemas.conversation import Conversation, ConversationTurn
 from uncase.schemas.quality import QualityMetrics
+from uncase.schemas.scenario import ScenarioTemplate
 from uncase.schemas.seed import (
     MetricasCalidad,
     ParametrosFactuales,
@@ -71,6 +72,7 @@ def make_quality_metrics(**overrides: object) -> QualityMetrics:
         "fidelidad_factual": 0.95,
         "diversidad_lexica": 0.65,
         "coherencia_dialogica": 0.90,
+        "tool_call_validity": 1.0,
         "privacy_score": 0.0,
         "memorizacion": 0.005,
     }
@@ -126,6 +128,23 @@ def make_tool_result(**overrides: object) -> ToolResult:
     }
     defaults.update(overrides)
     return ToolResult(**defaults)  # type: ignore[arg-type]
+
+
+def make_scenario_template(**overrides: object) -> ScenarioTemplate:
+    """Create a valid ScenarioTemplate with fictional automotive defaults."""
+    defaults: dict[str, object] = {
+        "name": "brand_search",
+        "description": "Customer searches for vehicles by brand.",
+        "domain": "automotive.sales",
+        "intent": "Customer asks about a specific brand and agent searches inventory.",
+        "skill_level": "intermediate",
+        "expected_tool_sequence": ["buscar_inventario"],
+        "flow_steps": ["Greeting", "Brand inquiry", "Inventory search", "Present results", "Next steps"],
+        "weight": 5.0,
+        "tags": ["search", "brand"],
+    }
+    defaults.update(overrides)
+    return ScenarioTemplate(**defaults)  # type: ignore[arg-type]
 
 
 def make_conversation_with_tools(seed_id: str = "test_seed_001", **overrides: object) -> Conversation:

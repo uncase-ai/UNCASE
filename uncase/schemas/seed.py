@@ -13,6 +13,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
+from uncase.schemas.scenario import ScenarioTemplate  # noqa: TC001
 from uncase.tools.schemas import ToolDefinition  # noqa: TC001
 
 SUPPORTED_DOMAINS = frozenset(
@@ -124,6 +125,16 @@ class SeedSchema(BaseModel):
     # Quality
     metricas_calidad: MetricasCalidad = Field(default_factory=MetricasCalidad, description="Quality thresholds")
 
+    # Scenario templates (optional — Phase 2)
+    scenarios: list[ScenarioTemplate] | None = Field(
+        default=None,
+        description=(
+            "Optional scenario templates that guide the generator toward specific "
+            "conversation archetypes. When present, the generator picks scenarios "
+            "via weighted selection for targeted, high-quality generation."
+        ),
+    )
+
     # Metadata
     organization_id: str | None = Field(default=None, description="Owning organization ID")
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), description="Creation timestamp")
@@ -135,6 +146,27 @@ class SeedSchema(BaseModel):
         if self.dominio not in SUPPORTED_DOMAINS:
             msg = f"Unsupported domain '{self.dominio}'. Supported: {sorted(SUPPORTED_DOMAINS)}"
             raise ValueError(msg)
+        return self
+
+    @model_validator(mode="after")
+    def validate_scenario_tools(self) -> SeedSchema:
+        """Warn when a scenario references tools not in herramientas."""
+        if not self.scenarios:
+            return self
+        all_tool_names: set[str] = set(self.parametros_factuales.herramientas or [])
+        if self.parametros_factuales.herramientas_definidas:
+            all_tool_names |= {td.name for td in self.parametros_factuales.herramientas_definidas}
+        if not all_tool_names:
+            return self
+        for scenario in self.scenarios:
+            for tool_name in scenario.expected_tool_sequence:
+                if tool_name not in all_tool_names:
+                    warnings.warn(
+                        f"Scenario '{scenario.name}' references tool '{tool_name}' "
+                        f"not in seed's herramientas. Available: {sorted(all_tool_names)}",
+                        UserWarning,
+                        stacklevel=2,
+                    )
         return self
 
     @model_validator(mode="after")
