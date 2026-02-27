@@ -32,17 +32,16 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 COPY pyproject.toml uv.lock* README.md ./
 
 # Instalar dependencias (sin el paquete aún)
-RUN if [ -n "${INSTALL_EXTRAS}" ]; then \
-        uv sync --frozen --no-install-project --extra ${INSTALL_EXTRAS}; \
-    else \
-        uv sync --frozen --no-install-project; \
-    fi
+# Always include sandbox extra for production (e2b demos)
+RUN uv sync --frozen --no-install-project --extra sandbox \
+    $([ -n "${INSTALL_EXTRAS}" ] && [ "${INSTALL_EXTRAS}" != "sandbox" ] && echo "--extra ${INSTALL_EXTRAS}")
 
 # Copiar código fuente, Alembic migrations, and entrypoint
 COPY uncase/ ./uncase/
 COPY alembic/ ./alembic/
 COPY alembic.ini ./
-RUN uv sync --frozen
+RUN uv sync --frozen --extra sandbox \
+    $([ -n "${INSTALL_EXTRAS}" ] && [ "${INSTALL_EXTRAS}" != "sandbox" ] && echo "--extra ${INSTALL_EXTRAS}")
 
 # ── Stage 2: Runtime ─────────────────────────────────────────
 FROM ${BASE_IMAGE} AS runtime
