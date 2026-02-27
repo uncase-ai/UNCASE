@@ -15,7 +15,7 @@ ARG BASE_IMAGE=python:3.12-slim
 # ── Stage 1: Builder ──────────────────────────────────────────
 FROM ${BASE_IMAGE} AS builder
 
-ARG INSTALL_EXTRAS=""
+ARG INSTALL_EXTRAS="sandbox"
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
