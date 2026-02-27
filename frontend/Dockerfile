@@ -7,13 +7,15 @@
 
 # ── Stage 1: Install dependencies ──────────────────────────────
 FROM node:22-alpine AS deps
+RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
-RUN npm ci
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 # ── Stage 2: Build the application ────────────────────────────
 FROM node:22-alpine AS builder
+RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
 # NEXT_PUBLIC_* vars must be available at build time
@@ -23,7 +25,7 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN npm run build
+RUN pnpm run build
 
 # ── Stage 3: Production runner ─────────────────────────────────
 FROM node:22-alpine AS runner
