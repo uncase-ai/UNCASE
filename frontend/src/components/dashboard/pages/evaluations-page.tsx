@@ -109,9 +109,11 @@ export function EvaluationsPage() {
 
           // Merge: API data + localStorage-only reports
           const apiIds = new Set(apiReports.map(r => `${r.conversation_id}-${r.evaluated_at}`))
+
           const localOnly = loadEvaluations().filter(
             r => !apiIds.has(`${r.conversation_id}-${r.evaluated_at}`)
           )
+
           const merged = [...apiReports, ...localOnly]
 
           setEvaluations(merged)

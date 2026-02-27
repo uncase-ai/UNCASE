@@ -141,6 +141,7 @@ export function ActivityPage() {
           // Merge: audit data + localStorage-only events
           const auditIds = new Set(auditEvents.map(e => e.id))
           const localOnly = loadActivity().filter(e => !auditIds.has(e.id))
+
           const merged = [...auditEvents, ...localOnly].sort(
             (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
           ).slice(0, 200)
