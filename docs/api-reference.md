@@ -28,10 +28,11 @@ Interactive documentation is available at:
 | **pipeline** | `/api/v1/pipeline` | 3 | End-to-end pipeline runs, status, cancel |
 | **jobs** | `/api/v1/jobs` | 5 | Background job queue, progress, cancel |
 | **audit** | `/api/v1/audit` | 1 | Compliance audit trail with filtering |
+| **scenarios** | `/api/v1/scenarios` | 3 | Scenario pack browsing, filtering by domain/skill/tags |
 | **costs** | `/api/v1/costs` | 3 | LLM API cost tracking per org/job |
 | **metrics** | `/metrics` | 1 | Prometheus-compatible metrics |
 
-**Total: 75+ endpoints** across 22 routers.
+**Total: 78+ endpoints** across 23 routers.
 
 ## Key Endpoints
 
@@ -79,6 +80,38 @@ curl -X POST http://localhost:8000/api/v1/evaluations/batch \
 # Get thresholds
 curl http://localhost:8000/api/v1/evaluations/thresholds
 ```
+
+### Scenario Packs
+
+```bash
+# List all available scenario packs (summary)
+curl http://localhost:8000/api/v1/scenarios/packs
+
+# Get a specific pack with all scenario templates
+curl http://localhost:8000/api/v1/scenarios/packs/automotive.sales
+
+# List scenarios with filters
+curl "http://localhost:8000/api/v1/scenarios/packs/automotive.sales/scenarios?skill_level=advanced&edge_case=true"
+curl "http://localhost:8000/api/v1/scenarios/packs/medical.consultation/scenarios?tag=anxiety"
+```
+
+**Available packs:** `automotive.sales` (12), `medical.consultation` (10), `finance.advisory` (10), `legal.advisory` (8), `industrial.support` (8), `education.tutoring` (8) — 56 total scenarios.
+
+### Quality Metrics
+
+The evaluation system tracks 7 quality dimensions:
+
+| Metric | Threshold | Description |
+|---|---|---|
+| `rouge_l` | >= 0.65 | Structural coherence with seed |
+| `fidelidad_factual` | >= 0.90 | Factual fidelity |
+| `diversidad_lexica` | >= 0.55 | Type-Token Ratio |
+| `coherencia_dialogica` | >= 0.85 | Inter-turn dialog coherence |
+| `tool_call_validity` | >= 0.90 | Tool call schema validity |
+| `privacy_score` | = 0.00 | PII residual (must be zero) |
+| `memorizacion` | < 0.01 | Extraction attack success rate |
+
+**Composite formula:** `Q = min(rouge_l, fidelidad, ttr, coherencia, tool_validity)` if `privacy = 0.0 AND memorization < 0.01`, else `Q = 0.0`.
 
 ### LLM Gateway
 

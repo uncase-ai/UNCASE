@@ -71,9 +71,40 @@ curl -X POST http://localhost:8000/api/v1/import/jsonl -F "file=@data.jsonl"
 
 Regex heuristics are always active. Presidio NER is an optional upgrade via the `[privacy]` extra.
 
+## Scenario Templates & Domain Packs
+
+Guide the generator with **declarative conversation archetypes** — each scenario template defines the intent, skill level, expected tool sequence, and conversation flow steps.
+
+**56 curated scenarios** across 6 industry verticals:
+
+| Domain | Scenarios | Edge Cases | Example Archetypes |
+|---|---|---|---|
+| Automotive Sales | 12 | 5 | Brand search, financing, frustrated customer |
+| Medical Consultation | 10 | 3 | Symptom assessment, anxious patient, insurance |
+| Finance Advisory | 10 | 4 | Portfolio review, market panic, suspicious activity |
+| Legal Advisory | 8 | 3 | Case intake, conflict of interest, scope limitation |
+| Industrial Support | 8 | 3 | Troubleshooting, safety incident, production down |
+| Education Tutoring | 8 | 3 | Concept explanation, frustrated student, learning style |
+
+**Key features:**
+- **Weighted random selection** — control scenario distribution in batch generation
+- **Skill levels** (basic/intermediate/advanced) — generate varying complexity
+- **Edge-case scenarios** — stress-test your model with difficult conversation patterns
+- **Tool sequence guidance** — ensure correct tool-calling order in generated data
+- **Flow step override** — scenario steps replace seed's `flujo_esperado` when present
+- **Metadata tracing** — every generated conversation records its scenario, skill level, and edge-case flag
+
+```bash
+# Browse scenario packs
+curl http://localhost:8000/api/v1/scenarios/packs
+
+# Get advanced edge-case scenarios for finance
+curl "http://localhost:8000/api/v1/scenarios/packs/finance.advisory/scenarios?skill_level=advanced&edge_case=true"
+```
+
 ## Quality Evaluation Engine
 
-Every generated conversation is scored against **6 mandatory metrics** with hard thresholds:
+Every generated conversation is scored against **7 mandatory metrics** with hard thresholds:
 
 | Metric | Threshold | What It Measures |
 |---|---|---|
@@ -81,10 +112,18 @@ Every generated conversation is scored against **6 mandatory metrics** with hard
 | Factual Fidelity | >= 0.90 | Accuracy of domain-specific facts |
 | Lexical Diversity (TTR) | >= 0.55 | Vocabulary richness |
 | Dialogic Coherence | >= 0.85 | Inter-turn consistency |
+| Tool Call Validity | >= 0.90 | Tool call schema correctness |
 | Privacy Score | = 0.00 | Zero residual PII |
 | Memorization | < 0.01 | Extraction attack success rate |
 
-**Composite score:** `Q = min(ROUGE-L, Fidelity, TTR, Coherence) if privacy == 0.0 AND memorization < 0.01 else 0.0`
+**Tool Call Validator** checks 5 dimensions:
+1. **Hallucinated tools** — tool name doesn't exist in the seed's tool definitions
+2. **Missing required arguments** — required arguments not provided
+3. **Unknown arguments** — arguments not in the tool schema
+4. **Type mismatches** — argument types don't match schema definitions
+5. **Sequence validation** — tool call order matches expected patterns (exact, subset, partial order)
+
+**Composite score:** `Q = min(ROUGE-L, Fidelity, TTR, Coherence, Tool Validity) if privacy == 0.0 AND memorization < 0.01 else 0.0`
 
 ## 10 Fine-Tuning Export Formats
 

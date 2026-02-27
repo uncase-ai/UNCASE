@@ -62,7 +62,8 @@ const METRIC_CONFIG = [
   { key: 'rouge_l' as const, label: 'ROUGE-L', threshold: QUALITY_THRESHOLDS.rouge_l },
   { key: 'fidelidad_factual' as const, label: 'Fidelity', threshold: QUALITY_THRESHOLDS.fidelidad_factual },
   { key: 'diversidad_lexica' as const, label: 'TTR', threshold: QUALITY_THRESHOLDS.diversidad_lexica },
-  { key: 'coherencia_dialogica' as const, label: 'Coherence', threshold: QUALITY_THRESHOLDS.coherencia_dialogica }
+  { key: 'coherencia_dialogica' as const, label: 'Coherence', threshold: QUALITY_THRESHOLDS.coherencia_dialogica },
+  { key: 'tool_call_validity' as const, label: 'Tool Validity', threshold: QUALITY_THRESHOLDS.tool_call_validity }
 ] as const
 
 // ─── Score bucket helpers ───
@@ -98,6 +99,7 @@ export function EvaluationsPage() {
               fidelidad_factual: item.fidelidad_factual,
               diversidad_lexica: item.diversidad_lexica,
               coherencia_dialogica: item.coherencia_dialogica,
+              tool_call_validity: item.tool_call_validity ?? 1.0,
               privacy_score: item.privacy_score,
               memorizacion: item.memorizacion
             } as QualityMetrics,
@@ -280,6 +282,18 @@ export function EvaluationsPage() {
           row.metrics.coherencia_dialogica < QUALITY_THRESHOLDS.coherencia_dialogica ? 'text-destructive' : 'text-muted-foreground'
         )}>
           {row.metrics.coherencia_dialogica.toFixed(3)}
+        </span>
+      )
+    },
+    {
+      key: 'tool_validity',
+      header: 'Tool Valid.',
+      cell: row => (
+        <span className={cn(
+          'text-xs',
+          row.metrics.tool_call_validity < QUALITY_THRESHOLDS.tool_call_validity ? 'text-destructive' : 'text-muted-foreground'
+        )}>
+          {row.metrics.tool_call_validity.toFixed(3)}
         </span>
       )
     },

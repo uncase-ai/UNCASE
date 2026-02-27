@@ -33,6 +33,7 @@ from uncase.api.routers.pipeline import router as pipeline_router
 from uncase.api.routers.plugins import router as plugins_router
 from uncase.api.routers.providers import router as providers_router
 from uncase.api.routers.sandbox import router as sandbox_router
+from uncase.api.routers.scenarios import router as scenarios_router
 from uncase.api.routers.seeds import router as seeds_router
 from uncase.api.routers.templates import router as templates_router
 from uncase.api.routers.tools import router as tools_router
@@ -217,6 +218,7 @@ def create_app() -> FastAPI:
     application.include_router(imports_router)
     application.include_router(evaluations_router)
     application.include_router(seeds_router)
+    application.include_router(scenarios_router)
     application.include_router(generation_router)
     application.include_router(pipeline_router)
     application.include_router(jobs_router)

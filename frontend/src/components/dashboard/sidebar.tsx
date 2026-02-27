@@ -9,6 +9,7 @@ import {
   DollarSign,
   FlaskConical,
   GitBranch,
+  Layers,
   LayoutDashboard,
   Library,
   MessageSquare,
@@ -36,6 +37,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Pipeline', href: '/dashboard/pipeline', icon: GitBranch },
       { label: 'Seeds', href: '/dashboard/pipeline/seeds', icon: Sprout },
+      { label: 'Scenarios', href: '/dashboard/pipeline/scenarios', icon: Layers },
       { label: 'Knowledge', href: '/dashboard/knowledge', icon: Library },
       { label: 'Import', href: '/dashboard/pipeline/import', icon: ArrowDownToLine },
       { label: 'Evaluate', href: '/dashboard/pipeline/evaluate', icon: FlaskConical },

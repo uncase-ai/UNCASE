@@ -31,6 +31,7 @@ class EvaluationReportModel(TimestampMixin, Base):
     coherencia_dialogica: Mapped[float] = mapped_column(Float, nullable=False)
     privacy_score: Mapped[float] = mapped_column(Float, nullable=False)
     memorizacion: Mapped[float] = mapped_column(Float, nullable=False)
+    tool_call_validity: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     # Composite result
     composite_score: Mapped[float] = mapped_column(Float, nullable=False)

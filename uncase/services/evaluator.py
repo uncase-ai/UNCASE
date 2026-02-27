@@ -45,6 +45,7 @@ class EvaluatorService:
             coherencia_dialogica=report.metrics.coherencia_dialogica,
             privacy_score=report.metrics.privacy_score,
             memorizacion=report.metrics.memorizacion,
+            tool_call_validity=report.metrics.tool_call_validity,
             composite_score=report.composite_score,
             passed=report.passed,
             failures=report.failures,
@@ -109,6 +110,7 @@ class EvaluatorService:
                 "fidelidad_factual",
                 "diversidad_lexica",
                 "coherencia_dialogica",
+                "tool_call_validity",
                 "privacy_score",
                 "memorizacion",
             ]

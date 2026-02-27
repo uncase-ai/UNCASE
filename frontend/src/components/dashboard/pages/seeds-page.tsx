@@ -13,6 +13,7 @@ import {
   CloudOff,
   HelpCircle,
   Info,
+  Layers,
   Loader2,
   Play,
   Plus,
@@ -25,9 +26,10 @@ import {
   X
 } from 'lucide-react'
 
-import type { Conversation, QualityReport, SeedSchema, ToolDefinition } from '@/types/api'
+import type { Conversation, QualityReport, ScenarioTemplate, SeedSchema, ToolDefinition } from '@/types/api'
 import { SUPPORTED_DOMAINS } from '@/types/api'
 import { checkApiHealth } from '@/lib/api/client'
+import { fetchScenarioPack } from '@/lib/api/scenarios'
 import { generateConversations } from '@/lib/api/generate'
 import { createEmptySeed, createSeedApi, deleteSeedApi, fetchSeeds, validateSeed } from '@/lib/api/seeds'
 import { cn } from '@/lib/utils'
@@ -234,6 +236,10 @@ export function SeedsPage() {
   // Detail dialog
   const [selectedSeed, setSelectedSeed] = useState<SeedSchema | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
+
+  // Scenario selector
+  const [domainScenarios, setDomainScenarios] = useState<ScenarioTemplate[]>([])
+  const [scenariosLoading, setScenariosLoading] = useState(false)
 
   // Computed stats from localStorage
   function computeSeedStats() {
@@ -528,6 +534,38 @@ export function SeedsPage() {
       setSeedStats(computeSeedStats())
     }
   }
+
+  // ─── Load domain scenarios when entering step 4 ───
+  useEffect(() => {
+    if (step === 4 && draft.dominio && apiAvailable) {
+      loadDomainScenarios(draft.dominio)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step])
+
+  const loadDomainScenarios = useCallback(async (domain: string) => {
+    if (!domain || !apiAvailable) {
+      setDomainScenarios([])
+
+      return
+    }
+
+    setScenariosLoading(true)
+
+    try {
+      const res = await fetchScenarioPack(domain)
+
+      if (res.data) {
+        setDomainScenarios(res.data.scenarios)
+      } else {
+        setDomainScenarios([])
+      }
+    } catch {
+      setDomainScenarios([])
+    } finally {
+      setScenariosLoading(false)
+    }
+  }, [apiAvailable])
 
   // ─── Draft update helpers ───
   function updateDraft(patch: Partial<SeedSchema>) {
@@ -1162,6 +1200,83 @@ export function SeedsPage() {
                   <Wrench className="mx-auto mb-1 size-4 text-muted-foreground" />
                   <p className="text-xs text-muted-foreground">
                     No tools registered yet. Go to the Tools page to add tools, or they will be loaded from demo data.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Scenario Templates */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1">
+                <Layers className="size-3.5" />
+                Scenario Templates
+                <FieldTooltip text="Attach curated conversation archetypes from the built-in scenario pack for this domain. The generator will randomly select from these during batch generation." />
+              </Label>
+              {domainScenarios.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="max-h-48 space-y-1 overflow-y-auto rounded-md border p-2">
+                    {domainScenarios.map(sc => {
+                      const attached = (draft as Record<string, unknown>)._scenarios as ScenarioTemplate[] | undefined
+                      const isSelected = attached?.some(s => s.name === sc.name) ?? false
+
+                      return (
+                        <label
+                          key={sc.name}
+                          className={cn(
+                            'flex cursor-pointer items-start gap-2 rounded-sm px-2 py-1.5 transition-colors hover:bg-muted/50',
+                            isSelected && 'bg-muted'
+                          )}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {
+                              const current = ((draft as Record<string, unknown>)._scenarios as ScenarioTemplate[] | undefined) ?? []
+
+                              if (isSelected) {
+                                (draft as Record<string, unknown>)._scenarios = current.filter(s => s.name !== sc.name)
+                              } else {
+                                (draft as Record<string, unknown>)._scenarios = [...current, sc]
+                              }
+
+                              setDraft({ ...draft })
+                            }}
+                            className="mt-0.5 accent-primary"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-medium">
+                                {sc.name.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                              </span>
+                              <Badge variant="outline" className="text-[9px]">{sc.skill_level}</Badge>
+                              {sc.edge_case && (
+                                <Badge variant="outline" className="text-[9px] bg-orange-500/10 text-orange-600">edge</Badge>
+                              )}
+                            </div>
+                            <p className="truncate text-[10px] text-muted-foreground">{sc.description}</p>
+                          </div>
+                        </label>
+                      )
+                    })}
+                  </div>
+                  {((draft as Record<string, unknown>)._scenarios as ScenarioTemplate[] | undefined)?.length ? (
+                    <p className="text-[10px] text-muted-foreground">
+                      {((draft as Record<string, unknown>)._scenarios as ScenarioTemplate[]).length} scenario{((draft as Record<string, unknown>)._scenarios as ScenarioTemplate[]).length > 1 ? 's' : ''} selected
+                    </p>
+                  ) : null}
+                </div>
+              ) : scenariosLoading ? (
+                <div className="flex items-center gap-2 rounded-md border border-dashed p-3">
+                  <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Loading scenarios...</span>
+                </div>
+              ) : (
+                <div className="rounded-md border border-dashed p-3 text-center">
+                  <Layers className="mx-auto mb-1 size-4 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">
+                    {draft.dominio
+                      ? 'No scenario pack available for this domain, or API is offline.'
+                      : 'Select a domain first to see available scenarios.'}
                   </p>
                 </div>
               )}

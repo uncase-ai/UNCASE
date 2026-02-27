@@ -54,6 +54,7 @@ class QualityThresholdsResponse(BaseModel):
     fidelidad_min: float = Field(default=0.90, description="Minimum factual fidelity")
     diversidad_lexica_min: float = Field(default=0.55, description="Minimum TTR")
     coherencia_dialogica_min: float = Field(default=0.85, description="Minimum dialog coherence")
+    tool_call_validity_min: float = Field(default=0.90, description="Minimum tool call validity")
     privacy_score_max: float = Field(default=0.0, description="Maximum PII residual (must be 0.0)")
     memorizacion_max: float = Field(default=0.01, description="Maximum memorization rate")
     formula: str = Field(
@@ -74,6 +75,7 @@ class EvaluationReportResponse(BaseModel):
     coherencia_dialogica: float
     privacy_score: float
     memorizacion: float
+    tool_call_validity: float | None = None
     composite_score: float
     passed: bool
     failures: list[str]
