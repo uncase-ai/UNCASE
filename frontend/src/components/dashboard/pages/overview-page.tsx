@@ -198,7 +198,7 @@ export function OverviewPage() {
         description="UNCASE synthetic data pipeline"
         actions={
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
               <Link href="https://github.com/uncase-ai/UNCASE" target="_blank" rel="noopener noreferrer">
                 <HelpCircle className="mr-1.5 size-3.5" />
                 Docs

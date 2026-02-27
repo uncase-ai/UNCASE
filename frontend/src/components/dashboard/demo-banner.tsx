@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 
 import { useRouter } from 'next/navigation'
-import { Cloud, ExternalLink, FlaskConical, RotateCcw, Timer, X } from 'lucide-react'
+import { Cloud, FlaskConical, RotateCcw, Timer, X } from 'lucide-react'
 
 import { DEMO_RUNNING_JOB_ID } from '@/lib/demo'
 import { useDemoMode } from '@/hooks/use-demo-mode'
@@ -59,7 +59,7 @@ export function DemoBanner() {
     }
 
     return (
-      <div className="flex items-center justify-between gap-4 border-b bg-emerald-50/50 px-4 py-2 dark:bg-emerald-950/20">
+      <div className="flex items-center justify-center gap-2 border-b bg-emerald-50/50 px-3 py-2 dark:bg-emerald-950/20 sm:justify-between sm:gap-4 sm:px-4">
         <div className="flex items-center gap-2 text-sm">
           <Cloud className="size-4 shrink-0 text-emerald-600" />
           <span className="font-medium">Live Sandbox</span>
@@ -72,12 +72,6 @@ export function DemoBanner() {
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" asChild className="h-7 gap-1.5 text-xs">
-            <a href={session.docsUrl} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="size-3.5" />
-              <span className="hidden sm:inline">API Docs</span>
-            </a>
-          </Button>
           <Button variant="ghost" size="sm" onClick={handleExit} className="h-7 gap-1.5 text-xs">
             <X className="size-3.5" />
             <span className="hidden sm:inline">Exit</span>
@@ -95,18 +89,18 @@ export function DemoBanner() {
     }
 
     return (
-      <div className="flex items-center justify-between gap-4 border-b bg-muted/50 px-4 py-2">
+      <div className="flex items-center justify-center gap-2 border-b bg-muted/50 px-3 py-2 sm:justify-between sm:gap-4 sm:px-4">
         <div className="flex items-center gap-2 text-sm">
           <FlaskConical className="size-4 shrink-0 text-muted-foreground" />
           <span className="font-medium">Demo Mode</span>
           <span className="hidden text-muted-foreground sm:inline">
-            — Exploring with sample automotive sales data
+            — Exploring with sample data
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={() => reset()} className="h-7 gap-1.5 text-xs">
+          <Button variant="ghost" size="sm" onClick={() => reset()} className="hidden h-7 gap-1.5 text-xs sm:inline-flex">
             <RotateCcw className="size-3.5" />
-            <span className="hidden sm:inline">Reset Data</span>
+            Reset Data
           </Button>
           <Button variant="ghost" size="sm" onClick={handleExit} className="h-7 gap-1.5 text-xs">
             <X className="size-3.5" />
