@@ -1,5 +1,5 @@
 import type { ChatRequest, ChatStreamChunk, ChatStreamComplete } from '@/types/api'
-import { apiPost, API_BASE } from './client'
+import { apiPost, getApiBase } from './client'
 
 // ─── Types (re-exported from api.ts for convenience) ───
 
@@ -50,7 +50,7 @@ export async function chatProxyStream(
 
   if (apiKey) headers['X-API-Key'] = apiKey
 
-  const res = await fetch(`${API_BASE}/api/v1/gateway/chat/stream`, {
+  const res = await fetch(`${getApiBase()}/api/v1/gateway/chat/stream`, {
     method: 'POST',
     headers,
     body: JSON.stringify(request),

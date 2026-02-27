@@ -1,8 +1,29 @@
 // ─── Type-safe fetch wrapper for UNCASE API ───
 // Supports: retries, abort signals, file uploads, error normalization, API key auth
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+const DEFAULT_API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 const API_KEY_STORAGE_KEY = 'uncase-api-key'
+const SANDBOX_BASE_KEY = 'uncase-sandbox-api-url'
+
+function getApiBase(): string {
+  if (typeof window === 'undefined') return DEFAULT_API_BASE
+
+  return sessionStorage.getItem(SANDBOX_BASE_KEY) ?? DEFAULT_API_BASE
+}
+
+export function setSandboxApiBase(url: string): void {
+  sessionStorage.setItem(SANDBOX_BASE_KEY, url)
+}
+
+export function clearSandboxApiBase(): void {
+  sessionStorage.removeItem(SANDBOX_BASE_KEY)
+}
+
+export function getSandboxApiBase(): string | null {
+  if (typeof window === 'undefined') return null
+
+  return sessionStorage.getItem(SANDBOX_BASE_KEY)
+}
 
 function getStoredApiKey(): string | null {
   if (typeof window === 'undefined') return null
@@ -50,7 +71,7 @@ async function request<T>(
   options: RequestOptions = {}
 ): Promise<ApiResponse<T>> {
   const { signal, headers = {}, retries = 0, retryDelay = 1000 } = options
-  const url = `${API_BASE}${path}`
+  const url = `${getApiBase()}${path}`
 
   // Inject API key if stored
   const apiKey = getStoredApiKey()
@@ -144,7 +165,7 @@ export async function apiUpload<T>(
   params?: Record<string, string>,
   options?: RequestOptions
 ): Promise<ApiResponse<T>> {
-  const url = new URL(`${API_BASE}${path}`)
+  const url = new URL(`${getApiBase()}${path}`)
 
   if (params) {
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
@@ -194,7 +215,7 @@ export async function apiUpload<T>(
 // ─── Connectivity check ───
 export async function checkApiHealth(): Promise<boolean> {
   try {
-    const res = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(3000) })
+    const res = await fetch(`${getApiBase()}/health`, { signal: AbortSignal.timeout(3000) })
 
     return res.ok
   } catch {
@@ -202,4 +223,6 @@ export async function checkApiHealth(): Promise<boolean> {
   }
 }
 
-export { API_BASE }
+const API_BASE = DEFAULT_API_BASE
+
+export { API_BASE, getApiBase }

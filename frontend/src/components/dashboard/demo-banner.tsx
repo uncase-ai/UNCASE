@@ -3,21 +3,30 @@
 import { useEffect } from 'react'
 
 import { useRouter } from 'next/navigation'
-import { FlaskConical, RotateCcw, X } from 'lucide-react'
+import { Cloud, ExternalLink, FlaskConical, RotateCcw, Timer, X } from 'lucide-react'
 
 import { DEMO_RUNNING_JOB_ID } from '@/lib/demo'
 import { useDemoMode } from '@/hooks/use-demo-mode'
+import { useSandboxDemo } from '@/hooks/use-sandbox-demo'
 import { useJobQueue } from '@/hooks/use-dashboard'
 import { Button } from '@/components/ui/button'
 
+function formatTtl(ms: number): string {
+  const minutes = Math.floor(ms / 60_000)
+  const seconds = Math.floor((ms % 60_000) / 1000)
+
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
+
 export function DemoBanner() {
-  const { active, exit, reset } = useDemoMode()
+  const { active: localActive, exit: localExit, reset } = useDemoMode()
+  const { active: sandboxActive, session, ttlMs, stop: sandboxStop } = useSandboxDemo()
   const { updateJob } = useJobQueue()
   const router = useRouter()
 
-  // Live simulation: increment running job progress
+  // Live simulation: increment running job progress (local demo only)
   useEffect(() => {
-    if (!active) return
+    if (!localActive) return
 
     const interval = setInterval(() => {
       try {
@@ -40,34 +49,73 @@ export function DemoBanner() {
     }, 2000)
 
     return () => clearInterval(interval)
-  }, [active, updateJob])
+  }, [localActive, updateJob])
 
-  if (!active) return null
+  // Sandbox mode banner (takes priority)
+  if (sandboxActive && session) {
+    const handleExit = () => {
+      sandboxStop()
+      router.push('/')
+    }
 
-  const handleExit = () => {
-    exit()
-    router.push('/')
+    return (
+      <div className="flex items-center justify-between gap-4 border-b bg-emerald-50/50 px-4 py-2 dark:bg-emerald-950/20">
+        <div className="flex items-center gap-2 text-sm">
+          <Cloud className="size-4 shrink-0 text-emerald-600" />
+          <span className="font-medium">Live Sandbox</span>
+          <span className="hidden items-center gap-1 text-muted-foreground sm:inline-flex">
+            — {session.domain}
+          </span>
+          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+            <Timer className="size-3" />
+            {formatTtl(ttlMs)}
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" asChild className="h-7 gap-1.5 text-xs">
+            <a href={session.docsUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="size-3.5" />
+              <span className="hidden sm:inline">API Docs</span>
+            </a>
+          </Button>
+          <Button variant="ghost" size="sm" onClick={handleExit} className="h-7 gap-1.5 text-xs">
+            <X className="size-3.5" />
+            <span className="hidden sm:inline">Exit</span>
+          </Button>
+        </div>
+      </div>
+    )
   }
 
-  return (
-    <div className="flex items-center justify-between gap-4 border-b bg-muted/50 px-4 py-2">
-      <div className="flex items-center gap-2 text-sm">
-        <FlaskConical className="size-4 shrink-0 text-muted-foreground" />
-        <span className="font-medium">Demo Mode</span>
-        <span className="hidden text-muted-foreground sm:inline">
-          — Exploring with sample automotive sales data
-        </span>
+  // Local demo mode banner
+  if (localActive) {
+    const handleExit = () => {
+      localExit()
+      router.push('/')
+    }
+
+    return (
+      <div className="flex items-center justify-between gap-4 border-b bg-muted/50 px-4 py-2">
+        <div className="flex items-center gap-2 text-sm">
+          <FlaskConical className="size-4 shrink-0 text-muted-foreground" />
+          <span className="font-medium">Demo Mode</span>
+          <span className="hidden text-muted-foreground sm:inline">
+            — Exploring with sample automotive sales data
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={() => reset()} className="h-7 gap-1.5 text-xs">
+            <RotateCcw className="size-3.5" />
+            <span className="hidden sm:inline">Reset Data</span>
+          </Button>
+          <Button variant="ghost" size="sm" onClick={handleExit} className="h-7 gap-1.5 text-xs">
+            <X className="size-3.5" />
+            <span className="hidden sm:inline">Exit Demo</span>
+          </Button>
+        </div>
       </div>
-      <div className="flex items-center gap-1">
-        <Button variant="ghost" size="sm" onClick={() => reset()} className="h-7 gap-1.5 text-xs">
-          <RotateCcw className="size-3.5" />
-          <span className="hidden sm:inline">Reset Data</span>
-        </Button>
-        <Button variant="ghost" size="sm" onClick={handleExit} className="h-7 gap-1.5 text-xs">
-          <X className="size-3.5" />
-          <span className="hidden sm:inline">Exit Demo</span>
-        </Button>
-      </div>
-    </div>
-  )
+    )
+  }
+
+  return null
 }
