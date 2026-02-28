@@ -253,29 +253,29 @@ if [ "$ENVIRONMENT" = "production" ]; then
         fi
     fi
 
-    # Ejecutar checks del landing si existe
+    # Ejecutar checks del dashboard frontend
     if [ -d "$LANDING_DIR" ] && [ -f "$LANDING_DIR/package.json" ]; then
-        echo -e "  ${BLUE}Ejecutando validaciones de la landing page...${NC}"
+        echo -e "  ${BLUE}Ejecutando validaciones del dashboard frontend...${NC}"
 
         echo -n "    TypeScript check... "
-        if (cd "$LANDING_DIR" && pnpm run check-types 2>/dev/null); then
+        if (cd "$LANDING_DIR" && npm run check-types 2>/dev/null); then
             ok "OK"
         else
-            fail "\n  ✗ Errores de TypeScript. Ejecuta: cd ${LANDING_DIR} && pnpm run check-types"
+            fail "\n  ✗ Errores de TypeScript. Ejecuta: cd ${LANDING_DIR} && npm run check-types"
         fi
 
         echo -n "    ESLint... "
-        if (cd "$LANDING_DIR" && pnpm run lint 2>/dev/null); then
+        if (cd "$LANDING_DIR" && npm run lint 2>/dev/null); then
             ok "OK"
         else
-            fail "\n  ✗ Errores de ESLint. Ejecuta: cd ${LANDING_DIR} && pnpm run lint:fix"
+            fail "\n  ✗ Errores de ESLint. Ejecuta: cd ${LANDING_DIR} && npm run lint:fix"
         fi
 
         echo -n "    Build... "
-        if (cd "$LANDING_DIR" && pnpm run build 2>/dev/null); then
+        if (cd "$LANDING_DIR" && npm run build 2>/dev/null); then
             ok "OK"
         else
-            fail "\n  ✗ Build falló. Ejecuta: cd ${LANDING_DIR} && pnpm run build"
+            fail "\n  ✗ Build falló. Ejecuta: cd ${LANDING_DIR} && npm run build"
         fi
     fi
 fi
@@ -332,41 +332,32 @@ step "Ejecutando deployment..."
 DEPLOY_START=$(date +%s)
 DEPLOY_SUCCESS=true
 
-# --- Landing Page (Vercel) ---
+# --- Dashboard Frontend (Docker/Railway) ---
+# NOTE: The landing page (uncase.md) is deployed from the PRIVATE repo
+# (uncase-private) via Vercel. This repo's frontend/ is the dashboard,
+# which deploys as a Docker container alongside the API (Railway).
+# Do NOT deploy this frontend to Vercel — it would overwrite the landing page.
 if [ -d "$LANDING_DIR" ]; then
     echo ""
-    echo -e "  ${BLUE}━━━ Landing Page (Vercel) ━━━${NC}"
+    echo -e "  ${BLUE}━━━ Dashboard Frontend (Docker) ━━━${NC}"
 
-    if ! command -v vercel > /dev/null 2>&1; then
-        warn "  ⚠ CLI de Vercel no instalado. Instálalo con: pnpm add -g vercel"
-        warn "  Saltando deploy de landing page."
-    else
-        case "$ENVIRONMENT" in
-            production)
-                echo "  Desplegando a producción..."
-                if (vercel --prod --yes --archive=tgz 2>&1 | sed 's/^/    /'); then
-                    ok "  ✓ Landing page desplegada a producción"
-                else
-                    echo -e "${RED}  ✗ Falló el deploy de la landing page${NC}"
-                    DEPLOY_SUCCESS=false
-                fi
-                ;;
-            preview)
-                echo "  Desplegando preview..."
-                if (vercel --yes --archive=tgz 2>&1 | sed 's/^/    /'); then
-                    ok "  ✓ Landing page desplegada como preview"
-                else
-                    echo -e "${RED}  ✗ Falló el deploy preview de la landing page${NC}"
-                    DEPLOY_SUCCESS=false
-                fi
-                ;;
-            development)
-                echo "  Entorno de desarrollo — sin deploy remoto."
-                echo "  Para desarrollo local: cd ${LANDING_DIR} && npm run dev"
-                ok "  ✓ Listo para desarrollo local"
-                ;;
-        esac
-    fi
+    case "$ENVIRONMENT" in
+        production)
+            echo "  Dashboard deploys via Docker/Railway (not Vercel)."
+            echo "  Railway auto-deploys from git push to origin/main."
+            ok "  ✓ Dashboard build validated in step 4"
+            ;;
+        preview)
+            echo "  Dashboard deploys via Docker. For local preview:"
+            echo "    cd ${LANDING_DIR} && npm run dev"
+            ok "  ✓ Dashboard build validated"
+            ;;
+        development)
+            echo "  For local development:"
+            echo "    cd ${LANDING_DIR} && npm run dev"
+            ok "  ✓ Listo para desarrollo local"
+            ;;
+    esac
 fi
 
 # --- Framework SCSF (Python) ---
