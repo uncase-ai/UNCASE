@@ -55,6 +55,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       diversidad_lexica_min: 0.55,
       coherencia_dialogica_min: 0.85
     },
+    rating: 4.6,
+    rating_count: 12,
+    run_count: 38,
+    avg_quality_score: 0.91,
     created_at: daysAgo(13),
     updated_at: daysAgo(13)
   },
@@ -104,6 +108,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       diversidad_lexica_min: 0.55,
       coherencia_dialogica_min: 0.85
     },
+    rating: 4.2,
+    rating_count: 8,
+    run_count: 22,
+    avg_quality_score: 0.88,
     created_at: daysAgo(11),
     updated_at: daysAgo(11)
   },
@@ -154,6 +162,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       diversidad_lexica_min: 0.55,
       coherencia_dialogica_min: 0.85
     },
+    rating: 3.9,
+    rating_count: 5,
+    run_count: 15,
+    avg_quality_score: 0.85,
     created_at: daysAgo(9),
     updated_at: daysAgo(8)
   },
@@ -205,6 +217,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       diversidad_lexica_min: 0.55,
       coherencia_dialogica_min: 0.85
     },
+    rating: 4.8,
+    rating_count: 19,
+    run_count: 47,
+    avg_quality_score: 0.94,
     created_at: daysAgo(6),
     updated_at: daysAgo(5)
   },
@@ -254,6 +270,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       diversidad_lexica_min: 0.55,
       coherencia_dialogica_min: 0.85
     },
+    rating: 4.4,
+    rating_count: 7,
+    run_count: 19,
+    avg_quality_score: 0.89,
     created_at: daysAgo(3),
     updated_at: daysAgo(2)
   }

@@ -12,7 +12,7 @@ import {
   Trash2
 } from 'lucide-react'
 
-import type { Conversation, QualityReport, RenderRequest, TemplateInfo } from '@/types/api'
+import type { Conversation, QualityReport, RenderRequest, SeedSchema, TemplateInfo } from '@/types/api'
 import { SUPPORTED_DOMAINS } from '@/types/api'
 
 import { useApi } from '@/hooks/use-api'
@@ -28,6 +28,7 @@ import { Textarea } from '@/components/ui/textarea'
 
 import type { Column } from '../data-table'
 import { DataTable } from '../data-table'
+import { DatasetCertification } from '../dataset-certification'
 import { EmptyState } from '../empty-state'
 import { PageHeader } from '../page-header'
 import { StatusBadge } from '../status-badge'
@@ -36,6 +37,7 @@ import { StatusBadge } from '../status-badge'
 const CONVERSATIONS_KEY = 'uncase-conversations'
 const EXPORTS_KEY = 'uncase-exports'
 const EVALUATIONS_KEY = 'uncase-evaluations'
+const SEEDS_KEY = 'uncase-seeds'
 
 // ─── Types ───
 interface ExportRecord {
@@ -91,6 +93,18 @@ function loadEvaluations(): QualityReport[] {
   }
 }
 
+function loadSeeds(): SeedSchema[] {
+  if (typeof window === 'undefined') return []
+
+  try {
+    const raw = localStorage.getItem(SEEDS_KEY)
+
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
 // ─── Helpers ───
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B'
@@ -129,7 +143,9 @@ function triggerBlobDownload(blob: Blob, filename: string) {
 export function ExportPage() {
   const [conversations] = useState<Conversation[]>(() => loadConversations())
   const [evaluations] = useState<QualityReport[]>(() => loadEvaluations())
+  const [seeds] = useState<SeedSchema[]>(() => loadSeeds())
   const [exports, setExports] = useState<ExportRecord[]>(() => loadExports())
+  const [certOpen, setCertOpen] = useState(false)
 
   // Template loading
   const { data: templates, loading: templatesLoading } = useApi<TemplateInfo[]>(
@@ -521,7 +537,7 @@ export function ExportPage() {
               </div>
 
               {/* Export buttons */}
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   onClick={handleExportApi}
                   disabled={exporting || filteredConversations.length === 0 || !selectedTemplate}
@@ -540,6 +556,14 @@ export function ExportPage() {
                 >
                   <FileDown className="mr-1.5 size-4" />
                   Export as JSONL
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setCertOpen(true)}
+                  disabled={filteredConversations.length === 0}
+                >
+                  <ShieldCheck className="mr-1.5 size-4" />
+                  Download Certification
                 </Button>
               </div>
             </CardContent>
@@ -643,6 +667,18 @@ export function ExportPage() {
           />
         </div>
       )}
+
+      {/* Certification dialog */}
+      <DatasetCertification
+        open={certOpen}
+        onOpenChange={setCertOpen}
+        conversations={filteredConversations}
+        evaluations={evaluations}
+        seeds={seeds}
+        exportName={exportName}
+        domain={domainFilter}
+        template={selectedTemplate}
+      />
     </div>
   )
 }
