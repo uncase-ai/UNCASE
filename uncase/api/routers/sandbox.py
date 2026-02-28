@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 import structlog
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,7 +21,10 @@ from uncase.sandbox.schemas import (
     OpikEvaluationResponse,
     SandboxGenerateRequest,
     SandboxGenerateResponse,
+    SandboxJob,
+    SandboxJobStatus,
     SandboxProgress,
+    SandboxTemplate,
 )
 from uncase.schemas.generation import SandboxStatusResponse
 
@@ -264,7 +268,8 @@ async def _local_fallback(
 
 @router.post("/demo", response_model=DemoSandboxResponse)
 async def create_demo_sandbox(
-    request: DemoSandboxRequest,
+    demo_request: DemoSandboxRequest,
+    http_request: Request,
     settings: Annotated[UNCASESettings, Depends(get_settings)],
 ) -> DemoSandboxResponse:
     """Spin up a short-lived demo sandbox for an industry vertical.
@@ -273,27 +278,83 @@ async def create_demo_sandbox(
     for the specified domain. The sandbox auto-destroys after the TTL
     expires.
 
-    No installation required — users get instant API access.
+    Falls back to the main API's Swagger docs when E2B is unavailable,
+    so users always get a working demo experience.
     """
-    if not settings.sandbox_available:
-        raise SandboxNotConfiguredError("Demo sandboxes require E2B. Set E2B_API_KEY and E2B_ENABLED=true.")
-
     logger.info(
         "api_demo_sandbox",
-        domain=request.domain,
-        ttl_minutes=request.ttl_minutes,
-        preload_seeds=request.preload_seeds,
+        domain=demo_request.domain,
+        ttl_minutes=demo_request.ttl_minutes,
+        preload_seeds=demo_request.preload_seeds,
+        e2b_available=settings.sandbox_available,
     )
 
-    try:
-        from uncase.sandbox.demo import DemoSandboxOrchestrator
-    except ImportError as exc:
-        raise SandboxNotConfiguredError(
-            "Demo sandboxes require the sandbox extra. Install with: pip install 'uncase[sandbox]'"
-        ) from exc
+    # Try E2B sandbox first
+    if settings.sandbox_available:
+        try:
+            from uncase.sandbox.demo import DemoSandboxOrchestrator
 
-    demo = DemoSandboxOrchestrator(settings=settings)
-    return await demo.create_demo(request)
+            demo = DemoSandboxOrchestrator(settings=settings)
+            return await demo.create_demo(demo_request)
+        except Exception as exc:
+            logger.warning(
+                "demo_sandbox_e2b_failed",
+                domain=demo_request.domain,
+                error=str(exc),
+            )
+
+    # Graceful fallback — point to main API docs with static seed data
+    logger.info("demo_sandbox_fallback", domain=demo_request.domain)
+    return _build_demo_fallback(demo_request, http_request)
+
+
+def _build_demo_fallback(req: DemoSandboxRequest, http_req: Request) -> DemoSandboxResponse:
+    """Build a fallback demo response pointing to the main API's Swagger docs.
+
+    Includes static demo seeds so the frontend can show them inline.
+    """
+    from uncase.sandbox.demo import _DEMO_SEEDS
+
+    base_url = str(http_req.base_url).rstrip("/")
+
+    # Build demo seed list
+    demo_seed = _DEMO_SEEDS.get(req.domain, next(iter(_DEMO_SEEDS.values())))
+    seeds_data: list[dict[str, object]] = []
+    for i in range(req.preload_seeds):
+        seed = dict(demo_seed)
+        seed["seed_id"] = f"demo-{req.domain.replace('.', '-')}-{i + 1}"
+        if req.language != "es":
+            seed["idioma"] = req.language
+        seeds_data.append(seed)
+
+    # Resolve template
+    template_map: dict[str, SandboxTemplate] = {
+        "automotive.sales": SandboxTemplate.DEMO_AUTOMOTIVE,
+        "medical.consultation": SandboxTemplate.DEMO_MEDICAL,
+        "legal.advisory": SandboxTemplate.DEMO_LEGAL,
+        "finance.advisory": SandboxTemplate.DEMO_FINANCE,
+        "industrial.support": SandboxTemplate.DEMO_INDUSTRIAL,
+        "education.tutoring": SandboxTemplate.DEMO_EDUCATION,
+    }
+    template = template_map.get(req.domain, SandboxTemplate.DEMO_AUTOMOTIVE)
+
+    job = SandboxJob(
+        template=template,
+        status=SandboxJobStatus.RUNNING,
+        api_url=base_url,
+        sandbox_url=base_url,
+    )
+
+    return DemoSandboxResponse(
+        job=job,
+        api_url=base_url,
+        docs_url=f"{base_url}/docs",
+        expires_at=datetime.now(UTC) + timedelta(hours=24),
+        preloaded_seeds=len(seeds_data),
+        domain=req.domain,
+        fallback=True,
+        demo_seeds=seeds_data,
+    )
 
 
 # -- Opik evaluation endpoints --

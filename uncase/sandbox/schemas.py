@@ -167,6 +167,14 @@ class DemoSandboxResponse(BaseModel):
     expires_at: datetime = Field(..., description="When the sandbox will auto-destroy")
     preloaded_seeds: int = Field(..., ge=0, description="Number of pre-loaded seeds")
     domain: str = Field(..., description="Industry domain of the demo")
+    fallback: bool = Field(
+        default=False,
+        description="True when E2B was unavailable and the main API docs are used instead",
+    )
+    demo_seeds: list[dict[str, object]] | None = Field(
+        default=None,
+        description="Static demo seed data (included in fallback mode)",
+    )
 
 
 # -- Opik evaluation sandbox schemas --
