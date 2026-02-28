@@ -179,7 +179,7 @@ export function EvaluationsPage() {
     if (totalEvaluations === 0) return []
 
     return METRIC_CONFIG.map(m => {
-      const avg = evaluations.reduce((sum, e) => sum + e.metrics[m.key], 0) / totalEvaluations
+      const avg = evaluations.reduce((sum, e) => sum + (e.metrics[m.key] ?? 0), 0) / totalEvaluations
 
       return {
         metric: m.label,
@@ -288,14 +288,18 @@ export function EvaluationsPage() {
     {
       key: 'tool_validity',
       header: 'Tool Valid.',
-      cell: row => (
-        <span className={cn(
-          'text-xs',
-          row.metrics.tool_call_validity < QUALITY_THRESHOLDS.tool_call_validity ? 'text-destructive' : 'text-muted-foreground'
-        )}>
-          {row.metrics.tool_call_validity.toFixed(3)}
-        </span>
-      )
+      cell: row => {
+        const tcv = row.metrics.tool_call_validity ?? 1.0
+
+        return (
+          <span className={cn(
+            'text-xs',
+            tcv < QUALITY_THRESHOLDS.tool_call_validity ? 'text-destructive' : 'text-muted-foreground'
+          )}>
+            {tcv.toFixed(3)}
+          </span>
+        )
+      }
     },
     {
       key: 'privacy',

@@ -6,14 +6,12 @@ import {
   AlertTriangle,
   ArrowRight,
   BookOpen,
-  ChevronDown,
   Cloud,
   CloudOff,
   Filter,
   Layers,
   Loader2,
   RefreshCw,
-  Sparkles,
   Target,
   Wrench,
   X,
@@ -28,11 +26,6 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger
-} from '@/components/ui/collapsible'
 import {
   Dialog,
   DialogContent,
@@ -88,12 +81,12 @@ export function ScenariosPage() {
       setError(null)
 
       try {
-        const health = await checkApiHealth()
+        const online = await checkApiHealth()
 
         if (cancelled) return
-        setApiOnline(health.ok)
+        setApiOnline(online)
 
-        if (!health.ok) {
+        if (!online) {
           setError('API is offline. Scenario packs require a running backend.')
           setLoading(false)
 
@@ -107,7 +100,7 @@ export function ScenariosPage() {
         if (res.data) {
           setPacks(res.data.packs)
         } else {
-          setError(res.error ?? 'Failed to load scenario packs')
+          setError(res.error?.message ?? 'Failed to load scenario packs')
         }
       } catch (err: unknown) {
         if (!cancelled) {
@@ -139,7 +132,7 @@ export function ScenariosPage() {
       if (res.data) {
         setSelectedPack(res.data)
       } else {
-        setError(res.error ?? 'Failed to load pack details')
+        setError(res.error?.message ?? 'Failed to load pack details')
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load pack')
@@ -339,7 +332,7 @@ export function ScenariosPage() {
             <Filter className="size-4 text-muted-foreground" />
             <SearchInput
               value={search}
-              onValueChange={setSearch}
+              onChange={setSearch}
               placeholder="Search scenarios..."
               className="w-52"
             />

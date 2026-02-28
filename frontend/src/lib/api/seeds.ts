@@ -111,3 +111,7 @@ export function updateSeedApi(seedId: string, data: Record<string, unknown>, sig
 export function deleteSeedApi(seedId: string, signal?: AbortSignal) {
   return apiDelete(`/api/v1/seeds/${seedId}`, { signal })
 }
+
+export function rateSeedApi(seedId: string, rating: number, signal?: AbortSignal) {
+  return apiPost<SeedResponse>(`/api/v1/seeds/${seedId}/rate`, { rating }, { signal })
+}

@@ -210,7 +210,7 @@ export interface QualityMetrics {
   fidelidad_factual: number
   diversidad_lexica: number
   coherencia_dialogica: number
-  tool_call_validity: number
+  tool_call_validity?: number
   privacy_score: number
   memorizacion: number
 }
