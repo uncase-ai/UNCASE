@@ -128,6 +128,24 @@ function loadProjectTools(): ToolDefinition[] {
   }
 }
 
+async function syncProjectTools(): Promise<ToolDefinition[]> {
+  try {
+    const { fetchTools } = await import('@/lib/api/tools')
+    const result = await fetchTools(undefined, AbortSignal.timeout(5_000))
+
+    if (result.data && result.data.length > 0) {
+      localStorage.setItem('uncase-tools', JSON.stringify(result.data))
+      window.dispatchEvent(new StorageEvent('storage', { key: 'uncase-tools' }))
+
+      return result.data
+    }
+  } catch {
+    // API unavailable — use localStorage
+  }
+
+  return loadProjectTools()
+}
+
 const DOMAIN_LABELS: Record<string, string> = {
   'automotive.sales': 'Automotive',
   'medical.consultation': 'Medical',
@@ -341,7 +359,7 @@ export function SeedsPage() {
       setApiAvailable(healthy)
 
       if (healthy) {
-        await loadFromApi()
+        await Promise.all([loadFromApi(), syncProjectTools()])
       }
     }
 

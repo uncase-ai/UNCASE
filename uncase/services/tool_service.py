@@ -153,8 +153,8 @@ class ToolService:
         return self._to_response(model)
 
     async def delete_custom_tool(self, tool_id: str) -> None:
-        """Hard-delete a custom tool."""
-        model = await self._get_or_raise(tool_id)
+        """Hard-delete a custom tool by ID or name."""
+        model = await self._get_by_id_or_name(tool_id)
 
         # Remove from in-memory registry
         registry = get_registry()
@@ -162,7 +162,7 @@ class ToolService:
 
         await self.session.delete(model)
         await self.session.commit()
-        logger.info("custom_tool_deleted", tool_id=tool_id, tool_name=model.name)
+        logger.info("custom_tool_deleted", tool_id=model.id, tool_name=model.name)
 
     async def resolve_tools_for_org(
         self,
@@ -216,6 +216,24 @@ class ToolService:
         model = result.scalar_one_or_none()
         if model is None:
             raise CustomToolNotFoundError(f"Custom tool '{tool_id}' not found")
+        return model
+
+    async def _get_by_id_or_name(self, identifier: str) -> CustomToolModel:
+        """Look up a custom tool by ID first, falling back to name."""
+        result = await self.session.execute(
+            select(CustomToolModel).where(CustomToolModel.id == identifier)
+        )
+        model = result.scalar_one_or_none()
+        if model is not None:
+            return model
+
+        # Fallback: try by name
+        result = await self.session.execute(
+            select(CustomToolModel).where(CustomToolModel.name == identifier)
+        )
+        model = result.scalar_one_or_none()
+        if model is None:
+            raise CustomToolNotFoundError(f"Custom tool '{identifier}' not found")
         return model
 
     @staticmethod

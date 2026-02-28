@@ -833,7 +833,7 @@ export function ToolCreationWizard({
     setError(null)
 
     const inputSchema = parametersToJsonSchema(inputParams)
-    const outputSchema = outputParams.length > 0 ? parametersToJsonSchema(outputParams) : undefined
+    const outputSchema = outputParams.length > 0 ? parametersToJsonSchema(outputParams) : {}
 
     const request: CustomToolCreateRequest = {
       name: name.trim(),
@@ -872,7 +872,7 @@ export function ToolCreationWizard({
       name: request.name,
       description: request.description,
       input_schema: inputSchema,
-      output_schema: outputSchema ?? {},
+      output_schema: outputSchema,
       domains,
       category,
       requires_auth: requiresAuth,
