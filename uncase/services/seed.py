@@ -46,6 +46,7 @@ class SeedService:
             parametros_factuales=data.parametros_factuales,
             privacidad=data.privacidad,
             metricas_calidad=data.metricas_calidad,
+            scenarios=data.scenarios,
             organization_id=organization_id,
         )
 
@@ -63,6 +64,7 @@ class SeedService:
             parametros_factuales=seed_schema.parametros_factuales.model_dump(),
             privacidad=seed_schema.privacidad.model_dump(),
             metricas_calidad=seed_schema.metricas_calidad.model_dump(),
+            scenarios=[s.model_dump() for s in seed_schema.scenarios] if seed_schema.scenarios else None,
             organization_id=organization_id,
         )
         self.session.add(seed_model)
@@ -133,6 +135,10 @@ class SeedService:
                 value = update_data[field_name]
                 if hasattr(value, "model_dump"):
                     update_data[field_name] = value.model_dump()
+
+        # Scenarios is a list of Pydantic models
+        if "scenarios" in update_data and update_data["scenarios"] is not None:
+            update_data["scenarios"] = [s.model_dump() for s in update_data["scenarios"]]
 
         # If domain is being changed, validate it through SeedSchema
         if "dominio" in update_data:
@@ -232,5 +238,6 @@ class SeedService:
             "parametros_factuales": seed_model.parametros_factuales,
             "privacidad": seed_model.privacidad,
             "metricas_calidad": seed_model.metricas_calidad,
+            "scenarios": seed_model.scenarios,
             "organization_id": seed_model.organization_id,
         }

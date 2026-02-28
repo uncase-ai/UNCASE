@@ -33,6 +33,9 @@ class SeedModel(TimestampMixin, Base):
     privacidad: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
     metricas_calidad: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
 
+    # Scenario templates (JSON list of ScenarioTemplate dicts)
+    scenarios: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=None)
+
     # Rating & run tracking
     rating: Mapped[float | None] = mapped_column(Float, nullable=True, default=None)
     rating_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

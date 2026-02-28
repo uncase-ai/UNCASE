@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
+from uncase.schemas.scenario import ScenarioTemplate  # noqa: TC001
 from uncase.schemas.seed import MetricasCalidad, ParametrosFactuales, PasosTurnos, Privacidad
 
 if TYPE_CHECKING:
@@ -31,6 +32,9 @@ class SeedCreateRequest(BaseModel):
     parametros_factuales: ParametrosFactuales = Field(..., description="Domain-specific factual parameters")
     privacidad: Privacidad = Field(default_factory=Privacidad, description="Privacy guarantees")
     metricas_calidad: MetricasCalidad = Field(default_factory=MetricasCalidad, description="Quality thresholds")
+    scenarios: list[ScenarioTemplate] | None = Field(
+        default=None, description="Optional scenario templates for targeted generation"
+    )
 
 
 class SeedUpdateRequest(BaseModel):
@@ -48,6 +52,9 @@ class SeedUpdateRequest(BaseModel):
     parametros_factuales: ParametrosFactuales | None = Field(default=None, description="Domain-specific parameters")
     privacidad: Privacidad | None = Field(default=None, description="Privacy guarantees")
     metricas_calidad: MetricasCalidad | None = Field(default=None, description="Quality thresholds")
+    scenarios: list[ScenarioTemplate] | None = Field(
+        default=None, description="Scenario templates for targeted generation"
+    )
 
 
 class SeedRatingRequest(BaseModel):
@@ -72,6 +79,7 @@ class SeedResponse(BaseModel):
     parametros_factuales: ParametrosFactuales
     privacidad: Privacidad
     metricas_calidad: MetricasCalidad
+    scenarios: list[ScenarioTemplate] | None = Field(default=None, description="Scenario templates")
     rating: float | None = Field(default=None, description="Average user rating (0-5)")
     rating_count: int = Field(default=0, description="Number of ratings received")
     run_count: int = Field(default=0, description="Number of generation runs")

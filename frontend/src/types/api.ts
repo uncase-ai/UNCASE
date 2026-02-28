@@ -56,6 +56,7 @@ export interface SeedSchema {
   parametros_factuales: ParametrosFactuales
   privacidad: Privacidad
   metricas_calidad: MetricasCalidad
+  scenarios?: ScenarioTemplate[] | null
   rating?: number | null
   rating_count?: number
   run_count?: number
@@ -255,6 +256,7 @@ export interface SeedResponse {
   parametros_factuales: ParametrosFactuales
   privacidad: Privacidad
   metricas_calidad: MetricasCalidad
+  scenarios?: ScenarioTemplate[] | null
   organization_id: string | null
   created_at: string
   updated_at: string

@@ -435,15 +435,20 @@ export function SeedsPage() {
 
     const now = new Date().toISOString()
 
+    const draftScenarios = ((draft as Record<string, unknown>)._scenarios as ScenarioTemplate[] | undefined) ?? null
+
     const newSeed: SeedSchema = {
       ...(draft as SeedSchema),
       seed_id: crypto.randomUUID().replace(/-/g, ''),
+      scenarios: draftScenarios?.length ? draftScenarios : null,
       created_at: now,
       updated_at: now
     }
 
     // Try backend first
     if (apiAvailable) {
+      const selectedScenarios = ((draft as Record<string, unknown>)._scenarios as ScenarioTemplate[] | undefined) ?? null
+
       const { data, error } = await createSeedApi({
         dominio: newSeed.dominio,
         idioma: newSeed.idioma,
@@ -456,7 +461,8 @@ export function SeedsPage() {
         pasos_turnos: newSeed.pasos_turnos,
         parametros_factuales: newSeed.parametros_factuales,
         privacidad: newSeed.privacidad,
-        metricas_calidad: newSeed.metricas_calidad
+        metricas_calidad: newSeed.metricas_calidad,
+        ...(selectedScenarios?.length ? { scenarios: selectedScenarios } : {})
       })
 
       if (data) {
