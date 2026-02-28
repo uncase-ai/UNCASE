@@ -56,6 +56,10 @@ export interface SeedSchema {
   parametros_factuales: ParametrosFactuales
   privacidad: Privacidad
   metricas_calidad: MetricasCalidad
+  rating?: number | null
+  rating_count?: number
+  run_count?: number
+  avg_quality_score?: number | null
   organization_id?: string
   created_at: string
   updated_at: string

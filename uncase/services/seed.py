@@ -154,6 +154,41 @@ class SeedService:
         logger.info("seed_updated", seed_id=seed_model.id, fields=list(update_data.keys()))
         return self._to_response(seed_model)
 
+    async def rate_seed(self, seed_id: str, new_rating: float) -> SeedResponse:
+        """Submit a rating for a seed. Computes running average."""
+        seed_model = await self._get_seed_or_raise(seed_id)
+
+        old_avg = seed_model.rating or 0.0
+        old_count = seed_model.rating_count or 0
+        new_count = old_count + 1
+        seed_model.rating = ((old_avg * old_count) + new_rating) / new_count
+        seed_model.rating_count = new_count
+        seed_model.updated_at = datetime.now(UTC)
+
+        await self.session.commit()
+        await self.session.refresh(seed_model)
+
+        logger.info("seed_rated", seed_id=seed_id, rating=new_rating, avg=seed_model.rating, count=new_count)
+        return self._to_response(seed_model)
+
+    async def increment_run_count(self, seed_id: str, quality_score: float | None = None) -> SeedResponse:
+        """Increment the run count for a seed and optionally update avg quality score."""
+        seed_model = await self._get_seed_or_raise(seed_id)
+
+        seed_model.run_count = (seed_model.run_count or 0) + 1
+
+        if quality_score is not None:
+            old_avg = seed_model.avg_quality_score or 0.0
+            old_count = seed_model.run_count - 1
+            seed_model.avg_quality_score = ((old_avg * old_count) + quality_score) / seed_model.run_count
+
+        seed_model.updated_at = datetime.now(UTC)
+        await self.session.commit()
+        await self.session.refresh(seed_model)
+
+        logger.info("seed_run_counted", seed_id=seed_id, run_count=seed_model.run_count)
+        return self._to_response(seed_model)
+
     async def delete_seed(self, seed_id: str) -> None:
         """Delete a seed by ID."""
         seed_model = await self._get_seed_or_raise(seed_id)

@@ -11,7 +11,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uncase.api.deps import get_db, get_optional_org
 from uncase.api.metering import meter
 from uncase.db.models.organization import OrganizationModel
-from uncase.schemas.seed_api import SeedCreateRequest, SeedListResponse, SeedResponse, SeedUpdateRequest
+from uncase.schemas.seed_api import (
+    SeedCreateRequest,
+    SeedListResponse,
+    SeedRatingRequest,
+    SeedResponse,
+    SeedUpdateRequest,
+)
 from uncase.services.seed import SeedService
 
 # NOTE: Phase 0→1 — Uses optional auth via get_optional_org. If an API key
@@ -77,6 +83,19 @@ async def update_seed(
     service = _get_service(session)
     result = await service.update_seed(seed_id, data)
     logger.info("seed_updated", seed_id=seed_id)
+    return result
+
+
+@router.post("/{seed_id}/rate", response_model=SeedResponse)
+async def rate_seed(
+    seed_id: str,
+    data: SeedRatingRequest,
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> SeedResponse:
+    """Submit a rating for a seed. Computes running average."""
+    service = _get_service(session)
+    result = await service.rate_seed(seed_id, data.rating)
+    logger.info("seed_rated", seed_id=seed_id, rating=data.rating, new_avg=result.rating)
     return result
 
 

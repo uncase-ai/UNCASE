@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
-import { Menu, Moon, PanelLeftClose, PanelLeftOpen, Sun } from 'lucide-react'
+import { ExternalLink, Lock, Menu, Moon, PanelLeftClose, PanelLeftOpen, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
 import { checkApiHealth } from '@/lib/api/client'
@@ -60,22 +60,75 @@ export function Topbar({ sidebarCollapsed, onToggleSidebar, onOpenMobile }: Topb
       <div className="flex-1" />
 
       {/* API status indicator */}
+      <div className="hidden items-center gap-3 sm:flex">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs" onClick={checkHealth}>
+              <span className="relative flex size-2">
+                {apiConnected && (
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                )}
+                <span
+                  className={cn(
+                    'relative inline-flex size-2 rounded-full',
+                    apiConnected === null && 'animate-pulse bg-muted-foreground',
+                    apiConnected === true && 'bg-emerald-500',
+                    apiConnected === false && 'bg-destructive'
+                  )}
+                />
+              </span>
+              <span className={cn(apiConnected ? 'text-emerald-700 dark:text-emerald-400' : 'text-muted-foreground')}>
+                {apiConnected === null ? 'Checking...' : apiConnected ? 'Established' : 'Offline'}
+              </span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {apiConnected ? 'API connected — click to refresh' : apiConnected === false ? 'API unreachable — click to retry' : 'Checking connectivity...'}
+          </TooltipContent>
+        </Tooltip>
+
+        {apiConnected && (
+          <>
+            <span className="h-3 w-px bg-border" />
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Lock className="size-3" />
+              Local
+            </span>
+            <span className="h-3 w-px bg-border" />
+            <a
+              href="http://localhost:4000"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Manage connections
+              <ExternalLink className="size-3" />
+            </a>
+          </>
+        )}
+      </div>
+
+      {/* Mobile API dot */}
       <Tooltip>
         <TooltipTrigger asChild>
-          <button className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground" onClick={checkHealth}>
-            <span
-              className={cn(
-                'size-2 rounded-full',
-                apiConnected === null && 'bg-muted-foreground animate-pulse',
-                apiConnected === true && 'bg-foreground',
-                apiConnected === false && 'bg-destructive'
+          <button className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground sm:hidden" onClick={checkHealth}>
+            <span className="relative flex size-2">
+              {apiConnected && (
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
               )}
-            />
-            <span className="hidden sm:inline">{apiConnected === null ? 'Checking...' : apiConnected ? 'API' : 'Offline'}</span>
+              <span
+                className={cn(
+                  'relative inline-flex size-2 rounded-full',
+                  apiConnected === null && 'animate-pulse bg-muted-foreground',
+                  apiConnected === true && 'bg-emerald-500',
+                  apiConnected === false && 'bg-destructive'
+                )}
+              />
+            </span>
           </button>
         </TooltipTrigger>
         <TooltipContent>
-          {apiConnected ? 'API connected' : apiConnected === false ? 'API unreachable — click to retry' : 'Checking connectivity...'}
+          {apiConnected ? 'API connected' : apiConnected === false ? 'Offline' : 'Checking...'}
         </TooltipContent>
       </Tooltip>
 
