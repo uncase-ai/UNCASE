@@ -4,11 +4,11 @@ import { Badge } from '@/components/ui/badge'
 type StatusVariant = 'success' | 'error' | 'warning' | 'info' | 'default' | 'running'
 
 const VARIANT_CLASSES: Record<StatusVariant, string> = {
-  success: 'bg-muted/50',
+  success: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
   error: 'bg-destructive/10 text-destructive',
   warning: 'bg-muted/50',
   info: 'bg-muted/50',
-  running: 'bg-muted/50',
+  running: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
   default: ''
 }
 
@@ -26,11 +26,11 @@ export function StatusBadge({ variant, children, dot = true, className }: Status
         <span
           className={cn(
             'size-1.5 rounded-full',
-            variant === 'success' && 'bg-foreground',
+            variant === 'success' && 'bg-emerald-500',
             variant === 'error' && 'bg-destructive',
             variant === 'warning' && 'bg-muted-foreground',
             variant === 'info' && 'bg-muted-foreground',
-            variant === 'running' && 'animate-pulse bg-foreground',
+            variant === 'running' && 'animate-pulse bg-emerald-500',
             variant === 'default' && 'bg-muted-foreground'
           )}
         />

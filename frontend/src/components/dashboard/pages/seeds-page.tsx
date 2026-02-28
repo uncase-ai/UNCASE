@@ -712,10 +712,10 @@ export function SeedsPage() {
   function renderInfoBanner() {
     return (
       <Card className="bg-muted/40">
-        <CardContent className="flex items-start gap-3 p-4">
-          <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-          <div className="space-y-1 text-xs text-muted-foreground">
-            <p className="font-medium text-foreground">What are Seeds?</p>
+        <CardContent className="flex items-start gap-3 p-4 sm:p-5">
+          <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground sm:size-5" />
+          <div className="space-y-1 text-xs text-muted-foreground sm:text-sm">
+            <p className="text-base font-semibold text-foreground sm:text-lg">What are Seeds?</p>
             <p>
               Seeds are structured templates that define the parameters for synthetic conversation generation.
               Each seed specifies the domain, roles, conversation flow, factual constraints, and privacy settings.

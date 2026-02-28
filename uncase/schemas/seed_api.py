@@ -50,6 +50,12 @@ class SeedUpdateRequest(BaseModel):
     metricas_calidad: MetricasCalidad | None = Field(default=None, description="Quality thresholds")
 
 
+class SeedRatingRequest(BaseModel):
+    """Request body for rating a seed."""
+
+    rating: float = Field(..., ge=0.0, le=5.0, description="User rating (0-5)")
+
+
 class SeedResponse(BaseModel):
     """API response for a single seed."""
 
@@ -66,6 +72,10 @@ class SeedResponse(BaseModel):
     parametros_factuales: ParametrosFactuales
     privacidad: Privacidad
     metricas_calidad: MetricasCalidad
+    rating: float | None = Field(default=None, description="Average user rating (0-5)")
+    rating_count: int = Field(default=0, description="Number of ratings received")
+    run_count: int = Field(default=0, description="Number of generation runs")
+    avg_quality_score: float | None = Field(default=None, description="Average composite quality score across runs")
     organization_id: str | None
     created_at: datetime
     updated_at: datetime
