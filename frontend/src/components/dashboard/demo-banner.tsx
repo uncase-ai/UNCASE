@@ -1,13 +1,14 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 import { useRouter } from 'next/navigation'
 import { Cloud, FlaskConical, RotateCcw, Timer, X } from 'lucide-react'
 
-import { DEMO_RUNNING_JOB_ID } from '@/lib/demo'
+import { activateDemo, DEMO_RUNNING_JOB_ID } from '@/lib/demo'
 import { useDemoMode } from '@/hooks/use-demo-mode'
 import { useSandboxDemo } from '@/hooks/use-sandbox-demo'
+import { getSandboxSession } from '@/lib/sandbox-session'
 import { useJobQueue } from '@/hooks/use-dashboard'
 import { Button } from '@/components/ui/button'
 
@@ -23,6 +24,17 @@ export function DemoBanner() {
   const { active: sandboxActive, session, ttlMs, stop: sandboxStop } = useSandboxDemo()
   const { updateJob } = useJobQueue()
   const router = useRouter()
+
+  // When sandbox expires, transition to demo mode instead of dead state
+  const prevSandboxActive = useRef(sandboxActive)
+
+  useEffect(() => {
+    if (prevSandboxActive.current && !sandboxActive && !localActive && getSandboxSession() === null) {
+      activateDemo()
+    }
+
+    prevSandboxActive.current = sandboxActive
+  }, [sandboxActive, localActive])
 
   // Live simulation: increment running job progress (local demo only)
   useEffect(() => {
@@ -55,7 +67,7 @@ export function DemoBanner() {
   if (sandboxActive && session) {
     const handleExit = () => {
       sandboxStop()
-      router.push('/')
+      activateDemo()
     }
 
     return (

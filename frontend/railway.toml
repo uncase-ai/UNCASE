@@ -1,0 +1,11 @@
+[build]
+dockerfilePath = "Dockerfile"
+
+[build.args]
+NEXT_PUBLIC_API_URL = "https://app.uncase.md"
+
+[deploy]
+healthcheckPath = "/"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

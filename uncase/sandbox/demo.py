@@ -427,6 +427,7 @@ app.add_middleware(
 )
 
 DEMO_SEEDS = json.loads("""{json.dumps(seeds, ensure_ascii=False)}""")
+GENERATED_CONVERSATIONS: list[dict] = []
 
 
 class GenerateRequest(BaseModel):
@@ -434,9 +435,24 @@ class GenerateRequest(BaseModel):
     count: int = Field(default=1, ge=1, le=5)
 
 
+class SeedCreate(BaseModel):
+    dominio: str = "{domain}"
+    idioma: str = "es"
+    roles: list[str] = ["agent", "user"]
+    descripcion_roles: dict[str, str] = {{}}
+    objetivo: str = ""
+    tono: str = "profesional"
+    pasos_turnos: dict = {{}}
+    parametros_factuales: dict = {{}}
+
+
 @app.get("/health")
 async def health():
     return {{"status": "ok", "domain": "{domain}", "mode": "demo"}}
+
+@app.get("/health/db")
+async def health_db():
+    return {{"status": "ok", "version": "demo"}}
 
 @app.get("/api/v1/seeds")
 async def list_seeds():
@@ -448,6 +464,14 @@ async def get_seed(seed_id: str):
         if seed.get("seed_id") == seed_id:
             return seed
     raise HTTPException(status_code=404, detail="Seed not found")
+
+@app.post("/api/v1/seeds")
+async def create_seed(request: SeedCreate):
+    seed = request.model_dump()
+    seed["seed_id"] = f"demo-{{uuid.uuid4().hex[:8]}}"
+    seed["created_at"] = datetime.now(timezone.utc).isoformat()
+    DEMO_SEEDS.append(seed)
+    return seed
 
 @app.post("/api/v1/generate")
 async def generate(request: GenerateRequest):
@@ -481,7 +505,7 @@ async def generate(request: GenerateRequest):
                 "herramientas_usadas": [],
                 "metadata": {{}},
             }})
-        conversations.append({{
+        conv = {{
             "conversation_id": uuid.uuid4().hex[:16],
             "seed_id": seed.get("seed_id", "unknown"),
             "dominio": seed.get("dominio", "{domain}"),
@@ -490,7 +514,9 @@ async def generate(request: GenerateRequest):
             "es_sintetica": True,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "metadata": {{"mode": "demo"}},
-        }})
+        }}
+        conversations.append(conv)
+        GENERATED_CONVERSATIONS.append(conv)
     return {{
         "conversations": conversations,
         "generation_summary": {{
@@ -500,6 +526,53 @@ async def generate(request: GenerateRequest):
             "duration_seconds": 0.1,
         }},
     }}
+
+@app.get("/api/v1/conversations")
+async def list_conversations():
+    return {{"items": GENERATED_CONVERSATIONS, "total": len(GENERATED_CONVERSATIONS)}}
+
+@app.get("/api/v1/tools")
+async def list_tools():
+    tools = []
+    for seed in DEMO_SEEDS:
+        herramientas = seed.get("parametros_factuales", {{}}).get("herramientas", [])
+        for tool_name in herramientas:
+            if not any(t["name"] == tool_name for t in tools):
+                tools.append({{
+                    "name": tool_name,
+                    "domain": seed.get("dominio", "{domain}"),
+                    "description": f"Demo tool: {{tool_name}}",
+                    "enabled": True,
+                }})
+    return tools
+
+@app.get("/api/v1/templates")
+async def list_templates():
+    return [
+        {{"name": "chatml", "format": "chatml", "description": "ChatML format"}},
+        {{"name": "llama3", "format": "llama3", "description": "Llama 3 format"}},
+        {{"name": "mistral", "format": "mistral", "description": "Mistral format"}},
+    ]
+
+@app.get("/api/v1/evaluations/reports")
+async def list_evaluations():
+    return {{"items": [], "total": 0}}
+
+@app.get("/api/v1/pipeline/jobs")
+async def list_pipeline_jobs():
+    return {{"items": [], "total": 0}}
+
+@app.get("/api/v1/audit/logs")
+async def list_audit_logs():
+    return {{"items": [], "total": 0}}
+
+@app.get("/api/v1/plugins")
+async def list_plugins():
+    return []
+
+@app.get("/api/v1/costs/summary")
+async def costs_summary():
+    return {{"total_cost": 0.0, "period": "current", "breakdown": []}}
 
 @app.get("/api/v1/sandbox/info")
 async def sandbox_info():
