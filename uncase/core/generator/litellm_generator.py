@@ -541,12 +541,18 @@ class LiteLLMGenerator(BaseGenerator):
         if self._api_base:
             kwargs["api_base"] = self._api_base
 
-        # Request JSON output format when supported
-        # Some models support response_format, some don't — catch and retry without it
+        # Request JSON output format when supported.
+        # Gemini models don't fully support response_format — skip it entirely.
+        model_lower = self._config.model.lower()
+        supports_response_format = not (
+            "gemini" in model_lower
+            or "google" in model_lower
+        )
+
         last_error: Exception | None = None
         for attempt in range(self._config.max_retries + 1):
             try:
-                if attempt == 0:
+                if attempt == 0 and supports_response_format:
                     kwargs["response_format"] = {"type": "json_object"}
 
                 response = await litellm.acompletion(**kwargs)
@@ -557,9 +563,6 @@ class LiteLLMGenerator(BaseGenerator):
                     raise GenerationError(msg)
 
                 return content  # type: ignore[no-any-return]
-
-            except GenerationError:
-                raise
 
             except Exception as exc:
                 last_error = exc

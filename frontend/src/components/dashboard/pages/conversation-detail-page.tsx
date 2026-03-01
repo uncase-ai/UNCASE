@@ -83,17 +83,27 @@ function saveAllConversations(conversations: Conversation[]) {
 
 // ─── Role detection helpers ───
 // Must stay in sync with the backend _ROLE_MAP used across all templates.
+//
+// Strategy: define known USER, SYSTEM, and TOOL roles explicitly.
+// Everything else defaults to "assistant" — this handles domain-specific
+// roles like asesor_ventas, valuador, médico, abogado, etc.
 
-const ASSISTANT_ROLES = new Set([
-  'asistente', 'assistant', 'agente', 'agent', 'vendedor', 'gpt', 'bot', 'model'
+const USER_ROLES = new Set([
+  'user', 'usuario', 'cliente', 'customer', 'paciente', 'patient', 'human',
+  'coordinador_operaciones', 'coordinador de operaciones',
+  'director_administrativo', 'director administrativo',
+  'gerente_compras', 'gerente de compras',
+  'gerente_recursos_humanos', 'gerente de recursos humanos',
+  'procurement officer', 'fleet manager',
+  'customer relations manager', 'finance manager',
 ])
 
 const SYSTEM_ROLES = new Set(['system', 'sistema'])
 
-const TOOL_ROLES = new Set(['herramienta', 'tool', 'function'])
+const TOOL_ROLES = new Set(['herramienta', 'tool', 'function', 'ipython'])
 
-function isAssistantRole(rol: string): boolean {
-  return ASSISTANT_ROLES.has(rol.toLowerCase())
+function isUserRole(rol: string): boolean {
+  return USER_ROLES.has(rol.toLowerCase())
 }
 
 function isSystemRole(rol: string): boolean {
@@ -106,10 +116,10 @@ function isToolRole(rol: string): boolean {
 
 function getMessageRole(turn: ConversationTurn): MessageRole {
   if (isSystemRole(turn.rol)) return 'system'
-  if (isAssistantRole(turn.rol)) return 'assistant'
   if (isToolRole(turn.rol)) return 'tool_result'
+  if (isUserRole(turn.rol)) return 'user'
 
-  return 'user'
+  return 'assistant'
 }
 
 // ─── Flatten turns ───
@@ -779,8 +789,8 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
   const status = conversation.status ?? 'valid'
   const flatItems = flattenTurns(conversation.turnos)
   const toolNames = getToolCallNames(conversation)
-  const userCount = conversation.turnos.filter(t => !isAssistantRole(t.rol) && !isSystemRole(t.rol) && !isToolRole(t.rol)).length
-  const assistantCount = conversation.turnos.filter(t => isAssistantRole(t.rol)).length
+  const userCount = conversation.turnos.filter(t => isUserRole(t.rol)).length
+  const assistantCount = conversation.turnos.filter(t => !isUserRole(t.rol) && !isSystemRole(t.rol) && !isToolRole(t.rol)).length
   const tags = conversation.tags ?? []
 
   return (

@@ -7,7 +7,7 @@
 # ═══════════════════════════════════════════════════════════════
 
 .DEFAULT_GOAL := help
-.PHONY: help install dev dev-all api test test-unit test-integration test-privacy test-ml lint format typecheck check docs docs-all docs-changelog migrate docker-build docker-up docker-down docker-logs clean
+.PHONY: help install dev dev-all api test test-unit test-integration test-privacy test-ml lint format typecheck check docs docs-all docs-changelog migrate docker-build docker-build-api docker-build-dashboard docker-up docker-fresh docker-down docker-logs docker-logs-dashboard clean
 
 # ── Installation ─────────────────────────────────────────────
 
@@ -74,10 +74,21 @@ migrate: ## Run Alembic migrations
 
 # ── Docker ───────────────────────────────────────────────────
 
-docker-build: ## Build Docker image
-	docker compose build
+docker-build: ## Build all Docker images (API + Dashboard) — no cache
+	docker compose build --no-cache api dashboard
 
-docker-up: ## Start services (API + PostgreSQL)
+docker-build-api: ## Build only the API image — no cache
+	docker compose build --no-cache api
+
+docker-build-dashboard: ## Build only the Dashboard image — no cache
+	docker compose build --no-cache dashboard
+
+docker-up: ## Start services (API + PostgreSQL + Dashboard)
+	docker compose up -d
+
+docker-fresh: ## Full rebuild and restart (down → build → up)
+	docker compose down
+	docker compose build --no-cache api dashboard
 	docker compose up -d
 
 docker-down: ## Stop all services
@@ -85,6 +96,9 @@ docker-down: ## Stop all services
 
 docker-logs: ## View API logs
 	docker compose logs -f api
+
+docker-logs-dashboard: ## View Dashboard logs
+	docker compose logs -f dashboard
 
 # ── Cleanup ──────────────────────────────────────────────────
 

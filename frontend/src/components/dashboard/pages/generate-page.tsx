@@ -102,20 +102,146 @@ function saveHistory(history: GenerationRun[]) {
 }
 
 // ─── Mock generation ───
+
+// Domain-specific turn content templates — the mock generator picks randomly
+// to produce realistic-looking conversations for demo mode.
+const MOCK_TURNS: Record<string, { user: string[]; assistant: string[] }> = {
+  'automotive.sales': {
+    user: [
+      'Buenos días, estoy buscando un vehículo familiar. ¿Qué opciones tienen?',
+      'Me interesa algo con buen rendimiento de combustible y espacio para 5 personas.',
+      '¿Cuál es el precio con todo incluido?',
+      '¿Tienen opciones de financiamiento? Mi presupuesto es limitado.',
+      'Me gustaría agendar una prueba de manejo para el fin de semana.',
+      '¿Qué garantía incluye el vehículo?',
+      '¿Manejan programa de trade-in? Tengo un auto 2020 que me gustaría dejar.',
+      'Perfecto, me interesa. ¿Cuáles son los siguientes pasos?',
+      '¿Tienen el modelo en color blanco o gris?',
+      '¿El seguro está incluido en la mensualidad?',
+    ],
+    assistant: [
+      'Bienvenido, con gusto le ayudo. Tenemos excelentes opciones en SUVs y sedanes familiares. ¿Tiene algún rango de presupuesto en mente?',
+      'Para sus necesidades, le recomiendo el Modelo XR5 2025. Tiene tercera fila de asientos, rendimiento de 14 km/l en ciudad y está disponible desde $689,900.',
+      'El precio final con IVA, placas y verificación es de $864,084 MXN. Incluye paquete de seguridad y garantía de 5 años o 100,000 km.',
+      'Contamos con financiamiento desde 12 hasta 72 meses. Con un enganche del 20%, su mensualidad quedaría en aproximadamente $15,800 a 48 meses con tasa preferencial.',
+      'Perfecto, tenemos disponibilidad el sábado a las 10:00 AM. La prueba dura aproximadamente 30 minutos. Solo necesita traer su licencia vigente.',
+      'El vehículo incluye garantía de fábrica de 5 años o 100,000 km, lo que ocurra primero. Cubre motor, transmisión y componentes electrónicos.',
+      'Claro, nuestro programa de trade-in le permite usar su vehículo actual como enganche. Basado en las condiciones de mercado, podemos hacer una valuación en 24 horas.',
+      'El siguiente paso sería la pre-aprobación de crédito. Necesitaría traer identificación oficial, comprobante de domicilio y últimos 3 recibos de nómina.',
+      'Sí, tenemos 2 unidades en blanco y 1 en gris plata disponibles para entrega inmediata.',
+      'El seguro se cotiza por separado, pero contamos con convenios con aseguradoras que ofrecen tarifas preferenciales para nuestros clientes.',
+    ],
+  },
+  'medical.consultation': {
+    user: [
+      'Doctor, he tenido dolor de cabeza frecuente las últimas dos semanas.',
+      '¿Podría ser algo serio? Me preocupa un poco.',
+      'No he tomado ningún medicamento, solo descanso.',
+      '¿Necesito hacerme algún estudio?',
+      '¿Cuándo debo regresar a consulta?',
+      'Tengo antecedentes de migraña en mi familia.',
+      '¿Hay algo que deba evitar mientras tanto?',
+      'Gracias doctor, seguiré sus indicaciones.',
+    ],
+    assistant: [
+      'Entiendo su preocupación. Vamos a revisar sus síntomas en detalle. ¿El dolor es constante o viene por episodios? ¿En qué zona de la cabeza lo siente?',
+      'Basado en lo que me describe, parece una cefalea tensional, que es la más común. Sin embargo, necesitamos descartar otras causas. ¿Ha tenido cambios en su visión o náuseas?',
+      'Le recomiendo iniciar con paracetamol 500mg cada 8 horas durante 5 días. También es importante mantener una buena hidratación y descanso adecuado.',
+      'Vamos a solicitar unos estudios de laboratorio básicos: biometría hemática, química sanguínea y perfil tiroideo. Si los síntomas persisten, consideraremos una tomografía.',
+      'Le agendo cita de seguimiento en 2 semanas. Si el dolor empeora, aparecen síntomas nuevos o no cede con el tratamiento, regrese antes.',
+      'Los antecedentes familiares son relevantes. Vamos a monitorear si el patrón de dolor es compatible con migraña y ajustar el tratamiento según sea necesario.',
+      'Evite el exceso de pantallas, procure dormir entre 7 y 8 horas, y reduzca el consumo de cafeína. El estrés también puede ser un factor desencadenante.',
+      'Quedo a sus órdenes. Recuerde seguir el tratamiento completo y no suspenderlo aunque se sienta mejor.',
+    ],
+  },
+  'finance.advisory': {
+    user: [
+      'Quisiera invertir mis ahorros pero no sé por dónde empezar.',
+      '¿Cuál es el rendimiento esperado de ese instrumento?',
+      'Mi tolerancia al riesgo es moderada. No quiero perder mi capital.',
+      '¿Cuánto necesito como mínimo para empezar?',
+      '¿Qué comisiones cobran por el manejo de la cuenta?',
+      '¿Puedo retirar mi dinero en cualquier momento?',
+    ],
+    assistant: [
+      'Con gusto le asesoro. Primero necesitamos definir su perfil de inversión: horizonte temporal, tolerancia al riesgo y objetivos financieros. ¿Para cuándo necesitaría disponer de estos recursos?',
+      'Para un perfil moderado con horizonte de 3 a 5 años, un portafolio diversificado en renta fija y variable podría generar entre 8% y 12% anual. El rendimiento pasado no garantiza rendimientos futuros.',
+      'Excelente. Para su perfil recomiendo 60% renta fija (CETES, bonos gubernamentales) y 40% renta variable (ETFs diversificados). Esto equilibra seguridad con crecimiento.',
+      'Puede iniciar desde $10,000 MXN. Sin embargo, para una diversificación adecuada recomiendo al menos $50,000. Podemos establecer aportaciones mensuales automáticas.',
+      'Manejamos una comisión anual del 1.2% sobre el saldo administrado. No hay comisiones por apertura, depósito ni retiro. El cobro es mensual prorrateado.',
+      'Sí, su capital está disponible en cualquier momento. Los instrumentos de renta fija tienen liquidez en 48 horas hábiles, y los de renta variable en 72 horas.',
+    ],
+  },
+  'legal.advisory': {
+    user: [
+      'Necesito asesoría para constituir una empresa. ¿Qué tipo de sociedad me conviene?',
+      '¿Cuánto tiempo toma el proceso completo?',
+      '¿Cuáles son los requisitos fiscales iniciales?',
+      '¿Necesito un apoderado legal?',
+    ],
+    assistant: [
+      'Depende de varios factores: número de socios, capital inicial, y el giro del negocio. Para la mayoría de las PYMES, recomiendo una S.A.S. (Sociedad por Acciones Simplificada) por su flexibilidad y menores requisitos.',
+      'La constitución ante notario toma entre 5 y 10 días hábiles. El registro ante el SAT y la inscripción en el Registro Público se completan en 2-3 semanas adicionales.',
+      'Necesitará: alta en el SAT con RFC de persona moral, registro de e.firma, selección de régimen fiscal, inscripción al IMSS como patrón, y apertura de cuenta bancaria empresarial.',
+      'No es obligatorio pero sí recomendable. Un apoderado legal puede representar a la empresa en trámites, firmas y procedimientos sin necesidad de que todos los socios estén presentes.',
+    ],
+  },
+  'industrial.support': {
+    user: [
+      'La línea de producción 3 se detuvo. Muestra un código de error E-4521.',
+      '¿Cuánto tiempo tomaría la reparación?',
+      '¿Tienen la pieza en stock o hay que pedirla?',
+      '¿Esto afecta la garantía del equipo?',
+    ],
+    assistant: [
+      'El código E-4521 indica un fallo en el sensor de temperatura del módulo de extrusión. Necesitamos verificar si es el sensor o el cableado. Le envío un técnico de inmediato para el diagnóstico.',
+      'Si es solo el sensor, la reparación toma aproximadamente 2 horas incluyendo calibración. Si hay daño en el cableado, podría extenderse a 4-6 horas.',
+      'Tenemos 3 unidades del sensor TMP-4500 en almacén. Si necesitamos el módulo completo, el tiempo de entrega es de 48 horas desde fábrica.',
+      'No, la reparación está cubierta por el contrato de mantenimiento preventivo. Solo aplican costos adicionales si se detecta mal uso o modificaciones no autorizadas al equipo.',
+    ],
+  },
+  'education.tutoring': {
+    user: [
+      'No entiendo bien el concepto de derivadas. ¿Me lo puede explicar?',
+      '¿Puede darme un ejemplo práctico?',
+      '¿Cómo resuelvo derivadas de funciones compuestas?',
+      '¿Tiene ejercicios para practicar?',
+    ],
+    assistant: [
+      'La derivada mide la tasa de cambio instantánea de una función. Imagina que conduces un auto: la posición es la función, la velocidad es la derivada (cuánto cambia la posición por unidad de tiempo).',
+      'Si tienes f(x) = x², su derivada es f\'(x) = 2x. Esto significa que en x=3, la función crece a una tasa de 6 unidades por cada unidad que avanza x. Es la pendiente de la recta tangente en ese punto.',
+      'Para funciones compuestas usamos la regla de la cadena: si y = f(g(x)), entonces y\' = f\'(g(x)) · g\'(x). Derivas de afuera hacia adentro multiplicando cada paso.',
+      'Le preparo una serie de 10 ejercicios graduales: los primeros 3 son derivadas directas, luego 4 con regla de la cadena, y los últimos 3 combinan múltiples reglas. ¿Quiere que los resolvamos juntos?',
+    ],
+  },
+}
+
+const DEFAULT_MOCK_TURNS = {
+  user: ['Hola, necesito ayuda con una consulta.', '¿Podría darme más detalles?', 'Gracias, eso es muy útil.', '¿Hay algo más que deba considerar?'],
+  assistant: ['Con gusto le ayudo. ¿En qué puedo asistirle?', 'Claro, permítame explicarle en detalle.', 'Esa es una excelente pregunta. Aquí tiene la información.', 'Le recomiendo tener en cuenta estos puntos adicionales.'],
+}
+
 function generateMockConversation(seed: SeedSchema, languageOverride?: string): Conversation {
   const numTurns = seed.pasos_turnos.turnos_min +
     Math.floor(Math.random() * (seed.pasos_turnos.turnos_max - seed.pasos_turnos.turnos_min + 1))
 
   const roles = seed.roles.length >= 2 ? seed.roles : ['usuario', 'asistente']
   const idioma = languageOverride || seed.idioma
+  const pool = MOCK_TURNS[seed.dominio] ?? DEFAULT_MOCK_TURNS
 
-  const turnos: ConversationTurn[] = Array.from({ length: numTurns }, (_, i) => ({
-    turno: i + 1,
-    rol: roles[i % roles.length],
-    contenido: `Generated turn ${i + 1} content for ${seed.dominio} — ${seed.objetivo}`,
-    herramientas_usadas: [],
-    metadata: {}
-  }))
+  const turnos: ConversationTurn[] = Array.from({ length: numTurns }, (_, i) => {
+    const isUser = i % 2 === 0
+    const bank = isUser ? pool.user : pool.assistant
+    const content = bank[Math.floor(Math.random() * bank.length)]
+
+    return {
+      turno: i + 1,
+      rol: roles[i % roles.length],
+      contenido: content,
+      herramientas_usadas: [],
+      metadata: {}
+    }
+  })
 
   return {
     conversation_id: crypto.randomUUID(),
@@ -126,7 +252,7 @@ function generateMockConversation(seed: SeedSchema, languageOverride?: string): 
     es_sintetica: true,
     created_at: new Date().toISOString(),
     metadata: {
-      generated_by: 'uncase-mock-generator',
+      generated_by: 'uncase-demo-generator',
       source_seed: seed.seed_id
     }
   }

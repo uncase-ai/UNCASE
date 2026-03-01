@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import Link from 'next/link'
-import { Cloud, CloudOff, Code2, Loader2, Lock, Plus, Puzzle, RefreshCw, Trash2, Unlock } from 'lucide-react'
+import { Cloud, CloudOff, Code2, Loader2, Lock, Plus, Puzzle, RefreshCw, Sprout, Trash2, Unlock } from 'lucide-react'
 
-import type { ToolDefinition } from '@/types/api'
+import type { SeedSchema, ToolDefinition } from '@/types/api'
 import { SUPPORTED_DOMAINS } from '@/types/api'
 import { checkApiHealth } from '@/lib/api/client'
 import { deleteTool as deleteToolApi, fetchTools } from '@/lib/api/tools'
@@ -79,6 +79,26 @@ export function ToolsPage() {
   // Delete confirmation
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+
+  // Seed usage counts per tool — recompute when tools change (proxy for data refresh)
+  const seedUsageCounts = useMemo(() => {
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('uncase-seeds') : null
+      const seeds: SeedSchema[] = raw ? JSON.parse(raw) : []
+      const counts: Record<string, number> = {}
+
+      for (const seed of seeds) {
+        for (const toolName of seed.parametros_factuales?.herramientas ?? []) {
+          counts[toolName] = (counts[toolName] || 0) + 1
+        }
+      }
+
+      return counts
+    } catch {
+      return {}
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tools.length])
 
   // Try syncing from API on mount — if it fails, fall back to localStorage data
   useEffect(() => {
@@ -307,6 +327,7 @@ export function ToolsPage() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map(tool => {
             const builtin = isBuiltin(tool.name)
+            const seedCount = seedUsageCounts[tool.name] || 0
 
             return (
               <Card key={tool.name} className="group relative h-full transition-colors hover:bg-muted/50">
@@ -350,6 +371,17 @@ export function ToolsPage() {
                           {domain.split('.').pop()}
                         </Badge>
                       ))}
+                      {seedCount > 0 && (
+                        <Link
+                          href={`/dashboard/pipeline/seeds?tool=${encodeURIComponent(tool.name)}`}
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <Badge variant="outline" className="gap-0.5 text-[10px] transition-colors hover:bg-muted">
+                            <Sprout className="size-2.5" />
+                            {seedCount} seed{seedCount > 1 ? 's' : ''}
+                          </Badge>
+                        </Link>
+                      )}
                     </div>
                   </CardContent>
                 </Link>

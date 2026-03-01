@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronRight,
+  ChevronUp,
   Code2,
   Keyboard,
   MessageSquare,
@@ -45,6 +46,7 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Rating } from '@/components/ui/rating'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -87,17 +89,27 @@ export function appendConversations(newConvs: Conversation[]) {
 // ─── Role helpers ───
 // Must stay in sync with the backend _ROLE_MAP used across all templates
 // (chatml.py, llama.py, mistral.py, etc.) and the JSONL parser role maps.
+//
+// Strategy: define known USER, SYSTEM, and TOOL roles explicitly.
+// Everything else defaults to "assistant" — this handles domain-specific
+// roles like asesor_ventas, valuador, médico, abogado, etc.
 
-const ASSISTANT_ROLES = new Set([
-  'asistente', 'assistant', 'agente', 'agent', 'vendedor', 'gpt', 'bot', 'model'
+const USER_ROLES = new Set([
+  'user', 'usuario', 'cliente', 'customer', 'paciente', 'patient', 'human',
+  'coordinador_operaciones', 'coordinador de operaciones',
+  'director_administrativo', 'director administrativo',
+  'gerente_compras', 'gerente de compras',
+  'gerente_recursos_humanos', 'gerente de recursos humanos',
+  'procurement officer', 'fleet manager',
+  'customer relations manager', 'finance manager',
 ])
 
 const SYSTEM_ROLES = new Set(['system', 'sistema'])
 
-const TOOL_ROLES = new Set(['herramienta', 'tool', 'function'])
+const TOOL_ROLES = new Set(['herramienta', 'tool', 'function', 'ipython'])
 
-function isAssistantRole(rol: string): boolean {
-  return ASSISTANT_ROLES.has(rol.toLowerCase())
+function isUserRole(rol: string): boolean {
+  return USER_ROLES.has(rol.toLowerCase())
 }
 
 function isSystemRole(rol: string): boolean {
@@ -112,10 +124,10 @@ type MessageRole = 'system' | 'user' | 'assistant' | 'tool_call' | 'tool_result'
 
 function getMessageRole(turn: ConversationTurn): MessageRole {
   if (isSystemRole(turn.rol)) return 'system'
-  if (isAssistantRole(turn.rol)) return 'assistant'
   if (isToolRole(turn.rol)) return 'tool_result'
+  if (isUserRole(turn.rol)) return 'user'
 
-  return 'user'
+  return 'assistant'
 }
 
 // ─── Format compatibility ───
@@ -334,7 +346,7 @@ function buildSummary(conv: Conversation): string {
 
   if (turns.length === 0) return 'Empty conversation'
 
-  const userTurns = turns.filter(t => !isAssistantRole(t.rol) && !isSystemRole(t.rol) && !isToolRole(t.rol))
+  const userTurns = turns.filter(t => isUserRole(t.rol))
   const firstUser = userTurns[0]
 
   if (!firstUser) return turns[0].contenido.slice(0, 120)
@@ -1051,6 +1063,7 @@ function DetailPanel({
   const [editValue, setEditValue] = useState('')
   const [showDelete, setShowDelete] = useState(false)
   const [pendingChanges, setPendingChanges] = useState<Partial<Conversation>>({})
+  const [reviewOpen, setReviewOpen] = useState(false)
 
   const status = conversation.status ?? 'valid'
   const flatItems = flattenTurns(conversation.turnos)
@@ -1104,8 +1117,8 @@ function DetailPanel({
 
   // Conversation summary
   const toolNames = getToolCallNames(conversation)
-  const userCount = conversation.turnos.filter(t => !isAssistantRole(t.rol) && !isSystemRole(t.rol) && !isToolRole(t.rol)).length
-  const assistantCount = conversation.turnos.filter(t => isAssistantRole(t.rol)).length
+  const userCount = conversation.turnos.filter(t => isUserRole(t.rol)).length
+  const assistantCount = conversation.turnos.filter(t => !isUserRole(t.rol) && !isSystemRole(t.rol) && !isToolRole(t.rol)).length
   const compatibleFormats = getCompatibleFormats(conversation)
 
   return (
@@ -1167,6 +1180,39 @@ function DetailPanel({
             ))}
           </div>
         )}
+
+        {/* Action toolbar — always visible in header */}
+        <div className="mt-3 flex items-center gap-2 border-t pt-3">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleValidate}>
+            <CheckCircle2 className="size-3.5" />
+            Validate
+          </Button>
+          <Button size="sm" className="gap-1.5" onClick={handleSave} disabled={!hasPendingChanges}>
+            <Save className="size-3.5" />
+            Save
+          </Button>
+          <div className="flex-1" />
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleToggleStatus}>
+            {status === 'valid' ? (
+              <>
+                <Ban className="size-3.5" /> Mark Invalid
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="size-3.5" /> Mark Valid
+              </>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-destructive hover:bg-destructive/10"
+            onClick={() => setShowDelete(true)}
+          >
+            <Trash2 className="size-3.5" />
+            Delete
+          </Button>
+        </div>
       </div>
 
       {/* Invalid banner */}
@@ -1205,42 +1251,36 @@ function DetailPanel({
         </div>
       </ScrollArea>
 
-      {/* Review panel */}
-      <div className="shrink-0 border-t p-4">
-        <ReviewPanel conversation={displayConv} onUpdate={handleReviewUpdate} />
-
-        {/* Action buttons */}
-        <div className="mt-3 flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleValidate}>
-            <CheckCircle2 className="size-3.5" />
-            Validate
-          </Button>
-          <Button size="sm" className="gap-1.5" onClick={handleSave} disabled={!hasPendingChanges}>
-            <Save className="size-3.5" />
-            Save
-          </Button>
-          <div className="flex-1" />
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleToggleStatus}>
-            {status === 'valid' ? (
-              <>
-                <Ban className="size-3.5" /> Mark Invalid
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="size-3.5" /> Mark Valid
-              </>
-            )}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 text-destructive hover:bg-destructive/10"
-            onClick={() => setShowDelete(true)}
-          >
-            <Trash2 className="size-3.5" />
-            Delete
-          </Button>
-        </div>
+      {/* Collapsible review panel */}
+      <div className="shrink-0 border-t">
+        <Collapsible open={reviewOpen} onOpenChange={setReviewOpen}>
+          <CollapsibleTrigger asChild>
+            <button className="flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-muted/50">
+              <div className="flex items-center gap-2">
+                <Star className="size-3.5 text-muted-foreground" />
+                <span className="text-xs font-semibold text-muted-foreground">Review &amp; Rating</span>
+                {displayConv.rating ? (
+                  <Rating value={displayConv.rating} size={14} readOnly variant="yellow" />
+                ) : null}
+                {(displayConv.tags?.length ?? 0) > 0 && (
+                  <span className="text-[10px] text-muted-foreground">
+                    {displayConv.tags!.length} tag{displayConv.tags!.length > 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+              {reviewOpen ? (
+                <ChevronDown className="size-3.5 text-muted-foreground" />
+              ) : (
+                <ChevronUp className="size-3.5 text-muted-foreground" />
+              )}
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="px-4 pb-4">
+              <ReviewPanel conversation={displayConv} onUpdate={handleReviewUpdate} />
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       </div>
 
       {/* Delete confirmation */}
