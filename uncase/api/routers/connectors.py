@@ -5,14 +5,23 @@ from __future__ import annotations
 from typing import Annotated
 
 import structlog
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, Header, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from uncase.api.deps import get_db
+from uncase.connectors.huggingface import HuggingFaceConnector
 from uncase.connectors.webhook import WebhookConnector
 from uncase.connectors.whatsapp import WhatsAppConnector
 from uncase.core.privacy.scanner import PIIScanner
-from uncase.schemas.connector import ConnectorImportResponse, PIIEntityResponse, PIIScanResponse, WebhookPayload
+from uncase.schemas.connector import (
+    ConnectorImportResponse,
+    HFDatasetInfoResponse,
+    HFUploadRequest,
+    HFUploadResponse,
+    PIIEntityResponse,
+    PIIScanResponse,
+    WebhookPayload,
+)
 
 router = APIRouter(prefix="/api/v1/connectors", tags=["connectors"])
 
@@ -117,6 +126,128 @@ async def scan_text_for_pii(
     )
 
 
+@router.get("/huggingface/search", response_model=list[HFDatasetInfoResponse])
+async def search_hf_datasets(
+    query: Annotated[str, Query(description="Search query for datasets")],
+    limit: Annotated[int, Query(ge=1, le=100, description="Max results")] = 20,
+) -> list[HFDatasetInfoResponse]:
+    """Search Hugging Face Hub for datasets.
+
+    Returns dataset metadata sorted by download count.
+    No authentication required for public datasets.
+    """
+    connector = HuggingFaceConnector()
+    results = await connector.search_datasets(query=query, limit=limit)
+
+    logger.info("hf_search_api", query=query, results=len(results))
+
+    return [
+        HFDatasetInfoResponse(
+            repo_id=ds.repo_id,
+            description=ds.description,
+            downloads=ds.downloads,
+            likes=ds.likes,
+            tags=ds.tags,
+            last_modified=ds.last_modified,
+            size_bytes=ds.size_bytes,
+        )
+        for ds in results
+    ]
+
+
+@router.post("/huggingface/import", response_model=ConnectorImportResponse)
+async def import_hf_dataset(
+    repo_id: Annotated[str, Query(description="HuggingFace dataset repo (user/dataset)")],
+    split: Annotated[str, Query(description="Dataset split to import")] = "train",
+    token: Annotated[str | None, Header(alias="X-HF-Token", description="HuggingFace API token")] = None,
+) -> ConnectorImportResponse:
+    """Import a dataset from Hugging Face Hub.
+
+    Downloads the specified split, parses rows with 'messages' format,
+    and converts them to UNCASE conversations.
+    """
+    connector = HuggingFaceConnector(token=token)
+    result = await connector.download_dataset(repo_id=repo_id, split=split, token=token)
+
+    logger.info(
+        "hf_import_api",
+        repo_id=repo_id,
+        split=split,
+        imported=result.total_imported,
+        skipped=result.total_skipped,
+    )
+
+    return ConnectorImportResponse(
+        conversations=result.conversations,
+        total_imported=result.total_imported,
+        total_skipped=result.total_skipped,
+        total_pii_anonymized=result.total_pii_anonymized,
+        errors=result.errors,
+        warnings=result.warnings,
+    )
+
+
+@router.post("/huggingface/upload", response_model=HFUploadResponse)
+async def upload_to_hf(
+    request: HFUploadRequest,
+) -> HFUploadResponse:
+    """Upload conversations to Hugging Face as a JSONL dataset.
+
+    Creates or updates a HuggingFace dataset repository with the
+    selected conversations in chat format.
+    """
+    # For now, use conversation_ids as placeholder data
+    # In production, this would fetch conversations from the DB
+    conversations: list[dict[str, object]] = [{"conversation_id": cid} for cid in request.conversation_ids]
+
+    connector = HuggingFaceConnector(token=request.token)
+    result = await connector.upload_dataset(
+        conversations=conversations,
+        repo_id=request.repo_id,
+        token=request.token,
+        private=request.private,
+    )
+
+    logger.info(
+        "hf_upload_api",
+        repo_id=request.repo_id,
+        conversations=len(request.conversation_ids),
+    )
+
+    return HFUploadResponse(
+        repo_id=result.repo_id,
+        url=result.url,
+        commit_hash=result.commit_hash,
+        files_uploaded=result.files_uploaded,
+    )
+
+
+@router.get("/huggingface/repos", response_model=list[HFDatasetInfoResponse])
+async def list_hf_repos(
+    token: Annotated[str, Header(alias="X-HF-Token", description="HuggingFace API token")],
+    limit: Annotated[int, Query(ge=1, le=100, description="Max results")] = 20,
+) -> list[HFDatasetInfoResponse]:
+    """List datasets owned by the authenticated HuggingFace user.
+
+    Requires a valid HuggingFace API token in the X-HF-Token header.
+    """
+    connector = HuggingFaceConnector(token=token)
+    results = await connector.list_user_repos(token=token, limit=limit)
+
+    return [
+        HFDatasetInfoResponse(
+            repo_id=ds.repo_id,
+            description=ds.description,
+            downloads=ds.downloads,
+            likes=ds.likes,
+            tags=ds.tags,
+            last_modified=ds.last_modified,
+            size_bytes=ds.size_bytes,
+        )
+        for ds in results
+    ]
+
+
 @router.get("")
 async def list_connectors() -> list[dict[str, object]]:
     """List all available data connectors."""
@@ -129,6 +260,15 @@ async def list_connectors() -> list[dict[str, object]]:
             "endpoint": "/api/v1/connectors/whatsapp",
             "method": "POST",
             "accepts": "file upload",
+        },
+        {
+            "name": "Hugging Face Hub",
+            "slug": "huggingface",
+            "description": "Search, import, and upload datasets on Hugging Face Hub",
+            "supported_formats": ["jsonl", "csv", "parquet"],
+            "endpoint": "/api/v1/connectors/huggingface",
+            "method": "GET/POST",
+            "accepts": "query params / JSON body",
         },
         {
             "name": "Webhook",

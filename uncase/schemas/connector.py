@@ -47,3 +47,37 @@ class PIIScanResponse(BaseModel):
     entities: list[PIIEntityResponse] = Field(default_factory=list, description="Detected PII entities")
     anonymized_preview: str = Field(default="", description="Text with PII replaced by tokens")
     scanner_mode: str = Field(..., description="Scanner capabilities: regex_only or regex+presidio")
+
+
+class HFDatasetInfoResponse(BaseModel):
+    """Metadata for a Hugging Face dataset."""
+
+    repo_id: str = Field(..., description="Repository identifier (user/dataset)")
+    description: str | None = Field(default=None, description="Dataset description")
+    downloads: int = Field(default=0, ge=0, description="Download count")
+    likes: int = Field(default=0, ge=0, description="Number of likes")
+    tags: list[str] = Field(default_factory=list, description="Dataset tags")
+    last_modified: str = Field(default="", description="Last modification timestamp")
+    size_bytes: int | None = Field(default=None, description="Dataset size in bytes")
+
+
+class HFUploadRequest(BaseModel):
+    """Request body for uploading conversations to Hugging Face."""
+
+    conversation_ids: list[str] = Field(
+        ...,
+        min_length=1,
+        description="IDs of conversations to upload",
+    )
+    repo_id: str = Field(..., description="Target HuggingFace dataset repo (user/dataset)")
+    token: str = Field(..., description="HuggingFace API token")
+    private: bool = Field(default=False, description="Create as private repository")
+
+
+class HFUploadResponse(BaseModel):
+    """Response from uploading to Hugging Face."""
+
+    repo_id: str = Field(..., description="Repository identifier")
+    url: str = Field(..., description="URL of the uploaded dataset")
+    commit_hash: str = Field(default="", description="Git commit hash of the upload")
+    files_uploaded: int = Field(default=0, ge=0, description="Number of files uploaded")

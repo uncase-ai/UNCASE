@@ -49,6 +49,32 @@ export interface ConnectorInfo {
   accepts: string
 }
 
+// ─── Hugging Face Types ───
+
+export interface HFDatasetInfo {
+  repo_id: string
+  description: string | null
+  downloads: number
+  likes: number
+  tags: string[]
+  last_modified: string
+  size_bytes: number | null
+}
+
+export interface HFUploadRequest {
+  conversation_ids: string[]
+  repo_id: string
+  token: string
+  private: boolean
+}
+
+export interface HFUploadResult {
+  repo_id: string
+  url: string
+  commit_hash: string
+  files_uploaded: number
+}
+
 // ─── API Functions ───
 
 export function listConnectors(signal?: AbortSignal) {
@@ -65,4 +91,33 @@ export function receiveWebhook(payload: WebhookPayload, signal?: AbortSignal) {
 
 export function scanTextForPii(text: string, signal?: AbortSignal) {
   return apiPost<PIIScanResponse>('/api/v1/connectors/scan-pii', text, { signal })
+}
+
+// ─── Hugging Face API Functions ───
+
+export function searchHFDatasets(query: string, limit: number = 20, signal?: AbortSignal) {
+  return apiGet<HFDatasetInfo[]>(`/api/v1/connectors/huggingface/search?query=${encodeURIComponent(query)}&limit=${limit}`, { signal })
+}
+
+export function importHFDataset(repoId: string, split: string = 'train', token?: string, signal?: AbortSignal) {
+  const headers: Record<string, string> = {}
+
+  if (token) headers['X-HF-Token'] = token
+
+  return apiPost<ConnectorImportResponse>(
+    `/api/v1/connectors/huggingface/import?repo_id=${encodeURIComponent(repoId)}&split=${encodeURIComponent(split)}`,
+    undefined,
+    { signal, headers }
+  )
+}
+
+export function uploadToHF(request: HFUploadRequest, signal?: AbortSignal) {
+  return apiPost<HFUploadResult>('/api/v1/connectors/huggingface/upload', request, { signal })
+}
+
+export function listHFRepos(token: string, limit: number = 20, signal?: AbortSignal) {
+  return apiGet<HFDatasetInfo[]>(`/api/v1/connectors/huggingface/repos?limit=${limit}`, {
+    signal,
+    headers: { 'X-HF-Token': token },
+  })
 }

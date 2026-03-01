@@ -5,6 +5,7 @@ import {
   ArrowDownToLine,
   BarChart3,
   BookOpen,
+  Cable,
   ClipboardList,
   DollarSign,
   FlaskConical,
@@ -42,7 +43,8 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Import', href: '/dashboard/pipeline/import', icon: ArrowDownToLine },
       { label: 'Evaluate', href: '/dashboard/pipeline/evaluate', icon: FlaskConical },
       { label: 'Generate', href: '/dashboard/pipeline/generate', icon: Rocket },
-      { label: 'Export', href: '/dashboard/pipeline/export', icon: PackageOpen }
+      { label: 'Export', href: '/dashboard/pipeline/export', icon: PackageOpen },
+      { label: 'Connectors', href: '/dashboard/connectors', icon: Cable }
     ]
   },
   {
