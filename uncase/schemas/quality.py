@@ -18,6 +18,8 @@ QUALITY_THRESHOLDS: Final[dict[str, tuple[float, str, str]]] = {
     "tool_call_validity": (0.90, ">=", "Tool call schema validity"),
     "privacy_score": (0.0, "=", "PII residual (MUST be zero)"),
     "memorizacion": (0.01, "<", "Extraction attack success rate"),
+    "semantic_fidelity": (0.60, ">=", "Semantic fidelity (LLM-as-Judge)"),
+    "embedding_drift": (0.40, ">=", "Semantic drift (embedding cosine similarity)"),
 }
 
 
@@ -33,6 +35,12 @@ class QualityMetrics(BaseModel):
     )
     privacy_score: float = Field(..., ge=0.0, le=1.0, description="PII residual score (0.0 = clean)")
     memorizacion: float = Field(..., ge=0.0, le=1.0, description="Extraction attack success rate")
+    semantic_fidelity: float = Field(
+        default=0.5, ge=0.0, le=1.0, description="Semantic fidelity via LLM-as-Judge (0.5 = neutral/unavailable)"
+    )
+    embedding_drift: float = Field(
+        default=0.5, ge=0.0, le=1.0, description="Semantic drift via embedding cosine similarity"
+    )
 
 
 class QualityReport(BaseModel):
@@ -79,13 +87,15 @@ def compute_composite_score(metrics: QualityMetrics) -> tuple[float, bool, list[
     if gate_failed:
         return 0.0, False, failures
 
-    # Composite = min of all quality dimensions
+    # Composite = min of all quality dimensions (including semantic)
     score = min(
         metrics.rouge_l,
         metrics.fidelidad_factual,
         metrics.diversidad_lexica,
         metrics.coherencia_dialogica,
         metrics.tool_call_validity,
+        metrics.semantic_fidelity,
+        metrics.embedding_drift,
     )
 
     passed = len(failures) == 0

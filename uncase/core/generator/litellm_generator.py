@@ -37,9 +37,10 @@ class GenerationConfig:
     temperature: float = 0.7
     max_tokens: int = 4096
     language_override: str | None = None
-    max_retries: int = 2
+    max_retries: int = 3
     temperature_variation: float = 0.05
     api_base: str | None = None
+    retry_temperature_step: float = 0.1  # Increase temperature on each retry
 
 
 # -- Prompt templates --
@@ -358,73 +359,75 @@ def _build_feedback_augmentation(quality_report: QualityReport) -> str:
     return "\n".join(instructions)
 
 
-def _parse_llm_response(raw_content: str, seed: SeedSchema) -> list[ConversationTurn]:
-    """Parse the LLM response into a list of ConversationTurn objects.
+def _extract_json_array(raw_content: str) -> list[dict[str, Any]]:
+    """Extract a JSON array from LLM output text.
 
-    Attempts multiple parsing strategies:
-    1. Direct JSON parse
-    2. Extract JSON from markdown code blocks
-    3. Extract JSON array from surrounding text
+    Tries direct parse first, then extracts from markdown code blocks.
+    Avoids fragile regex bracket-matching — if structured extraction fails,
+    raises GenerationError so the caller can trigger a smart retry.
 
     Args:
         raw_content: Raw string content from the LLM response.
-        seed: The seed schema (for validation context).
+
+    Returns:
+        Parsed list of dicts.
+
+    Raises:
+        GenerationError: If no valid JSON array can be extracted.
+    """
+    content = raw_content.strip()
+
+    # Strategy 1: Direct JSON parse (works when response_format=json_object)
+    with contextlib.suppress(json.JSONDecodeError):
+        parsed: Any = json.loads(content)
+        if isinstance(parsed, list):
+            return parsed        # Some models wrap array in an object: {"turns": [...]}
+        if isinstance(parsed, dict):
+            for key in ("turns", "conversation", "messages", "data"):
+                val = parsed.get(key)
+                if isinstance(val, list):
+                    return val
+    # Strategy 2: Extract from markdown code blocks
+    code_block_match = re.search(r"```(?:json)?\s*\n?(.*?)\n?\s*```", content, re.DOTALL)
+    if code_block_match:
+        with contextlib.suppress(json.JSONDecodeError):
+            parsed = json.loads(code_block_match.group(1).strip())
+            if isinstance(parsed, list):
+                return parsed
+    msg = "Failed to extract JSON array from LLM response"
+    raise GenerationError(msg)
+
+
+def _validate_turns(raw_turns: list[dict[str, Any]], seed: SeedSchema) -> list[ConversationTurn]:
+    """Validate and convert raw dicts to ConversationTurn objects using Pydantic.
+
+    Args:
+        raw_turns: Parsed JSON turn dicts.
+        seed: The seed schema (for role validation).
 
     Returns:
         List of validated ConversationTurn objects.
 
     Raises:
-        GenerationError: If parsing fails completely.
+        GenerationError: If no valid turns could be constructed.
     """
-    content = raw_content.strip()
-
-    # Strategy 1: Direct JSON parse
-    parsed: list[dict[str, Any]] | None = None
-    with contextlib.suppress(json.JSONDecodeError):
-        parsed = json.loads(content)
-
-    # Strategy 2: Extract from markdown code blocks
-    if parsed is None:
-        code_block_match = re.search(r"```(?:json)?\s*\n?(.*?)\n?\s*```", content, re.DOTALL)
-        if code_block_match:
-            with contextlib.suppress(json.JSONDecodeError):
-                parsed = json.loads(code_block_match.group(1).strip())
-
-    # Strategy 3: Find first [ ... ] in the text
-    if parsed is None:
-        bracket_match = re.search(r"\[.*\]", content, re.DOTALL)
-        if bracket_match:
-            with contextlib.suppress(json.JSONDecodeError):
-                parsed = json.loads(bracket_match.group(0))
-
-    if parsed is None:
-        msg = "Failed to parse LLM response as JSON after all strategies"
-        raise GenerationError(msg)
-
-    if not isinstance(parsed, list):
-        msg = f"Expected JSON array, got {type(parsed).__name__}"
-        raise GenerationError(msg)
-
-    if len(parsed) == 0:
+    if not raw_turns:
         msg = "LLM returned an empty array of turns"
         raise GenerationError(msg)
 
-    # Validate and convert each turn
     valid_roles = set(seed.roles)
     turns: list[ConversationTurn] = []
 
-    for i, turn_data in enumerate(parsed):
+    for i, turn_data in enumerate(raw_turns):
         if not isinstance(turn_data, dict):
             logger.warning("skipping_invalid_turn", index=i, reason="not a dict")
             continue
 
-        # Normalize fields
         turno = turn_data.get("turno", i + 1)
         rol = turn_data.get("rol", "")
         contenido = turn_data.get("contenido", "")
         herramientas = turn_data.get("herramientas_usadas", [])
 
-        # Validate role
         if rol not in valid_roles:
             logger.warning(
                 "turn_role_not_in_seed",
@@ -432,11 +435,9 @@ def _parse_llm_response(raw_content: str, seed: SeedSchema) -> list[Conversation
                 rol=rol,
                 valid_roles=sorted(valid_roles),
             )
-            # Try to find closest match or use first role
             if not rol:
                 rol = seed.roles[i % len(seed.roles)]
 
-        # Validate content
         if not contenido or not contenido.strip():
             logger.warning("skipping_empty_turn", turno=turno, rol=rol)
             continue
@@ -450,21 +451,36 @@ def _parse_llm_response(raw_content: str, seed: SeedSchema) -> list[Conversation
             )
             turns.append(turn)
         except Exception as exc:
-            logger.warning(
-                "skipping_invalid_turn",
-                turno=turno,
-                error=str(exc),
-            )
+            logger.warning("skipping_invalid_turn", turno=turno, error=str(exc))
 
     if not turns:
         msg = "No valid turns could be parsed from LLM response"
         raise GenerationError(msg)
 
-    # Re-number turns sequentially
     for idx, turn in enumerate(turns):
         turn.turno = idx + 1
 
     return turns
+
+
+def _parse_llm_response(raw_content: str, seed: SeedSchema) -> list[ConversationTurn]:
+    """Parse the LLM response into validated ConversationTurn objects.
+
+    Uses structured JSON extraction + Pydantic validation. No regex bracket
+    fallback — structural failures propagate to trigger smart retry.
+
+    Args:
+        raw_content: Raw string content from the LLM response.
+        seed: The seed schema (for validation context).
+
+    Returns:
+        List of validated ConversationTurn objects.
+
+    Raises:
+        GenerationError: If parsing or validation fails.
+    """
+    raw_turns = _extract_json_array(raw_content)
+    return _validate_turns(raw_turns, seed)
 
 
 class LiteLLMGenerator(BaseGenerator):
@@ -506,7 +522,15 @@ class LiteLLMGenerator(BaseGenerator):
         *,
         temperature: float | None = None,
     ) -> str:
-        """Call the LLM via LiteLLM and return the response content.
+        """Call the LLM via LiteLLM with smart retry on failure.
+
+        Smart retry strategy:
+        1. First attempt uses ``response_format=json_object`` when supported.
+        2. On JSON format failure, retries without ``response_format``.
+        3. On each retry, raises temperature by ``retry_temperature_step``
+           to encourage diverse output and escape degenerate patterns.
+        4. On structural parse failure (caller catches), the higher temperature
+           from retry helps the model break out of malformed patterns.
 
         Args:
             system_prompt: The system message.
@@ -517,11 +541,11 @@ class LiteLLMGenerator(BaseGenerator):
             Raw string content from the LLM response.
 
         Raises:
-            GenerationError: If the LLM call fails.
+            GenerationError: If the LLM call fails after all retries.
         """
         import litellm
 
-        temp = temperature if temperature is not None else self._config.temperature
+        base_temp = temperature if temperature is not None else self._config.temperature
 
         kwargs: dict[str, Any] = {
             "model": self._config.model,
@@ -529,15 +553,12 @@ class LiteLLMGenerator(BaseGenerator):
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            "temperature": temp,
             "max_tokens": self._config.max_tokens,
         }
 
-        # Set API key if provided
         if self._api_key:
             kwargs["api_key"] = self._api_key
 
-        # Set api_base if provided (e.g. for local/custom providers)
         if self._api_base:
             kwargs["api_base"] = self._api_base
 
@@ -551,6 +572,10 @@ class LiteLLMGenerator(BaseGenerator):
 
         last_error: Exception | None = None
         for attempt in range(self._config.max_retries + 1):
+            # Smart retry: escalate temperature on each attempt
+            retry_temp = min(2.0, base_temp + attempt * self._config.retry_temperature_step)
+            kwargs["temperature"] = retry_temp
+
             try:
                 if attempt == 0 and supports_response_format:
                     kwargs["response_format"] = {"type": "json_object"}
@@ -563,24 +588,24 @@ class LiteLLMGenerator(BaseGenerator):
                     raise GenerationError(msg)
 
                 return content  # type: ignore[no-any-return]
-
             except Exception as exc:
                 last_error = exc
-                # If response_format failed, retry without it
                 if "response_format" in kwargs:
                     kwargs.pop("response_format", None)
                     logger.warning(
                         "retrying_without_response_format",
                         model=self._config.model,
                         attempt=attempt + 1,
+                        temperature=retry_temp,
                         error=str(exc),
                     )
                 else:
                     logger.warning(
-                        "llm_call_failed",
+                        "llm_call_retry",
                         model=self._config.model,
                         attempt=attempt + 1,
                         max_retries=self._config.max_retries,
+                        temperature=retry_temp,
                         error=str(exc),
                     )
 

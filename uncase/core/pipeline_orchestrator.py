@@ -1,5 +1,8 @@
 """End-to-end pipeline orchestrator — chains all 5 SCSF layers.
 
+Supports parallel processing of seeds/conversations with semaphore-based
+concurrency control to respect LLM rate limits.
+
 Usage:
     orchestrator = PipelineOrchestrator(settings=settings)
     result = await orchestrator.run(
@@ -11,6 +14,7 @@ Usage:
 
 from __future__ import annotations
 
+import asyncio
 import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
@@ -33,6 +37,10 @@ if TYPE_CHECKING:
     from uncase.schemas.seed import SeedSchema
 
 logger = structlog.get_logger(__name__)
+
+# Default concurrency limit — controls how many LLM calls can be in-flight
+# simultaneously. Respects typical rate limits (10-50 RPM for most providers).
+_DEFAULT_MAX_CONCURRENCY = 10
 
 
 @dataclass
@@ -79,10 +87,15 @@ class PipelineOrchestrator:
         Layer 0 (Seed Engine) → Layer 1 (Parse) → Layer 2 (Evaluate) →
         Layer 3 (Generate) → Layer 2 (Re-evaluate) → Layer 4 (LoRA Train)
 
+    Uses ``asyncio.gather()`` with semaphore-based concurrency control to
+    process seeds and conversations in parallel while respecting LLM rate
+    limits.
+
     Args:
         settings: Application settings.
         progress_callback: Optional callback for progress updates.
             Receives (stage_name: str, progress: float, message: str).
+        max_concurrency: Max number of concurrent LLM calls (default 10).
     """
 
     def __init__(
@@ -90,6 +103,7 @@ class PipelineOrchestrator:
         *,
         settings: UNCASESettings | None = None,
         progress_callback: Callable[[str, float, str], Any] | None = None,
+        max_concurrency: int = _DEFAULT_MAX_CONCURRENCY,
     ) -> None:
         from uncase.config import UNCASESettings as _Settings
 
@@ -97,6 +111,8 @@ class PipelineOrchestrator:
         self._progress = progress_callback or (lambda *_args: None)
         self._seed_engine = SeedEngine()
         self._evaluator = ConversationEvaluator()
+        self._semaphore = asyncio.Semaphore(max_concurrency)
+        self._max_concurrency = max_concurrency
 
     async def run(
         self,
@@ -155,19 +171,26 @@ class PipelineOrchestrator:
             total_duration_seconds=0.0,
         )
 
-        # ── Stage 1: Seed Engine (Layer 0) ──────────────────────────────
+        # ── Stage 1: Seed Engine (Layer 0) — parallel ─────────────────
         self._progress("seed_engine", 0.0, "Creating seeds from raw conversations...")
         stage_start = time.monotonic()
         seeds: list[SeedSchema] = []
 
         try:
-            for i, raw in enumerate(raw_conversations):
-                seed = await self._seed_engine.create_seed(raw, domain)
+            total_raw = len(raw_conversations)
+
+            async def _create_seed(raw: str) -> SeedSchema:
+                async with self._semaphore:
+                    return await self._seed_engine.create_seed(raw, domain)
+
+            seed_tasks = [_create_seed(raw) for raw in raw_conversations]
+            for idx, coro in enumerate(asyncio.as_completed(seed_tasks), 1):
+                seed = await coro
                 seeds.append(seed)
                 self._progress(
                     "seed_engine",
-                    (i + 1) / len(raw_conversations),
-                    f"Seed {i + 1}/{len(raw_conversations)} created",
+                    idx / total_raw,
+                    f"Seed {idx}/{total_raw} created",
                 )
 
             stage_result = PipelineStageResult(
@@ -194,7 +217,7 @@ class PipelineOrchestrator:
             result.total_duration_seconds = round(time.monotonic() - total_start, 2)
             return result
 
-        # ── Stage 2: Generation (Layer 3) ────────────────────────────────
+        # ── Stage 2: Generation (Layer 3) — parallel ─────────────────
         self._progress("generation", 0.0, "Generating synthetic conversations...")
         stage_start = time.monotonic()
         all_conversations: list[Conversation] = []
@@ -207,13 +230,20 @@ class PipelineOrchestrator:
             )
             generator = LiteLLMGenerator(config=config, api_key=api_key)
 
-            for i, seed in enumerate(seeds):
-                conversations = await generator.generate(seed, count=count)
+            total_seeds = len(seeds)
+
+            async def _generate_for_seed(seed: SeedSchema) -> list[Conversation]:
+                async with self._semaphore:
+                    return await generator.generate(seed, count=count)
+
+            gen_tasks = [_generate_for_seed(s) for s in seeds]
+            for idx, gen_coro in enumerate(asyncio.as_completed(gen_tasks), 1):
+                conversations = await gen_coro
                 all_conversations.extend(conversations)
                 self._progress(
                     "generation",
-                    (i + 1) / len(seeds),
-                    f"Generated from seed {i + 1}/{len(seeds)} ({len(conversations)} conversations)",
+                    idx / total_seeds,
+                    f"Generated from seed {idx}/{total_seeds} ({len(conversations)} conversations)",
                 )
 
             stage_result = PipelineStageResult(
@@ -242,24 +272,39 @@ class PipelineOrchestrator:
             result.total_duration_seconds = round(time.monotonic() - total_start, 2)
             return result
 
-        # ── Stage 3: Quality Evaluation (Layer 2) ────────────────────────
+        # ── Stage 3: Quality Evaluation (Layer 2) — parallel batches ──
         self._progress("evaluation", 0.0, "Evaluating quality...")
         stage_start = time.monotonic()
         all_reports: list[QualityReport] = []
 
         try:
-            # Match conversations to their origin seeds (round-robin)
-            for i, conv in enumerate(all_conversations):
-                seed_idx = i % len(seeds)
-                report = await self._evaluator.evaluate(conv, seeds[seed_idx])
-                all_reports.append(report)
+            # Pair conversations with their origin seeds (round-robin)
+            conv_seed_pairs = [
+                (conv, seeds[i % len(seeds)])
+                for i, conv in enumerate(all_conversations)
+            ]
 
-                if (i + 1) % 10 == 0 or i == len(all_conversations) - 1:
-                    self._progress(
-                        "evaluation",
-                        (i + 1) / len(all_conversations),
-                        f"Evaluated {i + 1}/{len(all_conversations)}",
-                    )
+            completed = 0
+            total_convs = len(conv_seed_pairs)
+
+            async def _evaluate_one(conv: Conversation, seed: SeedSchema) -> QualityReport:
+                return await self._evaluator.evaluate(conv, seed)
+
+            eval_tasks = [_evaluate_one(conv, seed) for conv, seed in conv_seed_pairs]
+
+            # Process in batches to avoid overwhelming memory with too many
+            # concurrent coroutines when there are thousands of conversations.
+            batch_size = self._max_concurrency * 2
+            for batch_start in range(0, len(eval_tasks), batch_size):
+                batch = eval_tasks[batch_start : batch_start + batch_size]
+                batch_reports = await asyncio.gather(*batch)
+                all_reports.extend(batch_reports)
+                completed += len(batch)
+                self._progress(
+                    "evaluation",
+                    completed / total_convs,
+                    f"Evaluated {completed}/{total_convs}",
+                )
 
             passed = sum(1 for r in all_reports if r.passed)
             avg_score = round(sum(r.composite_score for r in all_reports) / len(all_reports), 4) if all_reports else 0.0

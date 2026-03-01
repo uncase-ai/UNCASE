@@ -13,6 +13,7 @@ from uncase.core.evaluator.metrics.fidelity import FactualFidelityMetric
 from uncase.core.evaluator.metrics.privacy import PrivacyMetric
 from uncase.core.evaluator.metrics.rouge import ROUGELMetric
 from uncase.core.evaluator.metrics.tool_call import ToolCallValidatorMetric
+from uncase.core.evaluator.semantic_judge import EmbeddingDriftMetric, SemanticFidelityMetric
 from uncase.schemas.quality import QualityMetrics, QualityReport, compute_composite_score
 
 if TYPE_CHECKING:
@@ -48,7 +49,12 @@ class ConversationEvaluator(BaseEvaluator):
 
     @staticmethod
     def _default_metrics() -> list[BaseMetric]:
-        """Return the standard set of quality metrics."""
+        """Return the standard set of quality metrics.
+
+        Includes both lexical metrics (always available) and semantic
+        metrics (EmbeddingDrift with TF-IDF fallback is always available;
+        SemanticFidelity requires LLM API access).
+        """
         return [
             ROUGELMetric(),
             FactualFidelityMetric(),
@@ -56,6 +62,8 @@ class ConversationEvaluator(BaseEvaluator):
             DialogCoherenceMetric(),
             ToolCallValidatorMetric(),
             PrivacyMetric(),
+            EmbeddingDriftMetric(),
+            SemanticFidelityMetric(),
         ]
 
     async def evaluate(self, conversation: Conversation, seed: SeedSchema) -> QualityReport:
@@ -88,6 +96,8 @@ class ConversationEvaluator(BaseEvaluator):
             tool_call_validity=scores.get("tool_call_validity", 1.0),
             privacy_score=scores.get("privacy_score", 0.0),
             memorizacion=scores.get("memorizacion", 0.0),
+            semantic_fidelity=scores.get("semantic_fidelity", 0.5),
+            embedding_drift=scores.get("embedding_drift", 0.5),
         )
 
         composite, passed, failures = compute_composite_score(metrics)
