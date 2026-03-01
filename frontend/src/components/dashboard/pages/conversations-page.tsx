@@ -45,6 +45,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Rating } from '@/components/ui/rating'
@@ -425,12 +426,18 @@ function ConversationCard({
   conv,
   index,
   isSelected,
-  onSelect
+  isChecked,
+  selectMode,
+  onSelect,
+  onToggleCheck
 }: {
   conv: Conversation
   index: number
   isSelected: boolean
+  isChecked: boolean
+  selectMode: boolean
   onSelect: () => void
+  onToggleCheck: () => void
 }) {
   const preview = buildSummary(conv)
   const tools = getToolCallNames(conv)
@@ -448,6 +455,14 @@ function ConversationCard({
       )}
     >
       <div className="flex items-start gap-2">
+        {selectMode && (
+          <Checkbox
+            checked={isChecked}
+            onCheckedChange={() => onToggleCheck()}
+            onClick={e => e.stopPropagation()}
+            className="mt-0.5 shrink-0"
+          />
+        )}
         <span className="shrink-0 font-mono text-xs font-bold text-muted-foreground">#{index + 1}</span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -662,7 +677,7 @@ function MessageBubble({
   const { textParts, toolBlocks } = parseToolCallsFromContent(item.turn.contenido)
 
   return (
-    <div className={cn('rounded-lg border p-3', style.bgClass, style.borderClass)}>
+    <div className={cn('min-w-0 rounded-lg border p-3', style.bgClass, style.borderClass)}>
       {/* Role label */}
       <div className="mb-2 flex items-center gap-2">
         <Icon className={cn('size-3.5', style.iconClass)} />
@@ -721,7 +736,7 @@ function MessageBubble({
         >
           {/* Render text parts */}
           {textParts.map((text, i) => (
-            <p key={`text-${i}`} className="whitespace-pre-wrap text-sm leading-relaxed">
+            <p key={`text-${i}`} className="whitespace-pre-wrap break-words text-sm leading-relaxed">
               {text}
             </p>
           ))}
@@ -787,7 +802,7 @@ function InlineToolCallBlock({ content }: { content: string }) {
           Tool Call
         </span>
       </div>
-      <pre className="overflow-x-auto text-[11px] leading-relaxed text-amber-900 dark:text-amber-200">{content}</pre>
+      <pre className="whitespace-pre-wrap break-all text-[11px] leading-relaxed text-amber-900 dark:text-amber-200">{content}</pre>
     </div>
   )
 }
@@ -806,7 +821,7 @@ function ToolCallBlock({
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <div className="ml-6 rounded-lg border border-amber-200 bg-amber-50/40 dark:border-amber-800/50 dark:bg-amber-950/20">
+    <div className="ml-6 min-w-0 rounded-lg border border-amber-200 bg-amber-50/40 dark:border-amber-800/50 dark:bg-amber-950/20">
       <button onClick={() => setExpanded(!expanded)} className="flex w-full items-center gap-2 px-3 py-2 text-left">
         {expanded ? (
           <ChevronDown className="size-3 text-amber-600 dark:text-amber-400" />
@@ -819,7 +834,7 @@ function ToolCallBlock({
       </button>
       {expanded && (
         <div className="border-t border-amber-200/60 px-3 py-2 dark:border-amber-800/40">
-          <pre className="overflow-x-auto text-[11px] leading-relaxed text-amber-900 dark:text-amber-200">
+          <pre className="whitespace-pre-wrap break-all text-[11px] leading-relaxed text-amber-900 dark:text-amber-200">
             {JSON.stringify(args, null, 2)}
           </pre>
         </div>
@@ -844,7 +859,7 @@ function ToolResultBlock({
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <div className="ml-6 rounded-lg border border-teal-200 bg-teal-50/40 dark:border-teal-800/50 dark:bg-teal-950/20">
+    <div className="ml-6 min-w-0 rounded-lg border border-teal-200 bg-teal-50/40 dark:border-teal-800/50 dark:bg-teal-950/20">
       <button onClick={() => setExpanded(!expanded)} className="flex w-full items-center gap-2 px-3 py-2 text-left">
         {expanded ? (
           <ChevronDown className="size-3 text-teal-600 dark:text-teal-400" />
@@ -862,7 +877,7 @@ function ToolResultBlock({
       </button>
       {expanded && (
         <div className="border-t border-teal-200/60 px-3 py-2 dark:border-teal-800/40">
-          <pre className="overflow-x-auto text-[11px] leading-relaxed text-teal-900 dark:text-teal-200">
+          <pre className="whitespace-pre-wrap break-all text-[11px] leading-relaxed text-teal-900 dark:text-teal-200">
             {typeof result === 'string' ? result : JSON.stringify(result, null, 2)}
           </pre>
         </div>
@@ -1182,10 +1197,15 @@ function DetailPanel({
         )}
 
         {/* Action toolbar — always visible in header */}
-        <div className="mt-3 flex items-center gap-2 border-t pt-3">
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleValidate}>
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t pt-3">
+          <Button
+            variant={status === 'valid' ? 'default' : 'outline'}
+            size="sm"
+            className={cn('gap-1.5', status === 'valid' && 'bg-emerald-600 text-white hover:bg-emerald-700')}
+            onClick={handleValidate}
+          >
             <CheckCircle2 className="size-3.5" />
-            Validate
+            {status === 'valid' ? 'Validated' : 'Validate'}
           </Button>
           <Button size="sm" className="gap-1.5" onClick={handleSave} disabled={!hasPendingChanges}>
             <Save className="size-3.5" />
@@ -1369,6 +1389,9 @@ export function ConversationsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [ratingFilter, setRatingFilter] = useState<string>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set())
+  const [selectMode, setSelectMode] = useState(false)
+  const [showBulkDelete, setShowBulkDelete] = useState(false)
   const [page, setPage] = useState(0)
   const [apiConnected, setApiConnected] = useState(false)
 
@@ -1567,6 +1590,49 @@ export function ConversationsPage() {
     [conversations, persist, selectedId, apiConnected]
   )
 
+  const handleBulkDelete = useCallback(() => {
+    if (checkedIds.size === 0) return
+
+    const remaining = conversations.filter(c => !checkedIds.has(c.conversation_id))
+
+    persist(remaining)
+
+    if (selectedId && checkedIds.has(selectedId)) setSelectedId(null)
+
+    // Delete from API (best-effort)
+    if (apiConnected) {
+      for (const id of checkedIds) {
+        deleteConversationApi(id).catch(() => {})
+      }
+    }
+
+    setCheckedIds(new Set())
+    setSelectMode(false)
+    setShowBulkDelete(false)
+  }, [conversations, checkedIds, persist, selectedId, apiConnected])
+
+  const toggleCheck = useCallback((id: string) => {
+    setCheckedIds(prev => {
+      const next = new Set(prev)
+
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+
+      return next
+    })
+  }, [])
+
+  const selectAllOnPage = useCallback(() => {
+    const ids = new Set(checkedIds)
+
+    for (const c of paged) ids.add(c.conversation_id)
+    setCheckedIds(ids)
+  }, [paged, checkedIds])
+
+  const deselectAll = useCallback(() => {
+    setCheckedIds(new Set())
+  }, [])
+
   // Reset page when filters change
   const handleFilterChange =
     <T,>(setter: (v: T) => void) =>
@@ -1606,7 +1672,7 @@ export function ConversationsPage() {
 
       <div className="flex min-h-0 flex-1 gap-0 overflow-hidden rounded-lg border">
         {/* ─── Left: Conversation list ─── */}
-        <div className="flex w-96 shrink-0 flex-col border-r bg-muted/20">
+        <div className="flex w-96 shrink-0 flex-col overflow-hidden border-r bg-muted/20">
           {/* Filters */}
           <div className="shrink-0 space-y-2 border-b p-3">
             <SearchInput
@@ -1665,7 +1731,49 @@ export function ConversationsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="text-[11px] text-muted-foreground">{filtered.length} results</div>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-muted-foreground">{filtered.length} results</span>
+              <div className="flex items-center gap-1">
+                {selectMode ? (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 text-[10px]"
+                      onClick={checkedIds.size === paged.length ? deselectAll : selectAllOnPage}
+                    >
+                      {checkedIds.size === paged.length ? 'Deselect All' : 'Select All'}
+                    </Button>
+                    {checkedIds.size > 0 && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="h-6 gap-1 text-[10px]"
+                        onClick={() => setShowBulkDelete(true)}
+                      >
+                        <Trash2 className="size-3" />
+                        Delete {checkedIds.size}
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 text-[10px]"
+                      onClick={() => {
+                        setSelectMode(false)
+                        setCheckedIds(new Set())
+                      }}
+                    >
+                      <X className="size-3" />
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => setSelectMode(true)}>
+                    Select
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Conversation cards */}
@@ -1677,7 +1785,10 @@ export function ConversationsPage() {
                   conv={conv}
                   index={page * PAGE_SIZE + i}
                   isSelected={selectedId === conv.conversation_id}
+                  isChecked={checkedIds.has(conv.conversation_id)}
+                  selectMode={selectMode}
                   onSelect={() => setSelectedId(conv.conversation_id)}
+                  onToggleCheck={() => toggleCheck(conv.conversation_id)}
                 />
               ))}
             </div>
@@ -1690,7 +1801,7 @@ export function ConversationsPage() {
         </div>
 
         {/* ─── Right: Detail panel ─── */}
-        <div className="flex-1 bg-background">
+        <div className="min-w-0 flex-1 overflow-hidden bg-background">
           {selectedConversation ? (
             <DetailPanel
               key={selectedConversation.conversation_id}
@@ -1709,6 +1820,27 @@ export function ConversationsPage() {
           )}
         </div>
       </div>
+
+      {/* Bulk delete confirmation */}
+      <Dialog open={showBulkDelete} onOpenChange={setShowBulkDelete}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete {checkedIds.size} Conversations</DialogTitle>
+            <DialogDescription>
+              This will permanently remove {checkedIds.size} conversation{checkedIds.size > 1 ? 's' : ''} from your
+              local store. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button variant="destructive" onClick={handleBulkDelete}>
+              Delete {checkedIds.size}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
