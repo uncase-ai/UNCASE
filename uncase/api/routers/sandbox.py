@@ -343,6 +343,7 @@ def _build_demo_fallback(req: DemoSandboxRequest, http_req: Request) -> DemoSand
         status=SandboxJobStatus.RUNNING,
         api_url=base_url,
         sandbox_url=base_url,
+        expires_at=datetime.now(UTC) + timedelta(hours=24),
     )
 
     return DemoSandboxResponse(

@@ -78,6 +78,8 @@ export interface DemoSandboxResponse {
   expires_at: string
   preloaded_seeds: number
   domain: string
+  fallback?: boolean
+  demo_seeds?: unknown[]
 }
 
 // ─── Opik Evaluation ───

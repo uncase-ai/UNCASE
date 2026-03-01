@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState, useSyncExternalStore } from 'react'
 
 import { createDemoSandbox } from '@/lib/api/sandbox'
+import { activateDemo } from '@/lib/demo'
 import {
   clearSandboxSession,
   getSandboxSession,
@@ -68,6 +69,9 @@ export function useSandboxDemo() {
         return null
       }
 
+      // Always populate demo data in localStorage so the dashboard has content
+      await activateDemo()
+
       const sandboxSession: SandboxSession = {
         apiUrl: data.api_url,
         docsUrl: data.docs_url,
@@ -78,7 +82,13 @@ export function useSandboxDemo() {
         createdAt: new Date().toISOString()
       }
 
-      setSandboxSession(sandboxSession)
+      // Only set sandbox session (API routing) when E2B is active.
+      // In fallback mode the api_url already points to the main API,
+      // so we skip session setup to avoid showing a sandbox TTL banner.
+      if (!data.fallback) {
+        setSandboxSession(sandboxSession)
+      }
+
       setBooting(false)
       bootingRef.current = false
 
