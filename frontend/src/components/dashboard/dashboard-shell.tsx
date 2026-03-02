@@ -28,8 +28,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       <div className="flex flex-1 flex-col overflow-hidden">
         <DemoBanner />
         <Topbar sidebarCollapsed={collapsed} onToggleSidebar={toggle} onOpenMobile={() => setMobileOpen(true)} />
-        <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">{children}</div>
+        <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col overflow-y-auto px-4 py-6 sm:px-6">{children}</div>
         </main>
       </div>
     </div>

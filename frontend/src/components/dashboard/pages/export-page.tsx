@@ -17,6 +17,8 @@ import { SUPPORTED_DOMAINS } from '@/types/api'
 
 import { useApi } from '@/hooks/use-api'
 import { downloadExport, fetchTemplates } from '@/lib/api/templates'
+import { isDemoMode } from '@/lib/demo'
+import { DEMO_BATCHES, DEMO_BLOCKCHAIN_STATS } from '@/lib/demo/blockchain'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -678,6 +680,8 @@ export function ExportPage() {
         exportName={exportName}
         domain={domainFilter}
         template={selectedTemplate}
+        blockchainStats={isDemoMode() ? DEMO_BLOCKCHAIN_STATS : null}
+        batches={isDemoMode() ? DEMO_BATCHES : null}
       />
     </div>
   )
