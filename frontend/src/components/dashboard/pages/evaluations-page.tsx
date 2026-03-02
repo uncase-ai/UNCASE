@@ -8,6 +8,8 @@ import {
   BarChart3,
   CheckCircle2,
   FlaskConical,
+  Link2,
+  Minus,
   ShieldAlert,
   Target
 } from 'lucide-react'
@@ -211,6 +213,24 @@ export function EvaluationsPage() {
       header: 'Conversation',
       cell: row => (
         <span className="font-mono text-xs">{row.conversation_id.slice(0, 12)}...</span>
+      )
+    },
+    {
+      key: 'cert',
+      header: 'Cert',
+      className: 'w-12',
+      cell: row => (
+        <Link
+          href={`/dashboard/blockchain?verify=${row.conversation_id}`}
+          title="Verify on blockchain"
+          className="inline-flex items-center justify-center"
+        >
+          {row.passed ? (
+            <Link2 className="size-3.5 text-emerald-500" />
+          ) : (
+            <Minus className="size-3.5 text-muted-foreground" />
+          )}
+        </Link>
       )
     },
     {

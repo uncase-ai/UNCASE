@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from 'react'
 
-import { Check, Copy, Eye, EyeOff, Key, Loader2, Play, Plus, RefreshCw, Server, Shield, ShieldOff, Star, Trash2, X, Zap } from 'lucide-react'
+import { Check, Copy, Eye, EyeOff, Key, Link2, Loader2, Play, Plus, RefreshCw, Server, Shield, ShieldOff, Star, Trash2, X, Zap } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
-import type { APIKeyCreatedResponse, APIKeyResponse, OrganizationResponse, ProviderResponse, ProviderTestResponse } from '@/types/api'
+import type { APIKeyCreatedResponse, APIKeyResponse, BlockchainStats, OrganizationResponse, ProviderResponse, ProviderTestResponse } from '@/types/api'
 import { PROVIDER_TYPES } from '@/types/api'
 import { checkApiHealth, clearStoredApiKey, setStoredApiKey } from '@/lib/api/client'
+import { fetchBlockchainStats } from '@/lib/api/blockchain'
 import {
   createApiKey,
   createOrganization,
@@ -112,6 +113,18 @@ export function SettingsPage() {
     is_default: false
   })
 
+  // ─── Blockchain Config ───
+  const [bcStats, setBcStats] = useState<BlockchainStats | null>(null)
+  const [bcLoading, setBcLoading] = useState(false)
+
+  const loadBlockchainStatus = async () => {
+    setBcLoading(true)
+    const res = await fetchBlockchainStats()
+
+    if (res.data) setBcStats(res.data)
+    setBcLoading(false)
+  }
+
   const loadProviders = async () => {
     setProvidersLoading(true)
     const res = await fetchProviders(false)
@@ -207,6 +220,7 @@ export function SettingsPage() {
     }
 
     loadProviders()
+    loadBlockchainStatus()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -854,6 +868,73 @@ export function SettingsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Separator />
+
+      {/* Blockchain */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Link2 className="size-4" /> Blockchain
+              </CardTitle>
+              <CardDescription>On-chain quality certification via Polygon PoS</CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={loadBlockchainStatus} disabled={bcLoading}>
+              {bcLoading ? <Loader2 className="mr-1 size-3 animate-spin" /> : <RefreshCw className="mr-1 size-3" />}
+              Test Connection
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {bcStats ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <StatusBadge variant="success">Connected</StatusBadge>
+                <span className="text-xs text-muted-foreground">
+                  {bcStats.total_anchored} reports anchored on-chain
+                </span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-lg border px-3 py-2">
+                  <p className="text-[10px] font-medium uppercase text-muted-foreground">Hashed</p>
+                  <p className="text-lg font-bold">{bcStats.total_hashed}</p>
+                </div>
+                <div className="rounded-lg border px-3 py-2">
+                  <p className="text-[10px] font-medium uppercase text-muted-foreground">Batches</p>
+                  <p className="text-lg font-bold">{bcStats.total_batches}</p>
+                </div>
+                <div className="rounded-lg border px-3 py-2">
+                  <p className="text-[10px] font-medium uppercase text-muted-foreground">Anchored</p>
+                  <p className="text-lg font-bold">{bcStats.total_anchored}</p>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-muted-foreground w-28 shrink-0">Private Key</span>
+                  <StatusBadge variant={bcStats.total_anchored > 0 || bcStats.total_batches > 0 ? 'success' : 'warning'}>
+                    {bcStats.total_anchored > 0 || bcStats.total_batches > 0 ? 'Configured' : 'Not configured'}
+                  </StatusBadge>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Blockchain settings (RPC URL, chain ID, contract address, private key) are configured via server environment variables. They cannot be modified from the UI for security reasons.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="py-4 text-center text-sm text-muted-foreground">
+              {bcLoading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="size-4 animate-spin" /> Checking blockchain status...
+                </div>
+              ) : (
+                'Click "Test Connection" to check blockchain configuration status.'
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

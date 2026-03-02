@@ -772,3 +772,63 @@ export interface AuditLogEntry {
   status: string
   created_at: string
 }
+
+// ─── Blockchain ───
+export interface BlockchainStats {
+  total_hashed: number
+  total_batched: number
+  total_unbatched: number
+  total_batches: number
+  total_anchored: number
+  total_pending_anchor: number
+  total_failed_anchor: number
+}
+
+export interface MerkleProofDetail {
+  siblings: string[]
+  directions: string[]
+  leaf_hash: string
+  leaf_index: number
+  merkle_root: string
+}
+
+export interface VerificationResponse {
+  evaluation_report_id: string
+  report_hash: string
+  hashed_at: string
+  batch_id: string | null
+  batch_number: number | null
+  tx_hash: string | null
+  block_number: number | null
+  chain_id: number | null
+  anchored: boolean
+  explorer_url: string | null
+  proof: MerkleProofDetail | null
+}
+
+export interface MerkleBatch {
+  id: string
+  batch_number: number
+  leaf_count: number
+  tree_depth: number
+  merkle_root: string
+  tx_hash: string | null
+  block_number: number | null
+  chain_id: number | null
+  contract_address: string | null
+  anchored: boolean
+  anchor_error: string | null
+  organization_id: string | null
+  created_at: string
+}
+
+export interface BatchBuildResponse {
+  batch_id: string
+  batch_number: number
+  leaf_count: number
+  tree_depth: number
+  merkle_root: string
+  anchored: boolean
+  tx_hash: string | null
+  anchor_error: string | null
+}
