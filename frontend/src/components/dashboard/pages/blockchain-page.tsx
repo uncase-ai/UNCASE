@@ -60,6 +60,8 @@ import {
   buildBatch,
   retryAnchor
 } from '@/lib/api/blockchain'
+import { isDemoMode } from '@/lib/demo'
+import { DEMO_BLOCKCHAIN_STATS, DEMO_BATCHES, getDemoVerification } from '@/lib/demo/blockchain'
 
 type AnchorFilter = 'all' | 'anchored' | 'pending' | 'failed'
 
@@ -666,8 +668,13 @@ export function BlockchainPage() {
     [anchorFilter]
   )
 
-  const { data: stats, loading: statsLoading, execute: refreshStats } = useApi<BlockchainStats>(statsFetcher)
-  const { data: batches, loading: batchesLoading, execute: refreshBatches } = useApi<MerkleBatch[]>(batchFetcher)
+  const { data: apiStats, loading: statsLoading, execute: refreshStats } = useApi<BlockchainStats>(statsFetcher)
+  const { data: apiBatches, loading: batchesLoading, execute: refreshBatches } = useApi<MerkleBatch[]>(batchFetcher)
+
+  // Demo fallback: use demo data when API returns empty and demo mode is active
+  const demo = isDemoMode()
+  const stats = apiStats && apiStats.total_hashed > 0 ? apiStats : demo ? DEMO_BLOCKCHAIN_STATS : apiStats
+  const batches = apiBatches && apiBatches.length > 0 ? apiBatches : demo ? DEMO_BATCHES : apiBatches
 
   // Filter failed batches client-side (API only supports anchored=true/false)
   const filteredBatches = (batches ?? []).filter(b => {
@@ -686,8 +693,16 @@ export function BlockchainPage() {
 
     const res = await fetchVerification(searchId.trim())
 
-    if (res.data) {
+    if (res.data && res.data.report_hash) {
       setVerification(res.data)
+    } else if (demo) {
+      const demoResult = getDemoVerification(searchId.trim())
+
+      if (demoResult) {
+        setVerification(demoResult)
+      } else {
+        setVerifyError('No demo verification found for this ID. Try: demo-conv-001, demo-conv-005, demo-conv-011, demo-conv-015, or demo-conv-019')
+      }
     } else {
       setVerifyError(res.error?.message ?? 'Verification failed')
     }
