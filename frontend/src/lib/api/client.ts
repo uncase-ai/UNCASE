@@ -64,6 +64,20 @@ function normalizeError(status: number, body: unknown): ApiError {
   return { status, message: `Request failed with status ${status}` }
 }
 
+function isSandboxActive(): boolean {
+  if (typeof window === 'undefined') return false
+
+  return sessionStorage.getItem(SANDBOX_BASE_KEY) !== null
+}
+
+// Safe empty response for sandbox fallback — prevents pages from breaking
+// when the demo API doesn't implement a specific endpoint
+function sandboxFallback<T>(): ApiResponse<T> {
+  const empty = { items: [], total: 0 } as unknown as T
+
+  return { data: empty, error: null }
+}
+
 async function request<T>(
   method: string,
   path: string,
@@ -72,6 +86,7 @@ async function request<T>(
 ): Promise<ApiResponse<T>> {
   const { signal, headers = {}, retries = 0, retryDelay = 1000 } = options
   const url = `${getApiBase()}${path}`
+  const sandbox = isSandboxActive()
 
   // Inject API key if stored
   const apiKey = getStoredApiKey()
@@ -99,6 +114,11 @@ async function request<T>(
       const contentType = res.headers.get('content-type') ?? ''
 
       if (!res.ok) {
+        // In sandbox mode, return safe empty data for 404/405 instead of error
+        if (sandbox && (res.status === 404 || res.status === 405)) {
+          return sandboxFallback<T>()
+        }
+
         const errorBody = contentType.includes('json') ? await res.json() : await res.text()
         const error = normalizeError(res.status, errorBody)
 
@@ -123,6 +143,11 @@ async function request<T>(
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
         return { data: null, error: { status: 0, message: 'Request cancelled' } }
+      }
+
+      // In sandbox mode, return safe empty data on network errors
+      if (sandbox) {
+        return sandboxFallback<T>()
       }
 
       if (attempt < retries) {

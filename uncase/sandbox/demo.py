@@ -397,19 +397,25 @@ class DemoSandboxOrchestrator:
 
 
 def _build_demo_api_script(domain: str, seeds: list[dict[str, object]]) -> str:
-    """Build a minimal FastAPI script for the demo sandbox.
+    """Build a comprehensive FastAPI script for the demo sandbox.
 
-    This creates a lightweight API with pre-loaded seeds that
-    demonstrates the UNCASE generation flow.
+    This creates an API with pre-loaded seeds that covers all endpoints
+    the UNCASE dashboard calls, with correct response formats matching
+    the TypeScript interfaces in frontend/src/types/api.ts.
     """
-    return f'''"""UNCASE Demo API — {domain}"""
+    return f'''"""UNCASE Demo API — {domain}
+
+Comprehensive demo API that mirrors the full UNCASE backend response
+formats so the dashboard works end-to-end without fallback.
+"""
 import json
 import random
 import uuid
 import uvicorn
-from datetime import datetime, timezone
-from fastapi import FastAPI, HTTPException
+from datetime import datetime, timezone, timedelta
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 app = FastAPI(
@@ -426,9 +432,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+NOW = datetime.now(timezone.utc).isoformat()
 DEMO_SEEDS = json.loads("""{json.dumps(seeds, ensure_ascii=False)}""")
 GENERATED_CONVERSATIONS: list[dict] = []
+EVALUATION_REPORTS: list[dict] = []
 
+
+# ─── Request models ───
 
 class GenerateRequest(BaseModel):
     seed_id: str | None = None
@@ -446,17 +456,32 @@ class SeedCreate(BaseModel):
     parametros_factuales: dict = {{}}
 
 
+# ─── Health ───
+
 @app.get("/health")
 async def health():
     return {{"status": "ok", "domain": "{domain}", "mode": "demo"}}
 
 @app.get("/health/db")
 async def health_db():
-    return {{"status": "ok", "version": "demo"}}
+    return {{"status": "ok", "version": "demo", "database": "connected"}}
+
+
+# ─── Seeds (SeedListResponse format) ───
 
 @app.get("/api/v1/seeds")
-async def list_seeds():
-    return {{"seeds": DEMO_SEEDS, "total": len(DEMO_SEEDS)}}
+async def list_seeds(page: int = 1, page_size: int = 25, domain: str | None = None):
+    filtered = [s for s in DEMO_SEEDS if not domain or s.get("dominio") == domain]
+    start = (page - 1) * page_size
+    items = filtered[start:start + page_size]
+    # Return both "items" (SeedListResponse) and "seeds" (bootstrap compat)
+    return {{
+        "items": items,
+        "seeds": items,
+        "total": len(filtered),
+        "page": page,
+        "page_size": page_size,
+    }}
 
 @app.get("/api/v1/seeds/{{seed_id}}")
 async def get_seed(seed_id: str):
@@ -469,9 +494,45 @@ async def get_seed(seed_id: str):
 async def create_seed(request: SeedCreate):
     seed = request.model_dump()
     seed["seed_id"] = f"demo-{{uuid.uuid4().hex[:8]}}"
-    seed["created_at"] = datetime.now(timezone.utc).isoformat()
+    seed["version"] = "1.0"
+    seed["etiquetas"] = []
+    seed["privacidad"] = {{
+        "pii_eliminado": True,
+        "metodo_anonimizacion": "presidio",
+        "nivel_confianza": 0.85,
+        "campos_sensibles_detectados": [],
+    }}
+    seed["metricas_calidad"] = {{
+        "rouge_l_min": 0.65,
+        "fidelidad_min": 0.90,
+        "diversidad_lexica_min": 0.55,
+        "coherencia_dialogica_min": 0.85,
+    }}
+    seed["organization_id"] = None
+    seed["created_at"] = NOW
+    seed["updated_at"] = NOW
     DEMO_SEEDS.append(seed)
     return seed
+
+@app.delete("/api/v1/seeds/{{seed_id}}")
+async def delete_seed(seed_id: str):
+    for i, seed in enumerate(DEMO_SEEDS):
+        if seed.get("seed_id") == seed_id:
+            DEMO_SEEDS.pop(i)
+            return None
+    raise HTTPException(status_code=404, detail="Seed not found")
+
+@app.post("/api/v1/seeds/{{seed_id}}/rate")
+async def rate_seed(seed_id: str):
+    for seed in DEMO_SEEDS:
+        if seed.get("seed_id") == seed_id:
+            seed["rating"] = 4.5
+            seed["rating_count"] = seed.get("rating_count", 0) + 1
+            return seed
+    raise HTTPException(status_code=404, detail="Seed not found")
+
+
+# ─── Generation ───
 
 @app.post("/api/v1/generate")
 async def generate(request: GenerateRequest):
@@ -519,17 +580,26 @@ async def generate(request: GenerateRequest):
         GENERATED_CONVERSATIONS.append(conv)
     return {{
         "conversations": conversations,
+        "reports": None,
         "generation_summary": {{
             "total_generated": len(conversations),
+            "total_passed": None,
+            "avg_composite_score": None,
             "model_used": "demo-mock",
             "temperature": 0.7,
             "duration_seconds": 0.1,
         }},
     }}
 
+
+# ─── Conversations ───
+
 @app.get("/api/v1/conversations")
 async def list_conversations():
     return {{"items": GENERATED_CONVERSATIONS, "total": len(GENERATED_CONVERSATIONS)}}
+
+
+# ─── Tools (ToolDefinition[] / CustomToolListResponse) ───
 
 @app.get("/api/v1/tools")
 async def list_tools():
@@ -540,39 +610,247 @@ async def list_tools():
             if not any(t["name"] == tool_name for t in tools):
                 tools.append({{
                     "name": tool_name,
-                    "domain": seed.get("dominio", "{domain}"),
                     "description": f"Demo tool: {{tool_name}}",
-                    "enabled": True,
+                    "input_schema": {{"type": "object", "properties": {{}}}},
+                    "output_schema": {{}},
+                    "domains": [seed.get("dominio", "{domain}")],
+                    "category": "domain",
+                    "requires_auth": False,
+                    "execution_mode": "simulated",
+                    "version": "1.0",
+                    "metadata": {{}},
                 }})
     return tools
+
+@app.get("/api/v1/tools/{{tool_name}}")
+async def get_tool(tool_name: str):
+    for seed in DEMO_SEEDS:
+        herramientas = seed.get("parametros_factuales", {{}}).get("herramientas", [])
+        if tool_name in herramientas:
+            return {{
+                "name": tool_name,
+                "description": f"Demo tool: {{tool_name}}",
+                "input_schema": {{"type": "object", "properties": {{}}}},
+                "output_schema": {{}},
+                "domains": [seed.get("dominio", "{domain}")],
+                "category": "domain",
+                "requires_auth": False,
+                "execution_mode": "simulated",
+                "version": "1.0",
+                "metadata": {{}},
+            }}
+    raise HTTPException(status_code=404, detail="Tool not found")
+
+
+# ─── Templates (TemplateInfo[]) ───
 
 @app.get("/api/v1/templates")
 async def list_templates():
     return [
-        {{"name": "chatml", "format": "chatml", "description": "ChatML format"}},
-        {{"name": "llama3", "format": "llama3", "description": "Llama 3 format"}},
-        {{"name": "mistral", "format": "mistral", "description": "Mistral format"}},
+        {{
+            "name": "chatml", "display_name": "ChatML",
+            "supports_tool_calls": True,
+            "special_tokens": ["<|im_start|>", "<|im_end|>"],
+        }},
+        {{
+            "name": "llama3", "display_name": "Llama 3",
+            "supports_tool_calls": True,
+            "special_tokens": ["<|begin_of_text|>", "<|eot_id|>"],
+        }},
+        {{
+            "name": "mistral", "display_name": "Mistral",
+            "supports_tool_calls": False,
+            "special_tokens": ["[INST]", "[/INST]"],
+        }},
     ]
 
+@app.get("/api/v1/templates/config")
+async def get_template_config():
+    return {{
+        "id": "demo-config",
+        "organization_id": None,
+        "default_template": "chatml",
+        "default_tool_call_mode": "none",
+        "default_system_prompt": None,
+        "preferred_templates": ["chatml", "llama3"],
+        "export_format": "jsonl",
+        "created_at": NOW,
+        "updated_at": NOW,
+    }}
+
+
+# ─── Evaluations (EvaluationReportListResponse) ───
+
 @app.get("/api/v1/evaluations/reports")
-async def list_evaluations():
-    return {{"items": [], "total": 0}}
+async def list_evaluations(page: int = 1, page_size: int = 100):
+    start = (page - 1) * page_size
+    items = EVALUATION_REPORTS[start:start + page_size]
+    return {{"items": items, "total": len(EVALUATION_REPORTS), "page": page, "page_size": page_size}}
+
+@app.get("/api/v1/evaluations/thresholds")
+async def get_thresholds():
+    return {{
+        "rouge_l_min": 0.65,
+        "fidelidad_min": 0.90,
+        "diversidad_lexica_min": 0.55,
+        "coherencia_dialogica_min": 0.85,
+        "tool_call_validity_min": 0.90,
+        "privacy_score_max": 0.0,
+        "memorizacion_max": 0.01,
+        "formula": "Q = min(ROUGE, Fidelity, TTR, Coherence) if privacy=0 AND memo<0.01 else 0",
+    }}
+
+
+# ─── Jobs (JobResponse[]) ───
+
+@app.get("/api/v1/jobs")
+async def list_jobs():
+    return []
 
 @app.get("/api/v1/pipeline/jobs")
 async def list_pipeline_jobs():
     return {{"items": [], "total": 0}}
 
-@app.get("/api/v1/audit/logs")
-async def list_audit_logs():
+
+# ─── Providers (ProviderListResponse) ───
+
+@app.get("/api/v1/providers")
+async def list_providers():
+    return {{
+        "items": [{{
+            "id": "demo-provider-1",
+            "name": "Demo LLM (mock)",
+            "provider_type": "custom",
+            "api_base": None,
+            "has_api_key": False,
+            "default_model": "demo-mock",
+            "max_tokens": 4096,
+            "temperature_default": 0.7,
+            "is_active": True,
+            "is_default": True,
+            "organization_id": None,
+            "created_at": NOW,
+            "updated_at": NOW,
+        }}],
+        "total": 1,
+    }}
+
+
+# ─── Costs (CostSummary / DailyCost[]) ───
+
+@app.get("/api/v1/costs/summary")
+async def costs_summary(period_days: int = 30):
+    return {{
+        "organization_id": "demo",
+        "period_days": period_days,
+        "total_cost_usd": 0.0,
+        "total_tokens": 0,
+        "event_count": 0,
+        "cost_by_provider": {{}},
+        "cost_by_event_type": {{}},
+    }}
+
+@app.get("/api/v1/costs/daily")
+async def daily_costs(days: int = 30):
+    return []
+
+
+# ─── Plugins (PluginManifest[] / InstalledPluginListResponse) ───
+
+@app.get("/api/v1/plugins/catalog")
+async def plugin_catalog():
+    return []
+
+@app.get("/api/v1/plugins/installed")
+async def installed_plugins():
     return {{"items": [], "total": 0}}
 
 @app.get("/api/v1/plugins")
 async def list_plugins():
     return []
 
-@app.get("/api/v1/costs/summary")
-async def costs_summary():
-    return {{"total_cost": 0.0, "period": "current", "breakdown": []}}
+
+# ─── Knowledge Base ───
+
+@app.get("/api/v1/knowledge/documents")
+async def list_knowledge():
+    return {{"items": [], "total": 0, "page": 1, "page_size": 25}}
+
+
+# ─── Connectors ───
+
+@app.get("/api/v1/connectors")
+async def list_connectors():
+    return []
+
+
+# ─── Audit Logs ───
+
+@app.get("/api/v1/audit/logs")
+async def list_audit_logs(page: int = 1, page_size: int = 50):
+    return {{"items": [], "total": 0, "page": page, "page_size": page_size}}
+
+
+# ─── Blockchain ───
+
+@app.get("/api/v1/blockchain/stats")
+async def blockchain_stats():
+    return {{
+        "total_hashed": 0,
+        "total_batched": 0,
+        "total_unbatched": 0,
+        "total_batches": 0,
+        "total_anchored": 0,
+        "total_pending_anchor": 0,
+        "total_failed_anchor": 0,
+    }}
+
+@app.get("/api/v1/blockchain/batches")
+async def blockchain_batches():
+    return []
+
+@app.get("/api/v1/blockchain/verify/{{report_id}}")
+async def blockchain_verify(report_id: str):
+    raise HTTPException(status_code=404, detail="Report not found in blockchain ledger")
+
+
+# ─── Organizations ───
+
+@app.get("/api/v1/organizations/{{org_id}}")
+async def get_organization(org_id: str):
+    return {{
+        "id": org_id,
+        "name": "Demo Organization",
+        "slug": "demo-org",
+        "description": "Demo sandbox organization",
+        "is_active": True,
+        "created_at": NOW,
+        "updated_at": NOW,
+    }}
+
+
+# ─── Webhooks ───
+
+@app.get("/api/v1/webhooks")
+async def list_webhooks():
+    return {{"items": [], "total": 0, "page": 1, "page_size": 25}}
+
+
+# ─── Scenario Packs ───
+
+@app.get("/api/v1/scenarios/packs")
+async def list_scenario_packs():
+    return {{"packs": [], "total": 0}}
+
+
+# ─── Usage ───
+
+@app.get("/api/v1/usage")
+async def usage_summary():
+    return {{"total_requests": 0, "period": "current"}}
+
+
+# ─── Sandbox Info ───
 
 @app.get("/api/v1/sandbox/info")
 async def sandbox_info():
@@ -580,9 +858,22 @@ async def sandbox_info():
         "mode": "demo",
         "domain": "{domain}",
         "total_seeds": len(DEMO_SEEDS),
-        "features": ["seeds", "generation", "evaluation"],
+        "features": ["seeds", "generation", "evaluation", "blockchain", "plugins", "knowledge"],
         "note": "This is a short-lived demo sandbox. Data will be lost when it expires.",
     }}
+
+@app.get("/api/v1/sandbox/status")
+async def sandbox_status():
+    return {{"enabled": True, "max_parallel": 5, "template_id": "demo"}}
+
+
+# ─── Catch-all: return empty JSON for any unhandled /api/v1/ endpoint ───
+
+@app.api_route("/api/v1/{{path:path}}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+async def catch_all(request: Request, path: str):
+    """Return empty data for any unrecognized endpoint to prevent 404 errors."""
+    return JSONResponse(content={{"items": [], "total": 0, "detail": "demo endpoint not implemented"}})
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
