@@ -1662,13 +1662,15 @@ export function ConversationsPage() {
   const invalidCount = conversations.filter(c => c.status === 'invalid').length
 
   return (
-    <div className="flex h-[calc(100vh-6rem)] flex-col">
+    <div className="flex h-[calc(100vh-8.5rem)] flex-col">
       <OnboardingDialog />
 
-      <PageHeader
-        title="Conversations"
-        description={`${conversations.length} conversations${invalidCount > 0 ? ` (${invalidCount} invalid)` : ''}`}
-      />
+      <div className="mb-4 shrink-0">
+        <PageHeader
+          title="Conversations"
+          description={`${conversations.length} conversations${invalidCount > 0 ? ` (${invalidCount} invalid)` : ''}`}
+        />
+      </div>
 
       <div className="flex min-h-0 flex-1 gap-0 overflow-hidden rounded-lg border">
         {/* ─── Left: Conversation list ─── */}
