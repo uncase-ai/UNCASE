@@ -13,7 +13,7 @@ import {
   Layers,
   LayoutDashboard,
   Library,
-  Link2,
+  ShieldCheck,
   MessageSquare,
   Package,
   PackageOpen,
@@ -63,7 +63,7 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Evaluations', href: '/dashboard/evaluations', icon: BarChart3 },
       { label: 'Jobs', href: '/dashboard/jobs', icon: ClipboardList },
       { label: 'Costs', href: '/dashboard/costs', icon: DollarSign },
-      { label: 'Blockchain', href: '/dashboard/blockchain', icon: Link2 }
+      { label: 'Blockchain', href: '/dashboard/blockchain', icon: ShieldCheck }
     ]
   },
   {
