@@ -82,7 +82,11 @@ sandbox = [
 evaluation = [
     "opik>=1.0.0",
 ]
-all = ["uncase[dev,ml,privacy,sandbox,evaluation]"]
+blockchain = [
+    "web3>=7.0.0",
+    "eth-account>=0.13.0",
+]
+all = ["uncase[dev,ml,privacy,sandbox,evaluation,blockchain]"]
 
 [project.scripts]
 uncase = "uncase.cli:app"
@@ -188,6 +192,8 @@ module = [
     "opacus.*",
     "torch.*",
     "jwt.*",
+    "web3.*",
+    "eth_account.*",
 ]
 ignore_missing_imports = true
 

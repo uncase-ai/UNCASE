@@ -58,6 +58,13 @@ class UNCASESettings(BaseSettings):
     e2b_enabled: bool = False
     e2b_webhook_secret: str = ""
 
+    # -- Blockchain anchoring (optional) --
+    blockchain_enabled: bool = False
+    polygon_rpc_url: str = ""
+    polygon_private_key: str = ""
+    polygon_contract_address: str = ""
+    polygon_chain_id: int = 80002  # Amoy testnet default
+
     # -- Directories --
     uncase_models_dir: str = "./models"
     uncase_exports_dir: str = "./exports"

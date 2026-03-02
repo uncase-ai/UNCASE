@@ -54,6 +54,16 @@ class EvaluatorService:
         self._session.add(model)
         await self._session.flush()
 
+        # Always hash locally (pure SHA-256, zero external deps).
+        # Anchoring is a separate step triggered via the /blockchain/batch endpoint.
+        try:
+            from uncase.services.blockchain import BlockchainService
+
+            bc = BlockchainService(self._session)
+            await bc.hash_and_store(report, model.id)
+        except Exception:
+            logger.warning("blockchain_hash_failed", report_id=model.id)
+
         logger.info(
             "evaluation_persisted",
             report_id=model.id,

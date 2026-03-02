@@ -3,6 +3,11 @@
 from __future__ import annotations
 
 from uncase.db.models.audit import AuditLogModel
+from uncase.db.models.blockchain import (
+    EvaluationHashModel,
+    MerkleBatchModel,
+    MerkleProofModel,
+)
 from uncase.db.models.conversation import ConversationModel
 from uncase.db.models.custom_tool import CustomToolModel
 from uncase.db.models.evaluation import EvaluationReportModel
@@ -20,6 +25,9 @@ __all__ = [
     "APIKeyAuditLogModel",
     "APIKeyModel",
     "AuditLogModel",
+    "EvaluationHashModel",
+    "MerkleBatchModel",
+    "MerkleProofModel",
     "ConversationModel",
     "CustomToolModel",
     "EvaluationReportModel",

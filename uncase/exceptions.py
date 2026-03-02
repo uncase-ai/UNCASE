@@ -249,3 +249,13 @@ class DatasetPreparationError(UNCASEError):
 
     status_code = 500
     detail = "Dataset preparation failed"
+
+
+# -- Blockchain --
+
+
+class BlockchainAnchorError(UNCASEError):
+    """Blockchain anchoring failed (RPC / transaction error)."""
+
+    status_code = 502
+    detail = "Blockchain anchoring failed"
