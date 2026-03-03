@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
@@ -670,21 +670,13 @@ function AutoAnchorStatus({ schedule, loading }: { schedule: AnchorSchedule | nu
 export function BlockchainPage() {
   const searchParams = useSearchParams()
   const [anchorFilter, setAnchorFilter] = useState<AnchorFilter>('all')
-  const [searchId, setSearchId] = useState('')
+  const initialVerifyId = searchParams.get('verify') ?? ''
+  const [searchId, setSearchId] = useState(initialVerifyId)
   const [verifying, setVerifying] = useState(false)
   const [verification, setVerification] = useState<VerificationResponse | null>(null)
   const [verifyError, setVerifyError] = useState<string | null>(null)
   const [building, setBuilding] = useState(false)
   const [retrying, setRetrying] = useState<string | null>(null)
-
-  // Auto-fill from search params (linked from evaluations page)
-  useEffect(() => {
-    const verifyId = searchParams.get('verify')
-
-    if (verifyId) {
-      setSearchId(verifyId)
-    }
-  }, [searchParams])
 
   // ─── Data fetchers ───
   const statsFetcher = useCallback((signal: AbortSignal) => fetchBlockchainStats(signal), [])
@@ -811,6 +803,7 @@ export function BlockchainPage() {
       header: 'Status',
       cell: row => {
         if (row.anchored) return <StatusBadge variant="success">Anchored</StatusBadge>
+
         if (row.anchor_error) {
           return (
             <TooltipProvider>

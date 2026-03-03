@@ -261,12 +261,15 @@ function CertificationDocument({
   const avgTurns = conversations.length > 0 ? (totalTurns / conversations.length).toFixed(1) : '0'
 
   const anchoredBatches = batches?.filter(b => b.anchored) ?? []
+
   const latestAnchoredTx = anchoredBatches.length > 0
     ? anchoredBatches[anchoredBatches.length - 1].tx_hash
     : null
+
   const contractAddr = anchoredBatches.length > 0
     ? anchoredBatches[0].contract_address ?? CONTRACT_ADDRESS
     : CONTRACT_ADDRESS
+
   const qrUrl = latestAnchoredTx
     ? `${EXPLORER_BASE}/tx/${latestAnchoredTx}`
     : `${EXPLORER_BASE}/address/${contractAddr}`
@@ -471,6 +474,7 @@ function CertificationDocument({
                 <tbody>
                   {Object.entries(QUALITY_THRESHOLDS).map(([key, cfg]) => {
                     const measured = metrics[key as keyof typeof metrics] as number
+
                     const passed = cfg.exact
                       ? measured === cfg.min
                       : cfg.below
@@ -660,17 +664,7 @@ function MetricBox({ label, value, pass: passed }: { label: string; value: strin
 
 // ─── HTML Download Template ───
 
-function buildDownloadHTML({
-  certId,
-  innerHTML,
-  qrUrl,
-  signatureQrValue
-}: {
-  certId: string
-  innerHTML: string
-  qrUrl: string
-  signatureQrValue: string
-}) {
+function buildDownloadHTML({ certId, innerHTML }: { certId: string; innerHTML: string }) {
   // Generate a simple SVG QR placeholder that links to the URL
   // The react-qr-code component renders SVG in the DOM, which gets captured by innerHTML
   return `<!DOCTYPE html>
@@ -737,17 +731,6 @@ export function DatasetCertification({
   const metrics = computeAggregateMetrics(evaluations)
   const compliance = getRelevantCompliance(domain)
 
-  const anchoredBatches = batches?.filter(b => b.anchored) ?? []
-  const latestAnchoredTx = anchoredBatches.length > 0
-    ? anchoredBatches[anchoredBatches.length - 1].tx_hash
-    : null
-  const contractAddr = anchoredBatches.length > 0
-    ? anchoredBatches[0].contract_address ?? CONTRACT_ADDRESS
-    : CONTRACT_ADDRESS
-  const qrUrl = latestAnchoredTx
-    ? `${EXPLORER_BASE}/tx/${latestAnchoredTx}`
-    : `${EXPLORER_BASE}/address/${contractAddr}`
-
   async function handleDownloadHTML() {
     setDownloading(true)
 
@@ -758,9 +741,7 @@ export function DatasetCertification({
 
       const html = buildDownloadHTML({
         certId,
-        innerHTML: el.innerHTML,
-        qrUrl,
-        signatureQrValue: `uncase:cert:${certId}:${documentHash.slice(0, 16)}`
+        innerHTML: el.innerHTML
       })
 
       const blob = new Blob([html], { type: 'text/html' })

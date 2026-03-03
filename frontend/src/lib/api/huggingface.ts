@@ -64,6 +64,7 @@ export async function searchDatasets(
     }
 
     const raw: Array<Record<string, unknown>> = await res.json()
+
     const results: HFSearchResult[] = raw.map(d => ({
       id: d.id as string,
       description: (d.description as string) ?? null,
@@ -131,6 +132,7 @@ export async function getDatasetRows(
       offset: String(offset),
       length: String(length),
     })
+
     const url = `https://datasets-server.huggingface.co/rows?${params}`
     const headers: Record<string, string> = {}
 

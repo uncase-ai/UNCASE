@@ -11,7 +11,6 @@ import {
   Database,
   Download,
   ExternalLink,
-  Eye,
   Heart,
   Loader2,
   Lock,
@@ -35,7 +34,7 @@ import {
 } from '@/lib/api/huggingface'
 import type { HFDatasetFormat, ParseResult } from '@/lib/api/hf-parsers'
 import { parseHFRowsToConversations } from '@/lib/api/hf-parsers'
-import { appendConversations, saveConversations } from './conversations-page'
+import { appendConversations } from './conversations-page'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -346,9 +345,11 @@ function ImportTab() {
   // ─── Derived data ───
 
   const configs = datasetInfo ? Object.keys(datasetInfo.dataset_info) : []
+
   const splits = datasetInfo && selectedConfig
     ? Object.keys(datasetInfo.dataset_info[selectedConfig]?.splits ?? {})
     : []
+
   const totalRows = rowsData?.num_rows_total ?? 0
 
   return (
