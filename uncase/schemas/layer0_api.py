@@ -21,7 +21,7 @@ class StartExtractionRequest(BaseModel):
         description="Maximum interview turns.",
     )
     locale: str = Field(
-        default="es",
+        default="en",
         description="Interview language (ISO 639-1).",
     )
 

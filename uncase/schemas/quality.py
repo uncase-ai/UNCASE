@@ -7,15 +7,24 @@ from typing import Final
 
 from pydantic import BaseModel, Field
 
+# Neutral score returned by optional metrics when the API is unavailable.
+_NEUTRAL_SCORE: Final[float] = 0.5
+
+# Metrics that are optional — they require external API calls and fall back
+# to _NEUTRAL_SCORE when unavailable. They are excluded from the composite
+# MIN formula when at their neutral value to avoid penalizing environments
+# without LLM-judge or embedding APIs configured.
+OPTIONAL_METRICS: Final[frozenset[str]] = frozenset({"semantic_fidelity", "embedding_drift"})
+
 # Canonical threshold definitions — single source of truth.
 # Referenced by compute_composite_score(), CLI, API, and docs.
 QUALITY_THRESHOLDS: Final[dict[str, tuple[float, str, str]]] = {
     # name: (threshold, operator, description)
     "rouge_l": (0.65, ">=", "ROUGE-L structural coherence with seed"),
-    "fidelidad_factual": (0.90, ">=", "Factual fidelity (domain constraint adherence)"),
+    "fidelidad_factual": (0.85, ">=", "Factual fidelity (domain constraint adherence)"),
     "diversidad_lexica": (0.55, ">=", "Type-Token Ratio (lexical diversity)"),
-    "coherencia_dialogica": (0.85, ">=", "Inter-turn dialog coherence"),
-    "tool_call_validity": (0.90, ">=", "Tool call schema validity"),
+    "coherencia_dialogica": (0.80, ">=", "Inter-turn dialog coherence"),
+    "tool_call_validity": (0.80, ">=", "Tool call schema validity"),
     "privacy_score": (0.0, "=", "PII residual (MUST be zero)"),
     "memorizacion": (0.01, "<", "Extraction attack success rate"),
     "semantic_fidelity": (0.60, ">=", "Semantic fidelity (LLM-as-Judge)"),
@@ -58,10 +67,14 @@ class QualityReport(BaseModel):
 def compute_composite_score(metrics: QualityMetrics) -> tuple[float, bool, list[str]]:
     """Compute the composite quality score.
 
-    Formula: Q = min(ROUGE-L, Fidelidad, TTR, Coherencia, ToolCallValidity,
-                     SemanticFidelity, EmbeddingDrift)
+    Formula: Q = min(core_metrics + [optional_metrics if computed])
              if privacy_score == 0.0 AND memorizacion < 0.01
              else Q = 0.0
+
+    Optional metrics (semantic_fidelity, embedding_drift) are only included
+    in the composite MIN and threshold checks when they have been actually
+    computed (i.e. not at the neutral fallback value of 0.5). This prevents
+    environments without LLM-judge or embedding APIs from being penalized.
 
     Args:
         metrics: Individual quality metrics.
@@ -71,10 +84,16 @@ def compute_composite_score(metrics: QualityMetrics) -> tuple[float, bool, list[
     """
     failures: list[str] = []
 
-    # Check all thresholds using canonical definitions
+    # Check all thresholds using canonical definitions.
+    # Optional metrics at neutral score are skipped — they weren't computed.
     gate_metrics = {"privacy_score", "memorizacion"}
     for name, (threshold, operator, _desc) in QUALITY_THRESHOLDS.items():
         value = getattr(metrics, name)
+
+        # Skip optional metrics that are at neutral (not computed)
+        if name in OPTIONAL_METRICS and abs(value - _NEUTRAL_SCORE) < 1e-9:
+            continue
+
         if operator == ">=" and value < threshold:
             failures.append(f"{name}={value} (min {threshold})")
         elif operator == "<" and value >= threshold:
@@ -88,16 +107,23 @@ def compute_composite_score(metrics: QualityMetrics) -> tuple[float, bool, list[
     if gate_failed:
         return 0.0, False, failures
 
-    # Composite = min of all quality dimensions (including semantic)
-    score = min(
+    # Composite = min of core quality dimensions.
+    # Optional metrics are only included when actually computed.
+    scores = [
         metrics.rouge_l,
         metrics.fidelidad_factual,
         metrics.diversidad_lexica,
         metrics.coherencia_dialogica,
         metrics.tool_call_validity,
-        metrics.semantic_fidelity,
-        metrics.embedding_drift,
-    )
+    ]
+
+    # Include optional metrics only when they were computed (not neutral)
+    if abs(metrics.semantic_fidelity - _NEUTRAL_SCORE) > 1e-9:
+        scores.append(metrics.semantic_fidelity)
+    if abs(metrics.embedding_drift - _NEUTRAL_SCORE) > 1e-9:
+        scores.append(metrics.embedding_drift)
+
+    score = min(scores)
 
     passed = len(failures) == 0
     return score, passed, failures

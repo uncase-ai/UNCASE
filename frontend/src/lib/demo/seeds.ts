@@ -93,7 +93,7 @@ export const DEMO_SEEDS: SeedSchema[] = [
         'Requiere licencia de conducir vigente',
         'Máximo 30 minutos por prueba'
       ],
-      herramientas: ['appointment_scheduler'],
+      herramientas: [],
       metadata: { conversion_rate: 0.35 }
     },
     privacidad: {
@@ -147,7 +147,7 @@ export const DEMO_SEEDS: SeedSchema[] = [
         'Vehículos de hasta 10 años de antigüedad',
         'Sujeto a inspección física'
       ],
-      herramientas: ['vin_decoder', 'trade_in_estimator'],
+      herramientas: [],
       metadata: { avg_trade_in_value: 280000 }
     },
     privacidad: {
@@ -255,7 +255,7 @@ export const DEMO_SEEDS: SeedSchema[] = [
         'Garantía aplica solo con servicio en red autorizada',
         'Refacciones originales únicamente'
       ],
-      herramientas: ['service_scheduler'],
+      herramientas: [],
       metadata: { avg_service_ticket: 8500 }
     },
     privacidad: {
@@ -367,7 +367,7 @@ export const DEMO_SEEDS: SeedSchema[] = [
         'Growth percentiles must reference WHO/CDC standard charts',
         'Parent consent required for all immunizations'
       ],
-      herramientas: ['check_medical_history', 'search_medications', 'schedule_appointment'],
+      herramientas: [],
       metadata: { specialty: 'pediatrics', visit_type: 'wellness', avg_duration_min: 30 }
     },
     privacidad: {
@@ -477,7 +477,7 @@ export const DEMO_SEEDS: SeedSchema[] = [
         'Medication recommendations must defer to psychiatry referral',
         'Insurance must be verified for ongoing therapy sessions'
       ],
-      herramientas: ['check_medical_history', 'verify_insurance', 'schedule_appointment'],
+      herramientas: [],
       metadata: { specialty: 'psychology', visit_type: 'intake', avg_duration_min: 60 }
     },
     privacidad: {

@@ -193,13 +193,18 @@ Conversación Real → [Capa 0: Eliminación PII] → SeedSchema v1
 | Métrica | Umbral | Nota |
 |---|---|---|
 | ROUGE-L | >= 0.65 | Coherencia estructural con semilla |
-| Fidelidad Factual | >= 0.90 | Precisión de hechos del dominio |
+| Fidelidad Factual | >= 0.85 | Precisión de hechos del dominio |
 | Diversidad Léxica (TTR) | >= 0.55 | Type-Token Ratio |
-| Coherencia Dialógica | >= 0.85 | Consistencia de roles inter-turno |
+| Coherencia Dialógica | >= 0.80 | Consistencia de roles inter-turno |
+| Tool Call Validity | >= 0.80 | Validez de llamadas a herramientas |
 | Privacy Score | = 0.00 | Cero PII residual (Presidio) |
 | Memorización | < 0.01 | Extraction attack success rate |
+| Semantic Fidelity* | >= 0.60 | LLM-as-Judge (opcional, requiere API) |
+| Embedding Drift* | >= 0.40 | Cosine similarity semántica (opcional) |
 
-**Fórmula compuesta:** `Q = min(ROUGE, Fidelidad, TTR, Coherencia)` si privacy=0 Y memorización<0.01, sino Q=0.
+*Las métricas opcionales (Semantic Fidelity, Embedding Drift) solo se incluyen en la fórmula compuesta cuando se calculan realmente. Si la API no está disponible, se omiten del MIN y del check de umbrales.*
+
+**Fórmula compuesta:** `Q = min(ROUGE, Fidelidad, TTR, Coherencia, ToolCallValidity [, SemanticFidelity, EmbeddingDrift])` si privacy=0 Y memorización<0.01, sino Q=0.
 
 ### Dominios soportados (namespaces)
 

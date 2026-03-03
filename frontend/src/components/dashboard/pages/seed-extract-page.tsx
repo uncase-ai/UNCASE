@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react'
 
-import { ArrowLeft, Loader2, MessageSquare, PanelRightClose, PanelRightOpen, Sparkles } from 'lucide-react'
+import { ArrowLeft, Globe, Loader2, MessageSquare, PanelRightClose, PanelRightOpen, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 
 import type { ChatMessage, ExtractionProgress } from '@/types/layer0'
@@ -25,6 +25,7 @@ export function SeedExtractPage() {
   const [progress, setProgress] = useState<ExtractionProgress | null>(null)
   const [seed, setSeed] = useState<Record<string, unknown> | null>(null)
   const [industry, setIndustry] = useState('automotive')
+  const [locale, setLocale] = useState('en')
   const [error, setError] = useState<string | null>(null)
   const [showSidebar, setShowSidebar] = useState(true)
   const [starting, setStarting] = useState(false)
@@ -49,10 +50,10 @@ export function SeedExtractPage() {
     setProgress(null)
     setSeed(null)
 
-    const { data, error: apiError } = await startExtraction({ industry })
+    const { data, error: apiError } = await startExtraction({ industry, locale })
 
     if (apiError || !data) {
-      setError(apiError?.message ?? 'Error al iniciar la sesión')
+      setError(apiError?.message ?? 'Failed to start session')
       setStarting(false)
       return
     }
@@ -62,7 +63,7 @@ export function SeedExtractPage() {
     addMessage('assistant', data.message.content, data.message.progress)
     setSessionState('active')
     setStarting(false)
-  }, [industry, addMessage])
+  }, [industry, locale, addMessage])
 
   const handleSend = useCallback(async (text: string) => {
     if (!sessionId || sessionState !== 'active') return
@@ -76,7 +77,7 @@ export function SeedExtractPage() {
     })
 
     if (apiError || !data) {
-      setError(apiError?.message ?? 'Error al procesar el turno')
+      setError(apiError?.message ?? 'Failed to process turn')
       setSessionState('active')
       return
     }
@@ -125,8 +126,8 @@ export function SeedExtractPage() {
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
       <PageHeader
-        title="Entrevista AI — Extracción de Seed"
-        description={sessionState === 'idle' ? 'Inicia una entrevista guiada por IA para crear un seed' : `Sesión activa · ${industry}`}
+        title="AI Interview — Seed Extraction"
+        description={sessionState === 'idle' ? 'Start an AI-guided interview to create a conversation seed' : `Active session · ${industry} · ${locale.toUpperCase()}`}
         actions={
           <div className="flex items-center gap-2">
             {sessionState !== 'idle' && (
@@ -147,40 +148,56 @@ export function SeedExtractPage() {
       {error && (
         <div className="mx-4 mb-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs text-red-700 dark:border-red-800 dark:bg-red-950/20 dark:text-red-300">
           {error}
-          <button onClick={() => setError(null)} className="ml-2 underline">Cerrar</button>
+          <button onClick={() => setError(null)} className="ml-2 underline">Dismiss</button>
         </div>
       )}
 
-      {/* Pre-session: industry selector */}
+      {/* Pre-session: industry + language selector */}
       {sessionState === 'idle' && (
         <div className="flex flex-1 items-center justify-center">
           <div className="mx-auto w-full max-w-md space-y-6 rounded-xl border bg-card p-8 shadow-sm">
             <div className="text-center">
-              <MessageSquare className="mx-auto mb-3 size-12 text-emerald-600" />
-              <h2 className="text-lg font-semibold">Entrevista de Extracción</h2>
+              <MessageSquare className="mx-auto mb-3 size-12 text-primary" />
+              <h2 className="text-lg font-semibold">Extraction Interview</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                La IA te guiará a través de preguntas para extraer todos los parámetros necesarios para crear un seed de conversación.
+                The AI will guide you through questions to extract all the parameters needed to create a conversation seed.
               </p>
             </div>
 
             <div className="space-y-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium">Industria</label>
+                <label className="text-xs font-medium">Industry</label>
                 <Select value={industry} onValueChange={setIndustry}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="automotive">Automotriz</SelectItem>
+                    <SelectItem value="automotive">Automotive</SelectItem>
+                    <SelectItem value="medical">Medical</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="flex items-center gap-1.5 text-xs font-medium">
+                  <Globe className="size-3" /> Language
+                </label>
+                <Select value={locale} onValueChange={setLocale}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="es">Spanish</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <Button onClick={handleStart} className="w-full gap-2" disabled={starting}>
                 {starting ? (
-                  <><Loader2 className="size-4 animate-spin" /> Iniciando...</>
+                  <><Loader2 className="size-4 animate-spin" /> Starting...</>
                 ) : (
-                  <><Sparkles className="size-4" /> Iniciar Entrevista</>
+                  <><Sparkles className="size-4" /> Start Interview</>
                 )}
               </Button>
             </div>
@@ -200,7 +217,7 @@ export function SeedExtractPage() {
             {/* Turn warning */}
             {progress && turnsLeft <= 2 && turnsLeft > 0 && sessionState !== 'complete' && (
               <div className="bg-amber-50 px-4 py-1.5 text-center text-xs text-amber-700 dark:bg-amber-950/30 dark:text-amber-300">
-                ⚠ Solo {turnsLeft} turno{turnsLeft !== 1 ? 's' : ''} restante{turnsLeft !== 1 ? 's' : ''}
+                {turnsLeft} turn{turnsLeft !== 1 ? 's' : ''} remaining
               </div>
             )}
 
@@ -209,14 +226,14 @@ export function SeedExtractPage() {
               <div className="flex items-center gap-3 border-t bg-emerald-50 p-4 dark:border-zinc-700 dark:bg-emerald-950/20">
                 <Sparkles className="size-5 text-emerald-600" />
                 <span className="flex-1 text-sm font-medium text-emerald-800 dark:text-emerald-200">
-                  Extracción completada
+                  Extraction complete
                 </span>
                 <Button variant="outline" size="sm" onClick={handleEndSession}>
-                  Nueva Entrevista
+                  New Interview
                 </Button>
                 {seed && (
                   <Button size="sm" onClick={handleCreateSeed} className="gap-1.5">
-                    <Sparkles className="size-3" /> Crear Seed
+                    <Sparkles className="size-3" /> Create Seed
                   </Button>
                 )}
               </div>
@@ -224,7 +241,7 @@ export function SeedExtractPage() {
               <ChatInput
                 onSend={handleSend}
                 disabled={sessionState !== 'active'}
-                placeholder={sessionState === 'processing' ? 'Procesando...' : 'Escribe tu respuesta...'}
+                placeholder={sessionState === 'processing' ? 'Processing...' : 'Type your response...'}
               />
             )}
           </div>
@@ -233,7 +250,7 @@ export function SeedExtractPage() {
           {showSidebar && (
             <div className="hidden w-80 shrink-0 border-l bg-card lg:block dark:border-zinc-800">
               <div className="border-b px-3 py-2 dark:border-zinc-800">
-                <h3 className="text-xs font-semibold">Progreso de Extracción</h3>
+                <h3 className="text-xs font-semibold">Extraction Progress</h3>
               </div>
               <ExtractionProgressPanel progress={progress} />
             </div>

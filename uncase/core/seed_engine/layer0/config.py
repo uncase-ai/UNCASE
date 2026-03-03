@@ -65,6 +65,6 @@ class Layer0Config(BaseModel):
         description="Industry vertical for the extraction schema.",
     )
     default_locale: str = Field(
-        default="es",
+        default="en",
         description="Default language for the interview (ISO 639-1).",
     )
