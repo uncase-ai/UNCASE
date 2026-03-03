@@ -137,7 +137,7 @@ const STAGES: StageConfig[] = [
 ]
 
 export function PipelinePage() {
-  const [readiness] = useState(() => STAGES.map(s => s.isReady()))
+  const readiness = STAGES.map(s => s.isReady())
   const [recentJobs, setRecentJobs] = useState<JobResponse[]>([])
   const [error, setError] = useState<string | null>(null)
 

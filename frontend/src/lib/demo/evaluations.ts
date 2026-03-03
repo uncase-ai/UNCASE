@@ -183,14 +183,14 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
     },
     composite_score: 0,
     passed: false,
-    failures: ['ROUGE-L below threshold (0.48 < 0.65)', 'Semantic fidelity below threshold (0.55 < 0.60)'],
+    failures: ['ROUGE-L below threshold (0.48 < 0.55)', 'Semantic fidelity below threshold (0.55 < 0.60)'],
     evaluated_at: daysAgo(4, 17)
   },
   {
     conversation_id: 'demo-conv-008',
     seed_id: 'demo-seed-004',
     metrics: {
-      rouge_l: 0.55,
+      rouge_l: 0.47,
       fidelidad_factual: 0.92,
       diversidad_lexica: 0.60,
       coherencia_dialogica: 0.88,
@@ -202,7 +202,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
     },
     composite_score: 0,
     passed: false,
-    failures: ['ROUGE-L below threshold (0.55 < 0.65)', 'Semantic fidelity below threshold (0.58 < 0.60)'],
+    failures: ['ROUGE-L below threshold (0.47 < 0.55)', 'Semantic fidelity below threshold (0.58 < 0.60)'],
     evaluated_at: daysAgo(2, 11)
   },
 

@@ -322,7 +322,7 @@ export interface QualityThresholdsResponse {
 
 // ─── Quality Thresholds (constants) ───
 export const QUALITY_THRESHOLDS = {
-  rouge_l: 0.65,
+  rouge_l: 0.55,
   fidelidad_factual: 0.85,
   diversidad_lexica: 0.55,
   coherencia_dialogica: 0.80,

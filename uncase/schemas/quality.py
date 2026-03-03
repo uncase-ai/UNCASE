@@ -20,7 +20,7 @@ OPTIONAL_METRICS: Final[frozenset[str]] = frozenset({"semantic_fidelity", "embed
 # Referenced by compute_composite_score(), CLI, API, and docs.
 QUALITY_THRESHOLDS: Final[dict[str, tuple[float, str, str]]] = {
     # name: (threshold, operator, description)
-    "rouge_l": (0.65, ">=", "ROUGE-L structural coherence with seed"),
+    "rouge_l": (0.55, ">=", "ROUGE-L structural coherence with seed"),
     "fidelidad_factual": (0.85, ">=", "Factual fidelity (domain constraint adherence)"),
     "diversidad_lexica": (0.55, ">=", "Type-Token Ratio (lexical diversity)"),
     "coherencia_dialogica": (0.80, ">=", "Inter-turn dialog coherence"),

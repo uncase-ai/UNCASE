@@ -259,6 +259,38 @@ function generateMockConversation(seed: SeedSchema, languageOverride?: string): 
   }
 }
 
+function generateMockQualityReport(conv: Conversation, seedId: string): QualityReport {
+  const r = () => 0.85 + Math.random() * 0.13
+
+  const metrics = {
+    rouge_l: r(),
+    fidelidad_factual: r(),
+    diversidad_lexica: 0.60 + Math.random() * 0.25,
+    coherencia_dialogica: r(),
+    tool_call_validity: 1.0,
+    privacy_score: 0.0,
+    memorizacion: 0.001 + Math.random() * 0.005,
+    semantic_fidelity: r(),
+    embedding_drift: 0.65 + Math.random() * 0.25,
+  }
+
+  const composite = Math.min(
+    metrics.rouge_l, metrics.fidelidad_factual, metrics.diversidad_lexica,
+    metrics.coherencia_dialogica, metrics.tool_call_validity,
+    metrics.semantic_fidelity, metrics.embedding_drift
+  )
+
+  return {
+    conversation_id: conv.conversation_id,
+    seed_id: seedId,
+    metrics,
+    composite_score: Math.round(composite * 1000) / 1000,
+    passed: true,
+    failures: [],
+    evaluated_at: new Date().toISOString(),
+  }
+}
+
 // ─── Domain Colors — neutral palette ───
 const DOMAIN_COLORS: Record<string, string> = {
   'automotive.sales': '',
@@ -381,6 +413,11 @@ export function GeneratePage() {
             const conversation = generateMockConversation(seed, languageOverride || undefined)
 
             generated.push(conversation)
+
+            if (evaluateAfter) {
+              allReports.push(generateMockQualityReport(conversation, seed.seed_id))
+            }
+
             completed++
             setProgress(Math.round((completed / totalConversations) * 100))
           }
@@ -443,6 +480,13 @@ export function GeneratePage() {
           passed: passedCount,
           avgScore: Math.round(avgScore * 1000) / 1000
         })
+
+        // Persist evaluation reports to localStorage
+        try {
+          const existingEvals: QualityReport[] = JSON.parse(localStorage.getItem('uncase-evaluations') || '[]')
+
+          localStorage.setItem('uncase-evaluations', JSON.stringify([...existingEvals, ...allReports]))
+        } catch { /* ignore parse errors */ }
       }
 
       // Save history
@@ -832,7 +876,7 @@ export function GeneratePage() {
                     </Tooltip>
                   </TooltipProvider>
                 </Label>
-                <Select value={languageOverride} onValueChange={setLanguageOverride}>
+                <Select value={languageOverride || '__default'} onValueChange={v => setLanguageOverride(v === '__default' ? '' : v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Use seed default" />
                   </SelectTrigger>

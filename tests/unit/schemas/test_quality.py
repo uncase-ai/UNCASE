@@ -57,11 +57,11 @@ class TestCompositeScore:
 
     def test_all_thresholds_met_exactly(self) -> None:
         metrics = make_quality_metrics(
-            rouge_l=0.65,
-            fidelidad_factual=0.90,
+            rouge_l=0.55,
+            fidelidad_factual=0.85,
             diversidad_lexica=0.55,
-            coherencia_dialogica=0.85,
-            tool_call_validity=0.90,
+            coherencia_dialogica=0.80,
+            tool_call_validity=0.80,
             privacy_score=0.0,
             memorizacion=0.0,
         )
@@ -70,7 +70,7 @@ class TestCompositeScore:
         assert score == 0.55
 
     def test_tool_call_validity_below_threshold(self) -> None:
-        metrics = make_quality_metrics(tool_call_validity=0.80)
+        metrics = make_quality_metrics(tool_call_validity=0.79)
         _score, passed, failures = compute_composite_score(metrics)
         assert passed is False
         assert any("tool_call_validity" in f for f in failures)

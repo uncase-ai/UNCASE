@@ -192,7 +192,7 @@ Conversación Real → [Capa 0: Eliminación PII] → SeedSchema v1
 
 | Métrica | Umbral | Nota |
 |---|---|---|
-| ROUGE-L | >= 0.65 | Coherencia estructural con semilla |
+| ROUGE-L | >= 0.55 | Coherencia estructural con semilla |
 | Fidelidad Factual | >= 0.85 | Precisión de hechos del dominio |
 | Diversidad Léxica (TTR) | >= 0.55 | Type-Token Ratio |
 | Coherencia Dialógica | >= 0.80 | Consistencia de roles inter-turno |

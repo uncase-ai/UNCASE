@@ -105,7 +105,7 @@ function generateMockMetrics(): QualityMetrics {
     diversidad_lexica: randomInRange(0.40, 0.85),
     coherencia_dialogica: randomInRange(0.70, 0.98),
     tool_call_validity: randomInRange(0.75, 1.0),
-    privacy_score: Math.random() < 0.9 ? 0.0 : randomInRange(0.0, 0.05),
+    privacy_score: Math.random() < 0.97 ? 0.0 : randomInRange(0.0, 0.05),
     memorizacion: Math.random() < 0.85 ? randomInRange(0.0, 0.009) : randomInRange(0.01, 0.05),
     semantic_fidelity: randomInRange(0.45, 0.95),
     embedding_drift: randomInRange(0.30, 0.90)
