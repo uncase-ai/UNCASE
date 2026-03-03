@@ -15,25 +15,25 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <div className="grid h-dvh grid-rows-[auto_1fr] overflow-hidden lg:grid-cols-[auto_1fr]">
-      {/* Desktop sidebar — spans both rows */}
-      <aside className="row-span-2 hidden lg:block">
+    <div className="flex h-dvh overflow-hidden">
+      {/* Desktop sidebar */}
+      <div className="hidden lg:block">
         <Sidebar collapsed={collapsed} />
-      </aside>
+      </div>
 
       {/* Mobile sidebar */}
       <MobileSidebar open={mobileOpen} onOpenChange={setMobileOpen} />
 
-      {/* Header row */}
-      <div className="min-w-0">
+      {/* Main column */}
+      <div className="flex min-w-0 flex-1 flex-col">
         <DemoBanner />
         <Topbar sidebarCollapsed={collapsed} onToggleSidebar={toggle} onOpenMobile={() => setMobileOpen(true)} />
+        <main id="dashboard-main" className="flex min-h-0 flex-1 flex-col">
+          <div className="mx-auto flex w-full min-h-0 flex-1 flex-col overflow-y-auto max-w-7xl px-4 py-6 sm:px-6">
+            {children}
+          </div>
+        </main>
       </div>
-
-      {/* Content row — single scrollable area */}
-      <main className="min-h-0 min-w-0 overflow-y-auto">
-        <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">{children}</div>
-      </main>
     </div>
   )
 }

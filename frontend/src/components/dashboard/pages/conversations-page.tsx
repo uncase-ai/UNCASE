@@ -49,7 +49,6 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Rating } from '@/components/ui/rating'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 
@@ -1269,7 +1268,7 @@ function DetailPanel({
       )}
 
       {/* Messages */}
-      <ScrollArea className="flex-1">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="space-y-2 p-4">
           {flatItems.map(item => {
             const isMainMsg = item.role === 'user' || item.role === 'assistant' || item.role === 'system'
@@ -1289,7 +1288,7 @@ function DetailPanel({
             )
           })}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Collapsible review panel */}
       <div className="shrink-0 border-t">
@@ -1689,7 +1688,7 @@ export function ConversationsPage() {
   const invalidCount = conversations.filter(c => c.status === 'invalid').length
 
   return (
-    <div className="flex h-[calc(100dvh-7.5rem)] flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       <OnboardingDialog />
 
       <div className="mb-4 shrink-0">
@@ -1806,7 +1805,7 @@ export function ConversationsPage() {
           </div>
 
           {/* Conversation cards */}
-          <ScrollArea className="flex-1">
+          <div className="min-h-0 flex-1 overflow-y-auto">
             <div className="space-y-1.5 p-2">
               {paged.map((conv, i) => (
                 <ConversationCard
@@ -1821,7 +1820,7 @@ export function ConversationsPage() {
                 />
               ))}
             </div>
-          </ScrollArea>
+          </div>
 
           {/* Pagination */}
           <div className="shrink-0 border-t">
