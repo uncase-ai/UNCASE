@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-import { useRouter, useSearchParams } from 'next/navigation'
 import { Cloud, Loader2 } from 'lucide-react'
 
 import { activateDemo } from '@/lib/demo'
@@ -11,22 +10,17 @@ import { setSandboxSession } from '@/lib/sandbox-session'
 type BootstrapState = 'loading' | 'ready' | 'error'
 
 export function SandboxBootstrap() {
-  const router = useRouter()
-  const params = useSearchParams()
   const [state, setState] = useState<BootstrapState>('loading')
   const [status, setStatus] = useState('Connecting to sandbox...')
   const didRun = useRef(false)
-
-  // Capture params in a ref so the effect has no reactive dependencies
-  // that could cause re-render loops after Suspense resolution.
-  const paramsRef = useRef(params)
-  paramsRef.current = params
 
   useEffect(() => {
     if (didRun.current) return
     didRun.current = true
 
-    const sp = paramsRef.current
+    // Read params directly from the URL — avoids useSearchParams() which
+    // requires Suspense and can cause re-render loops in Next.js 16.
+    const sp = new URLSearchParams(window.location.search)
     const apiUrl = sp.get('apiUrl')
     const docsUrl = sp.get('docsUrl') ?? ''
     const domain = sp.get('domain') ?? 'automotive.sales'
@@ -37,12 +31,10 @@ export function SandboxBootstrap() {
 
     async function bootstrap() {
       try {
-        // Step 1: Populate all localStorage keys with demo data
         setStatus('Loading dashboard data...')
         await activateDemo()
 
         if (!fallback && apiUrl) {
-          // Step 2: Set up sandbox session → routes API calls to E2B sandbox
           setStatus('Connecting to live sandbox...')
           setSandboxSession({
             apiUrl,
@@ -54,7 +46,6 @@ export function SandboxBootstrap() {
             createdAt: new Date().toISOString()
           })
 
-          // Step 3: Fetch seeds from sandbox and overwrite demo seeds
           setStatus('Loading domain seeds...')
 
           try {
@@ -76,21 +67,17 @@ export function SandboxBootstrap() {
           }
         }
 
-        // Step 4: Redirect to dashboard
         setStatus('Launching dashboard...')
         setState('ready')
-        router.replace('/dashboard')
+        window.location.replace('/dashboard')
       } catch {
         setState('error')
         setStatus('Something went wrong. Redirecting...')
-
-        // Fallback: just go to dashboard with demo data
-        setTimeout(() => router.replace('/dashboard'), 1500)
+        setTimeout(() => { window.location.replace('/dashboard') }, 1500)
       }
     }
 
     bootstrap()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
