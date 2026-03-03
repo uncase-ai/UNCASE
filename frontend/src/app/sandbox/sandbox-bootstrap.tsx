@@ -17,17 +17,23 @@ export function SandboxBootstrap() {
   const [status, setStatus] = useState('Connecting to sandbox...')
   const didRun = useRef(false)
 
+  // Capture params in a ref so the effect has no reactive dependencies
+  // that could cause re-render loops after Suspense resolution.
+  const paramsRef = useRef(params)
+  paramsRef.current = params
+
   useEffect(() => {
     if (didRun.current) return
     didRun.current = true
 
-    const apiUrl = params.get('apiUrl')
-    const docsUrl = params.get('docsUrl') ?? ''
-    const domain = params.get('domain') ?? 'automotive.sales'
-    const expiresAt = params.get('expiresAt') ?? ''
-    const preloadedSeeds = Number(params.get('preloadedSeeds') ?? '0')
-    const jobId = params.get('jobId') ?? ''
-    const fallback = params.get('fallback') === 'true'
+    const sp = paramsRef.current
+    const apiUrl = sp.get('apiUrl')
+    const docsUrl = sp.get('docsUrl') ?? ''
+    const domain = sp.get('domain') ?? 'automotive.sales'
+    const expiresAt = sp.get('expiresAt') ?? ''
+    const preloadedSeeds = Number(sp.get('preloadedSeeds') ?? '0')
+    const jobId = sp.get('jobId') ?? ''
+    const fallback = sp.get('fallback') === 'true'
 
     async function bootstrap() {
       try {
@@ -84,7 +90,8 @@ export function SandboxBootstrap() {
     }
 
     bootstrap()
-  }, [params, router])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
