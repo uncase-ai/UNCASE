@@ -93,6 +93,39 @@ async def _webhook_scheduler() -> None:
                 break
 
 
+async def _blockchain_scheduler() -> None:
+    """Background loop that auto-batches and anchors evaluation hashes."""
+    from uncase.api.routers.blockchain import get_anchor_client_from_settings
+    from uncase.db.engine import get_async_session
+    from uncase.logging import get_logger
+    from uncase.services.blockchain import BlockchainService
+
+    _logger = get_logger("uncase.blockchain_scheduler")
+    settings = UNCASESettings()
+
+    if not settings.blockchain_enabled:
+        _logger.info("blockchain_scheduler_disabled")
+        return
+
+    anchor_client = get_anchor_client_from_settings(settings)
+    interval = settings.blockchain_anchor_interval
+
+    _logger.info("blockchain_scheduler_started", interval_seconds=interval)
+
+    while True:
+        await asyncio.sleep(interval)
+
+        with contextlib.suppress(Exception):
+            async for session in get_async_session():
+                service = BlockchainService(session, settings=settings, anchor_client=anchor_client)
+                summary = await service.auto_anchor()
+
+                if summary["batched"] or summary["retried"]:
+                    _logger.info("blockchain_auto_anchor", **summary)
+
+                break
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan: init DB engine on startup, close on shutdown."""
@@ -103,11 +136,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await _hydrate_tools_from_db()
 
     webhook_task = asyncio.create_task(_webhook_scheduler())
+    blockchain_task = asyncio.create_task(_blockchain_scheduler())
     yield
     webhook_task.cancel()
+    blockchain_task.cancel()
 
     with contextlib.suppress(asyncio.CancelledError):
         await webhook_task
+    with contextlib.suppress(asyncio.CancelledError):
+        await blockchain_task
 
     await close_engine()
 

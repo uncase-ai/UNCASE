@@ -7,11 +7,10 @@ import { useSearchParams } from 'next/navigation'
 import { AnimatePresence, motion } from 'motion/react'
 import {
   AlertTriangle,
-  ArrowRight,
-  BookOpen,
   Check,
   ChevronDown,
   CircleDot,
+  Clock,
   Copy,
   ExternalLink,
   Fingerprint,
@@ -25,10 +24,11 @@ import {
   Shield,
   ShieldCheck,
   TreePine,
-  Wallet
+  Wallet,
+  Zap
 } from 'lucide-react'
 
-import type { BlockchainStats, MerkleBatch, VerificationResponse } from '@/types/api'
+import type { AnchorSchedule, BlockchainStats, MerkleBatch, VerificationResponse } from '@/types/api'
 import { useApi } from '@/hooks/use-api'
 import { Badge } from '@/components/ui/badge'
 import { BorderBeam } from '@/components/ui/border-beam'
@@ -57,11 +57,12 @@ import {
   fetchBlockchainStats,
   fetchBatches,
   fetchVerification,
+  fetchAnchorSchedule,
   buildBatch,
   retryAnchor
 } from '@/lib/api/blockchain'
 import { isDemoMode } from '@/lib/demo'
-import { DEMO_BLOCKCHAIN_STATS, DEMO_BATCHES, getDemoVerification } from '@/lib/demo/blockchain'
+import { DEMO_BLOCKCHAIN_STATS, DEMO_BATCHES, DEMO_ANCHOR_SCHEDULE, getDemoVerification } from '@/lib/demo/blockchain'
 
 type AnchorFilter = 'all' | 'anchored' | 'pending' | 'failed'
 
@@ -555,36 +556,37 @@ function NetworkInfoPanel({ batches }: { batches: MerkleBatch[] | null }) {
   )
 }
 
-// ─── Quick Start Guide ───
-function QuickStartGuide() {
+// ─── Auto Anchor Status ───
+function humanizeInterval(seconds: number): string {
+  if (seconds < 120) return `Every ${seconds}s`
+  if (seconds < 7200) return `Every ${Math.round(seconds / 60)} minutes`
+  if (seconds < 86400) return `Every ${Math.round(seconds / 3600)} hour${Math.round(seconds / 3600) !== 1 ? 's' : ''}`
+  return 'Daily'
+}
+
+function AutoAnchorStatus({ schedule, loading }: { schedule: AnchorSchedule | null; loading: boolean }) {
+  const statusInfo = useMemo(() => {
+    if (!schedule) return { label: 'Loading', color: 'text-muted-foreground', bg: 'bg-muted' }
+    if (schedule.configured) return { label: 'Active', color: 'text-emerald-500', bg: 'bg-emerald-500/10' }
+    if (schedule.enabled) return { label: 'Pending Setup', color: 'text-yellow-500', bg: 'bg-yellow-500/10' }
+    return { label: 'Disabled', color: 'text-muted-foreground', bg: 'bg-muted' }
+  }, [schedule])
+
   const steps = [
     {
-      icon: Wallet,
-      title: 'Set Up Wallet',
-      desc: 'Install MetaMask and add Polygon network. Fund with POL (formerly MATIC) for gas fees.',
-      link: '/docs/guides/polygon-setup',
-      linkLabel: 'Setup Guide'
-    },
-    {
-      icon: Shield,
-      title: 'Configure Server',
-      desc: 'Set POLYGON_RPC_URL, POLYGON_PRIVATE_KEY, and POLYGON_CONTRACT_ADDRESS in your .env file.',
-      link: '/docs/guides/polygon-setup',
-      linkLabel: 'Config Reference'
-    },
-    {
       icon: Fingerprint,
-      title: 'Run Evaluations',
-      desc: 'Quality reports are automatically hashed with SHA-256 after each evaluation.',
-      link: '/dashboard/pipeline/evaluate',
-      linkLabel: 'Go to Evaluate'
+      title: 'Evaluate',
+      desc: 'Quality reports are automatically SHA-256 hashed after each evaluation run.'
     },
     {
       icon: Layers,
-      title: 'Build & Anchor',
-      desc: 'Group hashes into Merkle batches and anchor roots on Polygon for permanent proof.',
-      link: '#',
-      linkLabel: 'Learn More'
+      title: 'Batch',
+      desc: 'Hashes are grouped into Merkle trees on a scheduled interval.'
+    },
+    {
+      icon: ShieldCheck,
+      title: 'Anchor',
+      desc: 'Merkle roots are written to Polygon, funded and managed by UNCASE.'
     }
   ]
 
@@ -592,19 +594,55 @@ function QuickStartGuide() {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-sm">
-          <BookOpen className="size-4" /> Quick Start
+          <Zap className="size-4" /> Auto-Anchor
         </CardTitle>
-        <CardDescription>Four steps to blockchain-verified synthetic data</CardDescription>
+        <CardDescription>UNCASE handles anchoring automatically — your evaluations are verified on-chain without any configuration</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="grid gap-3 sm:grid-cols-2">
+      <CardContent className="space-y-4">
+        {/* Status row */}
+        <div className="flex flex-wrap items-center gap-4">
+          {loading ? (
+            <Skeleton className="h-6 w-32" />
+          ) : (
+            <>
+              <Badge variant="outline" className={`${statusInfo.color} border-current/30 text-xs font-medium`}>
+                <span className={`mr-1.5 inline-block size-1.5 rounded-full ${statusInfo.bg} ${schedule?.configured ? 'animate-pulse' : ''}`} style={{ backgroundColor: schedule?.configured ? '#10b981' : undefined }} />
+                {statusInfo.label}
+              </Badge>
+              {schedule && (
+                <>
+                  <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Clock className="size-3" />
+                    {humanizeInterval(schedule.interval_seconds)}
+                  </span>
+                  {schedule.pending_hashes > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      {schedule.pending_hashes} hash{schedule.pending_hashes !== 1 ? 'es' : ''} awaiting batch
+                    </span>
+                  )}
+                  {schedule.failed_anchor > 0 && (
+                    <span className="flex items-center gap-1 text-xs text-yellow-500">
+                      <AlertTriangle className="size-3" />
+                      {schedule.failed_anchor} failed — will retry automatically
+                    </span>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </div>
+
+        <Separator />
+
+        {/* How it works */}
+        <div className="grid gap-3 sm:grid-cols-3">
           {steps.map((step, i) => (
             <motion.div
               key={step.title}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
-              className="group flex gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50"
+              className="flex gap-3 rounded-lg border p-3"
             >
               <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500/20 to-cyan-500/20">
                 <step.icon className="size-4 text-violet-500" />
@@ -617,13 +655,6 @@ function QuickStartGuide() {
                   <p className="text-xs font-semibold">{step.title}</p>
                 </div>
                 <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{step.desc}</p>
-                <Link
-                  href={step.link}
-                  className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
-                >
-                  {step.linkLabel}
-                  <ArrowRight className="size-3" />
-                </Link>
               </div>
             </motion.div>
           ))}
@@ -668,13 +699,17 @@ export function BlockchainPage() {
     [anchorFilter]
   )
 
+  const scheduleFetcher = useCallback((signal: AbortSignal) => fetchAnchorSchedule(signal), [])
+
   const { data: apiStats, loading: statsLoading, execute: refreshStats } = useApi<BlockchainStats>(statsFetcher)
   const { data: apiBatches, loading: batchesLoading, execute: refreshBatches } = useApi<MerkleBatch[]>(batchFetcher)
+  const { data: apiSchedule, loading: scheduleLoading } = useApi<AnchorSchedule>(scheduleFetcher)
 
   // Demo fallback: use demo data when API returns empty and demo mode is active
   const demo = isDemoMode()
   const stats = apiStats && apiStats.total_hashed > 0 ? apiStats : demo ? DEMO_BLOCKCHAIN_STATS : apiStats
   const batches = apiBatches && apiBatches.length > 0 ? apiBatches : demo ? DEMO_BATCHES : apiBatches
+  const schedule = apiSchedule ?? (demo ? DEMO_ANCHOR_SCHEDULE : null)
 
   // Filter failed batches client-side (API only supports anchored=true/false)
   const filteredBatches = (batches ?? []).filter(b => {
@@ -875,7 +910,7 @@ export function BlockchainPage() {
           }
         />
 
-        <QuickStartGuide />
+        <AutoAnchorStatus schedule={schedule} loading={scheduleLoading} />
       </div>
     )
   }
@@ -1008,7 +1043,7 @@ export function BlockchainPage() {
             <Network className="mr-1.5 size-3.5" /> Network
           </TabsTrigger>
           <TabsTrigger value="guide">
-            <BookOpen className="mr-1.5 size-3.5" /> Guide
+            <Zap className="mr-1.5 size-3.5" /> Auto-Anchor
           </TabsTrigger>
         </TabsList>
 
@@ -1118,9 +1153,9 @@ export function BlockchainPage() {
           </div>
         </TabsContent>
 
-        {/* Guide Tab */}
+        {/* Auto-Anchor Tab */}
         <TabsContent value="guide">
-          <QuickStartGuide />
+          <AutoAnchorStatus schedule={schedule} loading={scheduleLoading} />
         </TabsContent>
       </Tabs>
     </div>

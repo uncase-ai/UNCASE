@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import structlog
 from sqlalchemy import func, select
@@ -224,9 +224,7 @@ class BlockchainService:
 
     async def verify(self, evaluation_report_id: str) -> VerificationResponse:
         """Return the full verification bundle for an evaluation report."""
-        stmt = select(EvaluationHashModel).where(
-            EvaluationHashModel.evaluation_report_id == evaluation_report_id
-        )
+        stmt = select(EvaluationHashModel).where(EvaluationHashModel.evaluation_report_id == evaluation_report_id)
         result = await self._session.execute(stmt)
         eval_hash = result.scalar_one_or_none()
 
@@ -246,9 +244,7 @@ class BlockchainService:
             batch_result = await self._session.execute(batch_stmt)
             batch = batch_result.scalar_one_or_none()
 
-            proof_stmt = select(MerkleProofModel).where(
-                MerkleProofModel.evaluation_hash_id == eval_hash.id
-            )
+            proof_stmt = select(MerkleProofModel).where(MerkleProofModel.evaluation_hash_id == eval_hash.id)
             proof_result = await self._session.execute(proof_stmt)
             proof = proof_result.scalar_one_or_none()
 
@@ -273,6 +269,47 @@ class BlockchainService:
                 )
 
         return response
+
+    # ------------------------------------------------------------------
+    # Auto-anchor (background scheduler)
+    # ------------------------------------------------------------------
+
+    async def auto_anchor(self) -> dict[str, Any]:
+        """Batch unbatched hashes and retry failed batches. Returns summary.
+
+        Called by the background scheduler. Silently skips if there is no work.
+        """
+        summary: dict[str, Any] = {"batched": 0, "anchored": 0, "retried": 0, "errors": []}
+
+        # 1. Build batch from any unbatched hashes (silent skip if none)
+        try:
+            result = await self.build_batch()
+            summary["batched"] = result.leaf_count
+            if result.anchored:
+                summary["anchored"] = 1
+        except ValueError:
+            pass  # No unbatched hashes — normal, skip silently
+
+        # 2. Retry any failed batches
+        failed = await self._get_failed_batches()
+        for batch in failed:
+            try:
+                retry_result = await self.retry_anchor(batch.id)
+                if retry_result.anchored:
+                    summary["retried"] += 1
+            except Exception as exc:
+                summary["errors"].append(str(exc))
+
+        return summary
+
+    async def _get_failed_batches(self) -> list[MerkleBatchModel]:
+        """Return batches that failed anchoring (anchored=False with an error)."""
+        stmt = select(MerkleBatchModel).where(
+            MerkleBatchModel.anchored.is_(False),
+            MerkleBatchModel.anchor_error.is_not(None),
+        )
+        result = await self._session.execute(stmt)
+        return list(result.scalars().all())
 
     # ------------------------------------------------------------------
     # Stats

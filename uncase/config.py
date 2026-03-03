@@ -59,7 +59,8 @@ class UNCASESettings(BaseSettings):
     e2b_webhook_secret: str = ""
 
     # -- Blockchain anchoring (optional) --
-    blockchain_enabled: bool = False
+    blockchain_enabled: bool = True
+    blockchain_anchor_interval: int = Field(default=3600, ge=60, le=86400)
     polygon_rpc_url: str = ""
     polygon_private_key: str = ""
     polygon_contract_address: str = ""

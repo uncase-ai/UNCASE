@@ -1,5 +1,5 @@
 import { apiGet, apiPost } from './client'
-import type { BatchBuildResponse, BlockchainStats, MerkleBatch, VerificationResponse } from '@/types/api'
+import type { AnchorSchedule, BatchBuildResponse, BlockchainStats, MerkleBatch, VerificationResponse } from '@/types/api'
 
 export function fetchBlockchainStats(signal?: AbortSignal) {
   return apiGet<BlockchainStats>('/api/v1/blockchain/stats', { signal })
@@ -30,4 +30,8 @@ export function buildBatch(signal?: AbortSignal) {
 
 export function retryAnchor(batchId: string, signal?: AbortSignal) {
   return apiPost<BatchBuildResponse>('/api/v1/blockchain/retry-anchor', { batch_id: batchId }, { signal })
+}
+
+export function fetchAnchorSchedule(signal?: AbortSignal) {
+  return apiGet<AnchorSchedule>('/api/v1/blockchain/schedule', { signal })
 }

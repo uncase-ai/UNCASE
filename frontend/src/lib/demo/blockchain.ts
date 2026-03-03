@@ -1,4 +1,4 @@
-import type { BlockchainStats, MerkleBatch, VerificationResponse } from '@/types/api'
+import type { AnchorSchedule, BlockchainStats, MerkleBatch, VerificationResponse } from '@/types/api'
 
 function daysAgo(n: number, hours = 12): string {
   const d = new Date()
@@ -13,6 +13,17 @@ function daysAgo(n: number, hours = 12): string {
 const CHAIN_ID = 80002 // Polygon Amoy Testnet
 const CONTRACT_ADDRESS = '0x7a3B1f5cD9eE4a8b2c6D0f1E3A9d5C7b4F2e8A6d'
 const EXPLORER_BASE = 'https://amoy.polygonscan.com'
+
+// ─── Demo Anchor Schedule ───
+export const DEMO_ANCHOR_SCHEDULE: AnchorSchedule = {
+  enabled: true,
+  configured: true,
+  interval_seconds: 3600,
+  chain_id: 80002,
+  pending_hashes: 2,
+  pending_anchor: 0,
+  failed_anchor: 0
+}
 
 // ─── Demo Stats ───
 export const DEMO_BLOCKCHAIN_STATS: BlockchainStats = {

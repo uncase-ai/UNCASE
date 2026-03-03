@@ -31,8 +31,11 @@ logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/api/v1/blockchain", tags=["blockchain"])
 
 
-def _get_anchor_client(settings: UNCASESettings) -> AnchorClient | None:
-    """Lazily create an AnchorClient if blockchain is enabled and configured."""
+def get_anchor_client_from_settings(settings: UNCASESettings) -> AnchorClient | None:
+    """Lazily create an AnchorClient if blockchain is enabled and configured.
+
+    Shared between the router endpoints and the background scheduler.
+    """
     if not settings.blockchain_enabled:
         return None
     if not settings.polygon_rpc_url or not settings.polygon_private_key or not settings.polygon_contract_address:
@@ -76,7 +79,7 @@ async def build_batch(
 ) -> BatchBuildResponse:
     """Build a Merkle tree from unbatched evaluation hashes and anchor on-chain."""
     settings = UNCASESettings()
-    anchor_client = _get_anchor_client(settings)
+    anchor_client = get_anchor_client_from_settings(settings)
 
     org_id = request.organization_id or (org.id if org else None)
 
@@ -94,7 +97,7 @@ async def retry_anchor(
 ) -> BatchBuildResponse:
     """Retry on-chain anchoring for a failed batch."""
     settings = UNCASESettings()
-    anchor_client = _get_anchor_client(settings)
+    anchor_client = get_anchor_client_from_settings(settings)
     service = BlockchainService(session, settings=settings, anchor_client=anchor_client)
     try:
         return await service.retry_anchor(request.batch_id)
@@ -128,3 +131,24 @@ async def get_stats(
     """Return aggregate statistics for blockchain certification."""
     service = BlockchainService(session)
     return await service.get_stats()
+
+
+@router.get("/schedule")
+async def get_anchor_schedule(
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> dict[str, object]:
+    """Return auto-anchor scheduling info for the frontend dashboard."""
+    settings = UNCASESettings()
+    service = BlockchainService(session)
+    stats = await service.get_stats()
+    return {
+        "enabled": settings.blockchain_enabled,
+        "configured": bool(
+            settings.polygon_rpc_url and settings.polygon_private_key and settings.polygon_contract_address
+        ),
+        "interval_seconds": settings.blockchain_anchor_interval,
+        "chain_id": settings.polygon_chain_id,
+        "pending_hashes": stats.total_unbatched,
+        "pending_anchor": stats.total_pending_anchor,
+        "failed_anchor": stats.total_failed_anchor,
+    }

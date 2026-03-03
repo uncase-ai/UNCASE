@@ -806,6 +806,16 @@ export interface VerificationResponse {
   proof: MerkleProofDetail | null
 }
 
+export interface AnchorSchedule {
+  enabled: boolean
+  configured: boolean
+  interval_seconds: number
+  chain_id: number
+  pending_hashes: number
+  pending_anchor: number
+  failed_anchor: number
+}
+
 export interface MerkleBatch {
   id: string
   batch_number: number
