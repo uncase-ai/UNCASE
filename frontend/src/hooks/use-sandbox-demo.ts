@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 
 import { createDemoSandbox } from '@/lib/api/sandbox'
 import { activateDemo } from '@/lib/demo'
@@ -26,22 +26,18 @@ function subscribeTtl(cb: () => void): () => void {
   }
 }
 
-// Auto-clear expired sessions on every TTL read
-function getTtlSnapshot(): number {
-  const ms = getSandboxTtlMs()
-
-  if (ms <= 0 && isSandboxActive()) {
-    // Expired — clean up (will trigger subscribeSandbox listeners)
-    clearSandboxSession()
-  }
-
-  return ms
-}
-
 export function useSandboxDemo() {
   const active = useSyncExternalStore(subscribeSandbox, isSandboxActive, () => false)
   const session = useSyncExternalStore(subscribeSandbox, getSandboxSession, () => null)
-  const ttlMs = useSyncExternalStore(subscribeTtl, getTtlSnapshot, () => 0)
+  const ttlMs = useSyncExternalStore(subscribeTtl, getSandboxTtlMs, () => 0)
+
+  // Clean up expired sessions in an effect — NOT inside the snapshot getter,
+  // which must be a pure function to avoid infinite re-render loops.
+  useEffect(() => {
+    if (ttlMs <= 0 && active) {
+      clearSandboxSession()
+    }
+  }, [ttlMs, active])
 
   const [booting, setBooting] = useState(false)
   const [error, setError] = useState<string | null>(null)

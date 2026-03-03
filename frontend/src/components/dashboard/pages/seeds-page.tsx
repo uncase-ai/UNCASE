@@ -255,8 +255,8 @@ export function SeedsPage() {
         version: item.version as '1.0',
         dominio: item.dominio,
         idioma: item.idioma,
-        etiquetas: item.etiquetas,
-        roles: item.roles,
+        etiquetas: item.etiquetas ?? [],
+        roles: item.roles ?? [],
         descripcion_roles: item.descripcion_roles,
         objetivo: item.objetivo,
         tono: item.tono,
@@ -313,7 +313,7 @@ export function SeedsPage() {
           s.seed_id.toLowerCase().includes(q) ||
           s.objetivo.toLowerCase().includes(q) ||
           s.dominio.toLowerCase().includes(q) ||
-          s.etiquetas.some(t => t.toLowerCase().includes(q)) ||
+          (s.etiquetas ?? []).some(t => t.toLowerCase().includes(q)) ||
           s.roles.some(r => r.toLowerCase().includes(q))
       )
     }
@@ -664,13 +664,13 @@ export function SeedsPage() {
                         {role}
                       </Badge>
                     ))}
-                    {seed.etiquetas.slice(0, 3).map(tag => (
+                    {(seed.etiquetas ?? []).slice(0, 3).map(tag => (
                       <Badge key={tag} variant="secondary" className="text-[9px] font-normal">
                         {tag}
                       </Badge>
                     ))}
-                    {seed.etiquetas.length > 3 && (
-                      <span className="text-[9px] text-muted-foreground">+{seed.etiquetas.length - 3}</span>
+                    {(seed.etiquetas ?? []).length > 3 && (
+                      <span className="text-[9px] text-muted-foreground">+{(seed.etiquetas ?? []).length - 3}</span>
                     )}
                   </div>
 

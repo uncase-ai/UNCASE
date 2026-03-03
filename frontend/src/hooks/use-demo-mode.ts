@@ -5,13 +5,21 @@ import { useCallback, useSyncExternalStore } from 'react'
 import { activateDemo, deactivateDemo, isDemoMode, resetDemoData } from '@/lib/demo'
 
 const noop = () => {}
+const DEMO_MODE_KEY = 'uncase-demo-mode'
 
 function subscribeStorage(cb: () => void) {
   if (typeof window === 'undefined') return noop
 
-  window.addEventListener('storage', cb)
+  // Only react to the demo-mode key — not every localStorage write.
+  // Without this filter, every demo-data key dispatch (seeds, conversations,
+  // evaluations, etc.) triggers an unnecessary snapshot check.
+  const handler = (e: StorageEvent) => {
+    if (e.key === null || e.key === DEMO_MODE_KEY) cb()
+  }
 
-  return () => window.removeEventListener('storage', cb)
+  window.addEventListener('storage', handler)
+
+  return () => window.removeEventListener('storage', handler)
 }
 
 export function useDemoMode() {
