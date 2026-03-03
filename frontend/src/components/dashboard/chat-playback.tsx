@@ -56,15 +56,17 @@ export function ChatPlayback({ totalMessages, children }: ChatPlaybackProps) {
       return
     }
 
-    // Show typing indicator first, then reveal
-    setIsTyping(true)
+    // Show typing indicator first, then reveal after delay
     const typingDelay = (BASE_DELAY_MS * 0.4) / speed
     const messageDelay = (BASE_DELAY_MS * 0.6) / speed
 
     timerRef.current = setTimeout(() => {
-      setIsTyping(false)
-      timerRef.current = setTimeout(revealNext, messageDelay)
-    }, typingDelay)
+      setIsTyping(true)
+      timerRef.current = setTimeout(() => {
+        setIsTyping(false)
+        timerRef.current = setTimeout(revealNext, messageDelay)
+      }, typingDelay)
+    }, 0)
 
     return clearTimer
   }, [isPlaying, visibleCount, totalMessages, speed, revealNext, clearTimer])
