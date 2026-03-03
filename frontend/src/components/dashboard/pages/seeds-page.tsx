@@ -251,22 +251,22 @@ export function SeedsPage() {
 
     if (data) {
       const apiSeeds: SeedSchema[] = data.items.map(item => ({
-        seed_id: item.id,
-        version: item.version as '1.0',
-        dominio: item.dominio,
-        idioma: item.idioma,
+        seed_id: item.id ?? item.seed_id ?? '',
+        version: (item.version as '1.0') ?? '1.0',
+        dominio: item.dominio ?? item.domain ?? '',
+        idioma: item.idioma ?? 'es',
         etiquetas: item.etiquetas ?? [],
         roles: item.roles ?? [],
-        descripcion_roles: item.descripcion_roles,
-        objetivo: item.objetivo,
-        tono: item.tono,
-        pasos_turnos: item.pasos_turnos,
-        parametros_factuales: item.parametros_factuales,
-        privacidad: item.privacidad,
-        metricas_calidad: item.metricas_calidad,
+        descripcion_roles: item.descripcion_roles ?? {},
+        objetivo: item.objetivo ?? '',
+        tono: item.tono ?? 'profesional',
+        pasos_turnos: item.pasos_turnos ?? { turnos_min: 3, turnos_max: 10, flujo_esperado: [] },
+        parametros_factuales: item.parametros_factuales ?? { contexto: '', restricciones: [] },
+        privacidad: item.privacidad ?? { pii_fields: [], anonymization: 'redact' },
+        metricas_calidad: item.metricas_calidad ?? {},
         organization_id: item.organization_id ?? undefined,
-        created_at: item.created_at,
-        updated_at: item.updated_at
+        created_at: item.created_at ?? new Date().toISOString(),
+        updated_at: item.updated_at ?? new Date().toISOString()
       }))
 
       const localSeeds = loadSeeds()
@@ -314,7 +314,7 @@ export function SeedsPage() {
           s.objetivo.toLowerCase().includes(q) ||
           s.dominio.toLowerCase().includes(q) ||
           (s.etiquetas ?? []).some(t => t.toLowerCase().includes(q)) ||
-          s.roles.some(r => r.toLowerCase().includes(q))
+          (s.roles ?? []).some(r => r.toLowerCase().includes(q))
       )
     }
 
@@ -648,7 +648,7 @@ export function SeedsPage() {
                       {seed.seed_id}
                     </span>
                     <Badge variant="secondary" className="ml-auto shrink-0 text-[10px]">
-                      {DOMAIN_LABELS[seed.dominio] || seed.dominio.split('.').pop()}
+                      {DOMAIN_LABELS[seed.dominio] || (seed.dominio ?? '').split('.').pop()}
                     </Badge>
                   </div>
 
@@ -659,7 +659,7 @@ export function SeedsPage() {
 
                   {/* Row 3: Roles + Tags compact */}
                   <div className="flex flex-wrap gap-1">
-                    {seed.roles.map(role => (
+                    {(seed.roles ?? []).map(role => (
                       <Badge key={role} variant="outline" className="font-mono text-[9px]">
                         {role}
                       </Badge>
@@ -676,7 +676,7 @@ export function SeedsPage() {
 
                   {/* Row 4: Technical specs */}
                   <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-                    <span>{seed.pasos_turnos.turnos_min}-{seed.pasos_turnos.turnos_max} turns</span>
+                    <span>{seed.pasos_turnos?.turnos_min ?? 0}-{seed.pasos_turnos?.turnos_max ?? 0} turns</span>
                     <span className="text-muted-foreground/30">|</span>
                     <span>{seed.tono}</span>
                     <span className="text-muted-foreground/30">|</span>

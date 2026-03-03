@@ -222,10 +222,11 @@ const DEFAULT_MOCK_TURNS = {
 }
 
 function generateMockConversation(seed: SeedSchema, languageOverride?: string): Conversation {
-  const numTurns = seed.pasos_turnos.turnos_min +
-    Math.floor(Math.random() * (seed.pasos_turnos.turnos_max - seed.pasos_turnos.turnos_min + 1))
+  const minTurns = seed.pasos_turnos?.turnos_min ?? 3
+  const maxTurns = seed.pasos_turnos?.turnos_max ?? 10
+  const numTurns = minTurns + Math.floor(Math.random() * (maxTurns - minTurns + 1))
 
-  const roles = seed.roles.length >= 2 ? seed.roles : ['usuario', 'asistente']
+  const roles = (seed.roles?.length ?? 0) >= 2 ? seed.roles : ['usuario', 'asistente']
   const idioma = languageOverride || seed.idioma
   const pool = MOCK_TURNS[seed.dominio] ?? DEFAULT_MOCK_TURNS
 
@@ -405,7 +406,7 @@ export function GeneratePage() {
           if (error) {
             if (error.status === 0 && error.message === 'Request cancelled') break
             setGenerationError(
-              `Generation failed for seed ${seed.seed_id.slice(0, 8)}: ${error.message}`
+              `Generation failed for seed ${seed.seed_id?.slice(0, 8) ?? 'unknown'}: ${error.message}`
             )
             break
           }
@@ -671,13 +672,13 @@ export function GeneratePage() {
                     <div className="flex-1 overflow-hidden">
                       <div className="flex items-center gap-2">
                         <span className="truncate font-mono text-xs font-medium">
-                          {seed.seed_id.slice(0, 16)}...
+                          {(seed.seed_id ?? '').slice(0, 16)}...
                         </span>
                         <Badge
                           variant="secondary"
                           className={cn('shrink-0 text-[10px]', DOMAIN_COLORS[seed.dominio])}
                         >
-                          {seed.dominio.split('.').pop()}
+                          {(seed.dominio ?? '').split('.').pop()}
                         </Badge>
                         <Badge variant="outline" className="shrink-0 text-[10px]">
                           {seed.idioma}
@@ -687,9 +688,9 @@ export function GeneratePage() {
                         {seed.objetivo}
                       </p>
                       <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
-                        <span>{seed.roles.join(', ')}</span>
+                        <span>{(seed.roles ?? []).join(', ')}</span>
                         <span>|</span>
-                        <span>{seed.pasos_turnos.turnos_min}-{seed.pasos_turnos.turnos_max} turns</span>
+                        <span>{seed.pasos_turnos?.turnos_min ?? 0}-{seed.pasos_turnos?.turnos_max ?? 0} turns</span>
                       </div>
                     </div>
                   </label>

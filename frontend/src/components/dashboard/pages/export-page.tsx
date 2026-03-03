@@ -341,7 +341,7 @@ export function ExportPage() {
       header: 'Domain',
       cell: row => (
         <span className="text-xs text-muted-foreground">
-          {row.domain === 'all' ? 'All' : row.domain.split('.').pop()}
+          {row.domain === 'all' ? 'All' : (row.domain ?? '').split('.').pop()}
         </span>
       )
     },

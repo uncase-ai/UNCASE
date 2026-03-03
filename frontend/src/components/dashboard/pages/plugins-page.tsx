@@ -410,7 +410,7 @@ export function PluginsPage() {
                               <code className="shrink-0 text-[11px] font-medium">{tool.name}</code>
                               {isRegistered && <Check className="mt-0.5 size-3 shrink-0 text-foreground" />}
                               <span className="line-clamp-1 text-[11px] text-muted-foreground">
-                                {tool.description.split('\n')[0]}
+                                {(tool.description ?? '').split('\n')[0]}
                               </span>
                             </div>
                           )

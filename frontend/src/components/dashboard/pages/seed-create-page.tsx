@@ -757,11 +757,11 @@ export function SeedCreatePage() {
         const selectedDomain = draft.dominio || ''
 
         const domainTools = selectedDomain
-          ? allTools.filter(t => t.domains.some(d => d === selectedDomain))
+          ? allTools.filter(t => (t.domains ?? []).some(d => d === selectedDomain))
           : allTools
 
         const otherTools = selectedDomain
-          ? allTools.filter(t => !t.domains.some(d => d === selectedDomain))
+          ? allTools.filter(t => !(t.domains ?? []).some(d => d === selectedDomain))
           : []
 
         const selectedTools = new Set(draft.parametros_factuales?.herramientas || [])
@@ -929,7 +929,7 @@ export function SeedCreatePage() {
                                   {tool.name}
                                   <ExternalLink className="ml-0.5 inline size-2.5 text-muted-foreground" />
                                 </Link>
-                                <Badge variant="outline" className="text-[9px]">{tool.domains.join(', ')}</Badge>
+                                <Badge variant="outline" className="text-[9px]">{(tool.domains ?? []).join(', ')}</Badge>
                               </div>
                               <p className="truncate text-[10px] text-muted-foreground">{tool.description}</p>
                             </div>
@@ -993,7 +993,7 @@ export function SeedCreatePage() {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5">
                               <span className="text-xs font-medium">
-                                {sc.name.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                                {(sc.name ?? '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                               </span>
                               <Badge variant="outline" className="text-[9px]">{sc.skill_level}</Badge>
                               {sc.edge_case && (

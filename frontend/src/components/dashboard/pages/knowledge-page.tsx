@@ -713,7 +713,7 @@ export function KnowledgePage() {
                           {TYPE_LABELS[doc.type]}
                         </Badge>
                         <Badge variant="secondary" className="shrink-0 text-[10px]">
-                          {doc.domain.split('.').pop()}
+                          {(doc.domain ?? '').split('.').pop()}
                         </Badge>
                       </div>
                       <div className="mt-0.5 flex items-center gap-3 text-[11px] text-muted-foreground">
