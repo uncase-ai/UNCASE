@@ -252,9 +252,9 @@ export function SeedsPage() {
 
     if (data) {
       const apiSeeds: SeedSchema[] = data.items.map(item => ({
-        seed_id: item.id ?? item.seed_id ?? '',
+        seed_id: item.id ?? '',
         version: (item.version as '1.0') ?? '1.0',
-        dominio: item.dominio ?? item.domain ?? '',
+        dominio: item.dominio ?? '',
         idioma: item.idioma ?? 'es',
         etiquetas: item.etiquetas ?? [],
         roles: item.roles ?? [],
