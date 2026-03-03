@@ -1,11 +1,16 @@
-import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 
-import { SandboxBootstrap } from './sandbox-bootstrap'
+/**
+ * Legacy route — redirect to /sandbox which lives outside the
+ * DashboardShell layout so the Topbar health check doesn't fire
+ * before the sandbox session is established.
+ */
+export default function LegacySandboxPage({
+  searchParams
+}: {
+  searchParams: Record<string, string>
+}) {
+  const params = new URLSearchParams(searchParams).toString()
 
-export const metadata: Metadata = {
-  title: 'Connecting to Sandbox...'
-}
-
-export default function SandboxPage() {
-  return <SandboxBootstrap />
+  redirect(`/sandbox${params ? `?${params}` : ''}`)
 }
