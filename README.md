@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" /></a>
+  <a href="https://opensource.org/licenses/BSD-3-Clause"><img src="https://img.shields.io/badge/License-BSD_3--Clause-blue.svg" /></a>
   <a href="https://python.org"><img src="https://img.shields.io/badge/python-≥3.11-blue.svg" alt="Python" /></a>
   <a href="https://docs.astral.sh/ruff/"><img src="https://img.shields.io/badge/code%20style-ruff-000000.svg" alt="Ruff" /></a>
   <a href="#"><img src="https://img.shields.io/badge/tests-1160%2B%20passing-brightgreen.svg" alt="Tests" /></a>
@@ -114,7 +114,7 @@ Seeds are **traceable** (every synthetic conversation maps back to its seed via 
 | Privacy-first | No | Partial | **Zero PII — Privacy Interceptor + PromptShield** |
 | Quality verification | Self-reported | Self-reported | **9 metrics, blockchain-anchored on Polygon PoS** |
 | Regulated industries | No | Limited | **6 verticals: healthcare, finance, legal, automotive, manufacturing, education** |
-| Open source | Sometimes | No | **Apache 2.0 — free forever** |
+| Open source | Sometimes | No | **BSD-3-Clause — free forever** |
 | Seed-based generation | No | No | **Deterministic, traceable, reproducible** |
 | Full pipeline (import to LoRA) | No | Partial | **5 layers, end-to-end, with on-chain audit trail** |
 
@@ -454,7 +454,7 @@ See [docs/development.md](docs/development.md) for the full contributing guide.
 
 ## License
 
-[Apache License 2.0](LICENSE) — Free for commercial and non-commercial use.
+[BSD 3-Clause License](LICENSE) — Free for commercial and non-commercial use.
 
 ---
 
