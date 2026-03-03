@@ -32,6 +32,8 @@ class EvaluationReportModel(TimestampMixin, Base):
     privacy_score: Mapped[float] = mapped_column(Float, nullable=False)
     memorizacion: Mapped[float] = mapped_column(Float, nullable=False)
     tool_call_validity: Mapped[float | None] = mapped_column(Float, nullable=True)
+    semantic_fidelity: Mapped[float | None] = mapped_column(Float, nullable=True)
+    embedding_drift: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     # Composite result
     composite_score: Mapped[float] = mapped_column(Float, nullable=False)

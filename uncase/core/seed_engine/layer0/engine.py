@@ -241,10 +241,11 @@ class AgenticExtractionEngine:
             question = await self._generate_for_action(action, industry, language)
 
         # Generate final summary
+        final_action = self._state.decide_next_action()
         summary = await self._interviewer.generate_summary(
             captured_data=self._schema.to_extraction_dict(),
-            missing_fields=self._state.decide_next_action().missing_fields,
-            ambiguous_fields=self._state.decide_next_action().ambiguous_fields,
+            missing_fields=final_action.missing_fields,
+            ambiguous_fields=final_action.ambiguous_fields,
             industry=industry,
             language=language,
         )

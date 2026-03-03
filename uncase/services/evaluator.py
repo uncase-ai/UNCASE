@@ -46,6 +46,8 @@ class EvaluatorService:
             privacy_score=report.metrics.privacy_score,
             memorizacion=report.metrics.memorizacion,
             tool_call_validity=report.metrics.tool_call_validity,
+            semantic_fidelity=report.metrics.semantic_fidelity,
+            embedding_drift=report.metrics.embedding_drift,
             composite_score=report.composite_score,
             passed=report.passed,
             failures=report.failures,
@@ -61,8 +63,8 @@ class EvaluatorService:
 
             bc = BlockchainService(self._session)
             await bc.hash_and_store(report, model.id)
-        except Exception:
-            logger.warning("blockchain_hash_failed", report_id=model.id)
+        except Exception as exc:
+            logger.warning("blockchain_hash_failed", report_id=model.id, error=str(exc))
 
         logger.info(
             "evaluation_persisted",
@@ -123,6 +125,8 @@ class EvaluatorService:
                 "tool_call_validity",
                 "privacy_score",
                 "memorizacion",
+                "semantic_fidelity",
+                "embedding_drift",
             ]
             for field in metric_fields:
                 values = [getattr(r.metrics, field) for r in reports]

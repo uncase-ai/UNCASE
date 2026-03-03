@@ -57,8 +57,13 @@ class QualityThresholdsResponse(BaseModel):
     tool_call_validity_min: float = Field(default=0.90, description="Minimum tool call validity")
     privacy_score_max: float = Field(default=0.0, description="Maximum PII residual (must be 0.0)")
     memorizacion_max: float = Field(default=0.01, description="Maximum memorization rate")
+    semantic_fidelity_min: float = Field(default=0.60, description="Minimum semantic fidelity (LLM-as-Judge)")
+    embedding_drift_min: float = Field(default=0.40, description="Minimum embedding cosine similarity")
     formula: str = Field(
-        default="Q = min(rouge_l, fidelidad, ttr, coherencia) if privacy=0.0 AND memorization<0.01 else 0.0",
+        default=(
+            "Q = min(rouge_l, fidelidad, ttr, coherencia, tool_call_validity, "
+            "semantic_fidelity, embedding_drift) if privacy=0.0 AND memorization<0.01 else 0.0"
+        ),
         description="Composite score formula",
     )
 
@@ -76,6 +81,8 @@ class EvaluationReportResponse(BaseModel):
     privacy_score: float
     memorizacion: float
     tool_call_validity: float | None = None
+    semantic_fidelity: float | None = None
+    embedding_drift: float | None = None
     composite_score: float
     passed: bool
     failures: list[str]

@@ -58,7 +58,8 @@ class QualityReport(BaseModel):
 def compute_composite_score(metrics: QualityMetrics) -> tuple[float, bool, list[str]]:
     """Compute the composite quality score.
 
-    Formula: Q = min(ROUGE-L, Fidelidad, TTR, Coherencia, ToolCallValidity)
+    Formula: Q = min(ROUGE-L, Fidelidad, TTR, Coherencia, ToolCallValidity,
+                     SemanticFidelity, EmbeddingDrift)
              if privacy_score == 0.0 AND memorizacion < 0.01
              else Q = 0.0
 
@@ -78,7 +79,7 @@ def compute_composite_score(metrics: QualityMetrics) -> tuple[float, bool, list[
             failures.append(f"{name}={value} (min {threshold})")
         elif operator == "<" and value >= threshold:
             failures.append(f"{name}={value} (must be < {threshold})")
-        elif operator == "=" and value != threshold:
+        elif operator == "=" and abs(value - threshold) > 1e-9:
             failures.append(f"{name}={value} (must be {threshold})")
 
     # Gate metrics kill the composite score entirely

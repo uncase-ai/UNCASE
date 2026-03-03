@@ -252,8 +252,6 @@ class PipelineOrchestrator:
                 duration_seconds=round(time.monotonic() - stage_start, 2),
                 artifacts={"conversation_count": len(all_conversations)},
             )
-        except GenerationError:
-            raise
         except Exception as exc:
             stage_result = PipelineStageResult(
                 stage="generation",

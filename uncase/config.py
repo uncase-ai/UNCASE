@@ -115,6 +115,18 @@ class UNCASESettings(BaseSettings):
         """Parse CORS origins string into a list."""
         return [o.strip() for o in self.api_cors_origins.split(",") if o.strip()]
 
+    def to_layer0_config(self) -> Layer0Config:
+        """Build a Layer0Config from the current settings."""
+        from uncase.core.seed_engine.layer0.config import Layer0Config
+
+        return Layer0Config(
+            max_turns=self.layer0_max_turns,
+            extractor_model=self.layer0_extractor_model,
+            interviewer_provider=self.layer0_interviewer_provider,
+            interviewer_model=self.layer0_interviewer_model,
+            default_locale=self.uncase_default_locale,
+        )
+
 
 def get_settings() -> UNCASESettings:
     """Create and return settings instance."""

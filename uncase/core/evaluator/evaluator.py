@@ -71,6 +71,11 @@ class ConversationEvaluator(BaseEvaluator):
 
         Computes all metrics, applies the composite scoring formula
         with privacy/memorization gates, and returns a full report.
+
+        Metrics that provide a ``compute_async()`` method are awaited
+        directly so that LLM-backed evaluations (SemanticFidelity,
+        EmbeddingDrift) actually execute instead of falling back to
+        neutral scores.
         """
         logger.info(
             "evaluating_conversation",
@@ -81,7 +86,12 @@ class ConversationEvaluator(BaseEvaluator):
 
         scores: dict[str, float] = {}
         for metric in self._metrics:
-            score = metric.compute(conversation, seed)
+            # Prefer the async path when available — avoids the
+            # "already in an event loop" fallback that returns 0.5.
+            if hasattr(metric, "compute_async"):
+                score = await metric.compute_async(conversation, seed)
+            else:
+                score = metric.compute(conversation, seed)
             scores[metric.name] = max(0.0, min(1.0, score))  # Clamp to [0, 1]
 
         # Build QualityMetrics from computed scores.
