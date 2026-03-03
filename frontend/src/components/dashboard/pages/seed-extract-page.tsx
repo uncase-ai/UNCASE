@@ -242,6 +242,7 @@ function buildDemoProgress(step: number, totalSteps: number, fields: Record<stri
 
   for (const name of allFieldNames) {
     const existing = fields[name]
+
     progressFields[name] = existing
       ? { status: existing.status as 'extracted' | 'confirmed', confidence: existing.confidence, is_required: existing.is_required }
       : { status: 'empty', confidence: 0, is_required: name === 'dominio' || name === 'roles' || name === 'objetivo' }
@@ -309,6 +310,7 @@ export function SeedExtractPage() {
       if (apiError || !data) {
         setError(apiError?.message ?? 'Failed to start session')
         setStarting(false)
+
         return
       }
 
@@ -317,6 +319,7 @@ export function SeedExtractPage() {
       addMessage('assistant', data.message.content, data.message.progress)
       setSessionState('active')
       setStarting(false)
+
       return
     }
 
@@ -376,10 +379,12 @@ export function SeedExtractPage() {
           : 'Extraction complete! I\'ve gathered all the parameters needed for your conversation seed. You can review and create it.'
 
         const finalProgress = buildDemoProgress(script.length, script.length, script[script.length - 1].fields)
+
         setProgress(finalProgress)
         addMessage('system', summaryMsg, finalProgress)
         setSeed(demoSeed)
         setSessionState('complete')
+
         return
       }
 
@@ -390,6 +395,7 @@ export function SeedExtractPage() {
       addMessage('assistant', step.question, demoProgress)
       demoStepRef.current = stepIdx + 1
       setSessionState('active')
+
       return
     }
 
@@ -402,6 +408,7 @@ export function SeedExtractPage() {
     if (apiError || !data) {
       setError(apiError?.message ?? 'Failed to process turn')
       setSessionState('active')
+
       return
     }
 
@@ -414,6 +421,7 @@ export function SeedExtractPage() {
 
     if (data.is_complete) {
       setSessionState('complete')
+
       if (data.message.seed) {
         setSeed(data.message.seed as Record<string, unknown>)
       }
@@ -426,6 +434,7 @@ export function SeedExtractPage() {
     if (sessionId && !demoMode) {
       await endSession(sessionId)
     }
+
     setSessionState('idle')
     setSessionId(null)
     setDemoMode(false)
@@ -435,12 +444,14 @@ export function SeedExtractPage() {
   const handleCreateSeed = useCallback(() => {
     if (!seed) return
     const existing = JSON.parse(localStorage.getItem('uncase-seeds') ?? '[]')
+
     const newSeed = {
       ...seed,
       seed_id: `seed-${Date.now()}`,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
+
     localStorage.setItem('uncase-seeds', JSON.stringify([newSeed, ...existing]))
     window.location.href = '/dashboard/pipeline/seeds'
   }, [seed])

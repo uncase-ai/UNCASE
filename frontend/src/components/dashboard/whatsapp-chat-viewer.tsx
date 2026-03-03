@@ -34,6 +34,7 @@ type BubbleRole = 'user' | 'assistant' | 'system'
 function getBubbleRole(turn: ConversationTurn): BubbleRole {
   if (isSystemRole(turn.rol)) return 'system'
   if (isUserRole(turn.rol)) return 'user'
+
   return 'assistant'
 }
 
@@ -41,7 +42,9 @@ function getBubbleRole(turn: ConversationTurn): BubbleRole {
 
 function simulateTimestamps(turns: ConversationTurn[]): Date[] {
   const base = new Date()
+
   base.setHours(10, 0, 0, 0)
+
   return turns.map((_, i) => new Date(base.getTime() + i * 45000))
 }
 

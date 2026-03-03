@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { BookOpen, BrainCircuit, Check, MessageSquare, Search, Shield, Sparkles, Zap } from 'lucide-react'
 
@@ -33,20 +33,21 @@ const apiFeatures = [
   { icon: BookOpen, label: 'Knowledge Extraction', desc: 'Process domain documents for seed enrichment' },
 ]
 
-export function WelcomeModal() {
-  const [open, setOpen] = useState(false)
-  const [dontShow, setDontShow] = useState(false)
+function shouldShowWelcome(): boolean {
+  if (typeof window === 'undefined') return false
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const dismissed = localStorage.getItem(STORAGE_KEY)
-    if (!dismissed) setOpen(true)
-  }, [])
+  return !localStorage.getItem(STORAGE_KEY)
+}
+
+export function WelcomeModal() {
+  const [open, setOpen] = useState(shouldShowWelcome)
+  const [dontShow, setDontShow] = useState(false)
 
   function handleDismiss() {
     if (dontShow) {
       localStorage.setItem(STORAGE_KEY, 'true')
     }
+
     setOpen(false)
   }
 

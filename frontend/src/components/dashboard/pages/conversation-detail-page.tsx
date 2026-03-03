@@ -917,6 +917,7 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
                   <ChatPlayback totalMessages={conversation.turnos.length}>
                     {(visibleCount, isTyping) => {
                       const slicedConv = { ...conversation, turnos: conversation.turnos.slice(0, visibleCount) }
+
                       const playbackContent = (
                         <WhatsAppChatViewer
                           conversation={slicedConv}
@@ -928,6 +929,7 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
                           onEditCancel={handleEditCancel}
                         />
                       )
+
                       return showPhoneFrame ? (
                         <PhoneFrame title={conversation.dominio}>
                           {playbackContent}

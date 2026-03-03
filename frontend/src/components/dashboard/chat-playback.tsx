@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { ReactNode } from 'react'
+
 import { FastForward, Pause, Play, SkipForward } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -35,11 +36,14 @@ export function ChatPlayback({ totalMessages, children }: ChatPlaybackProps) {
   const revealNext = useCallback(() => {
     setVisibleCount(prev => {
       const next = prev + 1
+
       if (next >= totalMessages) {
         setIsPlaying(false)
         setIsTyping(false)
+
         return totalMessages
       }
+
       return next
     })
     setIsTyping(false)
@@ -48,6 +52,7 @@ export function ChatPlayback({ totalMessages, children }: ChatPlaybackProps) {
   useEffect(() => {
     if (!isPlaying || visibleCount >= totalMessages) {
       clearTimer()
+
       return
     }
 

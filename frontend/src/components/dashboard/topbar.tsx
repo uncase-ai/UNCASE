@@ -49,7 +49,8 @@ export function Topbar({ sidebarCollapsed, onToggleSidebar, onOpenMobile }: Topb
       </Button>
 
       {/* Logo */}
-      <img src="/images/logo/favicon.png" alt="UNCASE" className="size-5 dark:invert" />
+      <img src="/images/logo/logo-dark.svg" alt="UNCASE" className="h-5 w-auto dark:hidden" />
+      <img src="/images/logo/logo-white.svg" alt="UNCASE" className="hidden h-5 w-auto dark:block" />
       <span className="text-sm font-bold tracking-tight">UNCASE</span>
 
       {/* Breadcrumbs */}

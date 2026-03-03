@@ -229,6 +229,7 @@ function generateDemoConversation(seed: SeedSchema): Conversation {
     const isUser = i % 2 === 0
     const bank = isUser ? pool.user : pool.assistant
     const bankIdx = Math.floor(i / 2) % bank.length
+
     return {
       turno: i + 1,
       rol: roles[i % roles.length],
@@ -253,6 +254,7 @@ function generateDemoConversation(seed: SeedSchema): Conversation {
 function generateDemoQualityReport(conv: Conversation, seed: SeedSchema): QualityReport {
   // Generate realistic scores that pass thresholds (demo content is premium)
   const r = () => 0.85 + Math.random() * 0.13 // 0.85–0.98
+
   const metrics = {
     rouge_l: r(),
     fidelidad_factual: r(),
@@ -262,6 +264,7 @@ function generateDemoQualityReport(conv: Conversation, seed: SeedSchema): Qualit
     privacy_score: 0.0,
     memorizacion: 0.001 + Math.random() * 0.005,
   }
+
   const composite = Math.min(metrics.rouge_l, metrics.fidelidad_factual, metrics.diversidad_lexica, metrics.coherencia_dialogica)
 
   return {
@@ -508,6 +511,7 @@ export function SeedsPage() {
       for (let i = 0; i < count; i++) {
         const conv = generateDemoConversation(seed)
         const report = generateDemoQualityReport(conv, seed)
+
         conversations.push(conv)
         reports.push(report)
       }
@@ -520,15 +524,18 @@ export function SeedsPage() {
       )
 
       const { appendConversations } = await import('./conversations-page')
+
       appendConversations(conversations)
 
       try {
         const existing = JSON.parse(localStorage.getItem('uncase-evaluations') || '[]')
+
         localStorage.setItem('uncase-evaluations', JSON.stringify([...existing, ...reports]))
       } catch { /* storage full */ }
 
       setSeedStats(computeSeedStats())
       setGenerating(null)
+
       return
     }
 
@@ -544,6 +551,7 @@ export function SeedsPage() {
 
     if (error) {
       setSyncError(`Generation failed: ${error.message}`)
+
       return
     }
 
@@ -557,11 +565,13 @@ export function SeedsPage() {
       )
 
       const { appendConversations } = await import('./conversations-page')
+
       appendConversations(data.conversations)
 
       if (data.reports) {
         try {
           const existing = JSON.parse(localStorage.getItem('uncase-evaluations') || '[]')
+
           localStorage.setItem('uncase-evaluations', JSON.stringify([...existing, ...data.reports]))
         } catch { /* storage full */ }
       }

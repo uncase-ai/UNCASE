@@ -17,8 +17,10 @@ export function ChatInput({ onSend, disabled = false, placeholder = 'Escribe tu 
 
   const handleSend = useCallback(() => {
     const value = textareaRef.current?.value.trim()
+
     if (!value) return
     onSend(value)
+
     if (textareaRef.current) {
       textareaRef.current.value = ''
       textareaRef.current.style.height = 'auto'
@@ -37,6 +39,7 @@ export function ChatInput({ onSend, disabled = false, placeholder = 'Escribe tu 
 
   const handleInput = useCallback(() => {
     const ta = textareaRef.current
+
     if (!ta) return
     ta.style.height = 'auto'
     ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'
