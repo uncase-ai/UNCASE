@@ -76,7 +76,27 @@ function loadConversations(): Conversation[] {
 }
 
 export function saveConversations(conversations: Conversation[]) {
-  localStorage.setItem(STORE_KEY, JSON.stringify(conversations))
+  const json = JSON.stringify(conversations)
+
+  try {
+    localStorage.setItem(STORE_KEY, json)
+  } catch {
+    // Quota exceeded — clear old data, then save only what we have now
+    localStorage.removeItem(STORE_KEY)
+
+    try {
+      localStorage.setItem(STORE_KEY, json)
+    } catch {
+      // Individual payload too large — keep the most recent half
+      try {
+        const recent = conversations.slice(Math.floor(conversations.length / 2))
+
+        localStorage.setItem(STORE_KEY, JSON.stringify(recent))
+      } catch {
+        // Nothing fits — give up silently
+      }
+    }
+  }
 }
 
 export function appendConversations(newConvs: Conversation[]) {
@@ -1382,7 +1402,8 @@ function Pagination({
 // ─── Main page ───
 
 export function ConversationsPage() {
-  const [conversations, setConversations] = useState<Conversation[]>(() => loadConversations())
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [mounted, setMounted] = useState(false)
   const [search, setSearch] = useState('')
   const [domainFilter, setDomainFilter] = useState<string>('all')
   const [syntheticFilter, setSyntheticFilter] = useState<string>('all')
@@ -1394,6 +1415,12 @@ export function ConversationsPage() {
   const [showBulkDelete, setShowBulkDelete] = useState(false)
   const [page, setPage] = useState(0)
   const [apiConnected, setApiConnected] = useState(false)
+
+  // Hydrate from localStorage after mount (avoids SSR mismatch)
+  useEffect(() => {
+    setConversations(loadConversations())
+    setMounted(true)
+  }, [])
 
   // Try to load tools from API (best-effort, non-blocking)
   const [apiTools, setApiTools] = useState<ToolDefinition[] | null>(null)
@@ -1641,7 +1668,7 @@ export function ConversationsPage() {
       setPage(0)
     }
 
-  if (conversations.length === 0) {
+  if (conversations.length === 0 && mounted) {
     return (
       <div className="space-y-6">
         <PageHeader title="Conversations" description="Browse, search, and inspect conversation data" />
@@ -1662,7 +1689,7 @@ export function ConversationsPage() {
   const invalidCount = conversations.filter(c => c.status === 'invalid').length
 
   return (
-    <div data-fill-viewport className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       <OnboardingDialog />
 
       <div className="mb-4 shrink-0">

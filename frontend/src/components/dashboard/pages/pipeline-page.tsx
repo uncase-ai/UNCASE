@@ -232,11 +232,9 @@ export function PipelinePage() {
               {/* Action */}
               <div className="shrink-0 self-center">
                 {ready ? (
-                  <Button variant="outline" size="sm" className="gap-1.5" asChild>
-                    <Link href={stage.href}>
-                      Open
-                      <ArrowRight className="size-3" />
-                    </Link>
+                  <Button variant="outline" size="sm" className="gap-1.5">
+                    Open
+                    <ArrowRight className="size-3" />
                   </Button>
                 ) : (
                   <Tooltip>

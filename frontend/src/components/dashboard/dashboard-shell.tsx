@@ -15,7 +15,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <div className="flex h-screen w-full overflow-hidden">
+    <div className="fixed inset-0 flex overflow-hidden">
       {/* Desktop sidebar */}
       <div className="hidden lg:flex">
         <Sidebar collapsed={collapsed} />
@@ -29,7 +29,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         <DemoBanner />
         <Topbar sidebarCollapsed={collapsed} onToggleSidebar={toggle} onOpenMobile={() => setMobileOpen(true)} />
         <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col overflow-y-auto px-4 py-6 sm:px-6 [&:has(>[data-fill-viewport])]:overflow-hidden">{children}</div>
+          <div className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col overflow-y-auto px-4 py-6 sm:px-6">{children}</div>
         </main>
       </div>
     </div>
