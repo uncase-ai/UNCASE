@@ -561,6 +561,7 @@ function humanizeInterval(seconds: number): string {
   if (seconds < 120) return `Every ${seconds}s`
   if (seconds < 7200) return `Every ${Math.round(seconds / 60)} minutes`
   if (seconds < 86400) return `Every ${Math.round(seconds / 3600)} hour${Math.round(seconds / 3600) !== 1 ? 's' : ''}`
+
   return 'Daily'
 }
 
@@ -569,6 +570,7 @@ function AutoAnchorStatus({ schedule, loading }: { schedule: AnchorSchedule | nu
     if (!schedule) return { label: 'Loading', color: 'text-muted-foreground', bg: 'bg-muted' }
     if (schedule.configured) return { label: 'Active', color: 'text-emerald-500', bg: 'bg-emerald-500/10' }
     if (schedule.enabled) return { label: 'Pending Setup', color: 'text-yellow-500', bg: 'bg-yellow-500/10' }
+
     return { label: 'Disabled', color: 'text-muted-foreground', bg: 'bg-muted' }
   }, [schedule])
 
