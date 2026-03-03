@@ -25,7 +25,6 @@ import {
 
 import type { NavGroup } from '@/types/dashboard'
 import { cn } from '@/lib/utils'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 
 import { SidebarNavItem } from './sidebar-nav-item'
@@ -83,12 +82,11 @@ export function Sidebar({ collapsed, onNavigate }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'flex h-full flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-200',
+        'h-full overflow-y-auto border-r border-sidebar-border bg-sidebar transition-[width] duration-200',
         collapsed ? 'w-14' : 'w-56'
       )}
     >
-      <ScrollArea className="flex-1 py-2">
-        <nav className="flex flex-col gap-1 px-2">
+      <nav className="flex flex-col gap-1 px-2 py-2">
           {NAV_GROUPS.map((group, gi) => (
             <div key={gi}>
               {gi > 0 && <Separator className="my-2" />}
@@ -103,7 +101,6 @@ export function Sidebar({ collapsed, onNavigate }: SidebarProps) {
             </div>
           ))}
         </nav>
-      </ScrollArea>
     </aside>
   )
 }

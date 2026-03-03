@@ -1689,7 +1689,7 @@ export function ConversationsPage() {
   const invalidCount = conversations.filter(c => c.status === 'invalid').length
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex h-[calc(100dvh-7.5rem)] flex-col">
       <OnboardingDialog />
 
       <div className="mb-4 shrink-0">
