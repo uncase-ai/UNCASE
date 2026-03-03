@@ -2,12 +2,13 @@
 
 import { useCallback, useRef, useState } from 'react'
 
-import { ArrowLeft, Globe, Loader2, MessageSquare, PanelRightClose, PanelRightOpen, Sparkles } from 'lucide-react'
+import { ArrowLeft, Globe, Info, Loader2, MessageSquare, PanelRightClose, PanelRightOpen, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 
 import type { ChatMessage, ExtractionProgress } from '@/types/layer0'
 import { checkApiHealth } from '@/lib/api/client'
 import { endSession, sendTurn, startExtraction } from '@/lib/api/layer0'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
@@ -486,6 +487,23 @@ export function SeedExtractPage() {
                 The AI will guide you through questions to extract all the parameters needed to create a conversation seed.
               </p>
             </div>
+
+            <Alert className="text-left">
+              <Info className="size-4" />
+              <AlertTitle>API connection required</AlertTitle>
+              <AlertDescription>
+                The AI Interview requires a running UNCASE API with an LLM configured.
+                A <strong>scripted demo</strong> will run if no API is detected.
+                You can also{' '}
+                <Link href="/dashboard/pipeline/seeds/new" className="font-medium underline underline-offset-2">
+                  create a seed manually
+                </Link>{' '}
+                or browse{' '}
+                <Link href="/dashboard/pipeline/seeds" className="font-medium underline underline-offset-2">
+                  existing seeds
+                </Link>.
+              </AlertDescription>
+            </Alert>
 
             <div className="space-y-3">
               <div className="space-y-1">

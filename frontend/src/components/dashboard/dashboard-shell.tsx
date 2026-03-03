@@ -9,6 +9,7 @@ import { DemoBanner } from './demo-banner'
 import { MobileSidebar } from './mobile-sidebar'
 import { Sidebar } from './sidebar'
 import { Topbar } from './topbar'
+import { WelcomeModal } from './welcome-modal'
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   const { collapsed, toggle } = useSidebar()
@@ -23,6 +24,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
       {/* Mobile sidebar */}
       <MobileSidebar open={mobileOpen} onOpenChange={setMobileOpen} />
+
+      <WelcomeModal />
 
       {/* Main column */}
       <div className="flex min-w-0 flex-1 flex-col">
