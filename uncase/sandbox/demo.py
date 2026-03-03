@@ -231,7 +231,7 @@ class DemoSandboxOrchestrator:
         response = await demo.create_demo(
             DemoSandboxRequest(domain="automotive.sales", ttl_minutes=30)
         )
-        # response.api_url -> "https://<sandbox>.e2b.dev:8000"
+        # response.api_url -> "https://8000-<sandbox_id>.e2b.app"
     """
 
     def __init__(self, *, settings: UNCASESettings) -> None:
@@ -313,25 +313,32 @@ class DemoSandboxOrchestrator:
             )
             await sandbox.files.write("/home/user/bootstrap.sh", bootstrap_script)
 
-            # Start the bootstrap in the background so we don't block
-            # on the E2B SDK's HTTP request timeout during pip install.
+            # Start the bootstrap in the background using the SDK's
+            # built-in background execution (E2B v2 API).
             logger.info("demo_sandbox_installing", job_id=job.job_id)
             await sandbox.commands.run(
-                "chmod +x /home/user/bootstrap.sh && nohup /home/user/bootstrap.sh &",
-                timeout=10,
+                "chmod +x /home/user/bootstrap.sh && /home/user/bootstrap.sh",
+                background=True,
             )
 
-            # Wait for the API to be ready (poll health endpoint)
+            # Wait for the API to be ready (poll health endpoint).
+            # Allow up to 150s (50 polls × 3s) to accommodate pip install
+            # on the "base" template which can take 60-90s.
             import asyncio
 
             api_ready = False
-            for _ in range(30):
+            for attempt in range(50):
                 check = await sandbox.commands.run(
                     "curl -sf http://localhost:8000/health || true",
                     timeout=5,
                 )
                 if check.stdout and "ok" in check.stdout:
                     api_ready = True
+                    logger.info(
+                        "demo_sandbox_health_ok",
+                        job_id=job.job_id,
+                        attempts=attempt + 1,
+                    )
                     break
                 await asyncio.sleep(3)
 
@@ -347,12 +354,19 @@ class DemoSandboxOrchestrator:
                     job_id=job.job_id,
                     log_tail=log_tail,
                 )
-                msg = f"Demo API did not start within 90s. Log: {log_tail[:300]}"
+                msg = f"Demo API did not start within 150s. Log: {log_tail[:300]}"
                 raise SandboxError(msg)
 
-            # Build URLs
-            sandbox_host = getattr(sandbox, "get_host", None)
-            host = sandbox_host(8000) if callable(sandbox_host) else f"https://{sandbox.sandbox_id}.e2b.dev:8000"
+            # Build URLs — E2B v2 get_host() returns hostname only
+            # (e.g. "8000-abc123.e2b.app"), so we must prepend the scheme.
+            sandbox_host_fn = getattr(sandbox, "get_host", None)
+            if callable(sandbox_host_fn):
+                hostname = sandbox_host_fn(8000)
+                host = f"https://{hostname}"
+            else:
+                # Legacy fallback — should not happen with E2B v2
+                sandbox_id = getattr(sandbox, "sandbox_id", "unknown")
+                host = f"https://8000-{sandbox_id}.e2b.app"
 
             api_url = host
             docs_url = f"{host}/docs"
