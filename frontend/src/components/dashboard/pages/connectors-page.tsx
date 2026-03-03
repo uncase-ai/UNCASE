@@ -652,33 +652,31 @@ function ImportTab() {
                     </div>
                   )}
 
-                  {/* Sample conversations */}
-                  <div className="max-h-[240px] space-y-2 overflow-y-auto rounded-md border p-2">
-                    {parseResult.conversations.slice(0, 5).map((conv, i) => (
+                  {/* Scrollable conversation preview pane */}
+                  <div className="max-h-[280px] space-y-2 overflow-y-auto rounded-md border p-2">
+                    {parseResult.conversations.map((conv, i) => (
                       <div key={i} className="rounded border p-2 text-xs">
-                        <div className="mb-1 flex items-center justify-between">
-                          <span className="font-medium">Conversation {i + 1}</span>
-                          <span className="text-muted-foreground">{conv.turnos.length} turns</span>
+                        <div className="mb-1 flex items-center gap-2">
+                          <span className="shrink-0 font-medium">#{i + 1}</span>
+                          <span className="min-w-0 truncate font-mono text-muted-foreground" title={conv.conversation_id}>
+                            {conv.conversation_id}
+                          </span>
+                          <span className="ml-auto shrink-0 text-muted-foreground">{conv.turnos.length} turns</span>
                         </div>
-                        {conv.turnos.slice(0, 3).map((turn, j) => (
+                        {conv.turnos.slice(0, 2).map((turn, j) => (
                           <div key={j} className="mt-1">
                             <span className="font-medium text-muted-foreground">{turn.rol}: </span>
-                            <span className="line-clamp-2">{turn.contenido}</span>
+                            <span className="line-clamp-1">{turn.contenido}</span>
                           </div>
                         ))}
-                        {conv.turnos.length > 3 && (
-                          <p className="mt-1 text-muted-foreground">+{conv.turnos.length - 3} more turns</p>
+                        {conv.turnos.length > 2 && (
+                          <p className="mt-1 text-muted-foreground">+{conv.turnos.length - 2} more turns</p>
                         )}
                       </div>
                     ))}
-                    {parseResult.conversations.length > 5 && (
-                      <p className="py-1 text-center text-xs text-muted-foreground">
-                        +{parseResult.conversations.length - 5} more conversations
-                      </p>
-                    )}
                   </div>
 
-                  {/* Import buttons */}
+                  {/* Import buttons — always visible outside the scrollable area */}
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       onClick={handleImportLocal}
