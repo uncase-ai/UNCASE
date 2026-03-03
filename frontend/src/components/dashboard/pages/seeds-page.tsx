@@ -18,6 +18,7 @@ import {
   Plus,
   RefreshCw,
   Rocket,
+  Sparkles,
   Sprout,
   Star,
   Trash2,
@@ -487,11 +488,18 @@ export function SeedsPage() {
   // ─── Create seed button (navigates to full-page wizard) ───
   function renderCreateButton() {
     return (
-      <Link href="/dashboard/pipeline/seeds/new">
-        <Button size="sm">
-          <Plus className="mr-1.5 size-4" /> Create Seed
-        </Button>
-      </Link>
+      <div className="flex items-center gap-2">
+        <Link href="/dashboard/pipeline/seeds/extract">
+          <Button size="sm" variant="outline" className="gap-1.5">
+            <Sparkles className="size-4" /> Entrevista AI
+          </Button>
+        </Link>
+        <Link href="/dashboard/pipeline/seeds/new">
+          <Button size="sm">
+            <Plus className="mr-1.5 size-4" /> Create Seed
+          </Button>
+        </Link>
+      </div>
     )
   }
 

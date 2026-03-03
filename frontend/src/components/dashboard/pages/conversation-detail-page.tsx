@@ -13,6 +13,10 @@ import {
   ChevronDown,
   ChevronRight,
   Code2,
+  MessageSquare,
+  Monitor,
+  Phone,
+  Play,
   Plus,
   ShieldCheck,
   Trash2,
@@ -40,9 +44,12 @@ import { Rating } from '@/components/ui/rating'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 
+import { ChatPlayback } from '../chat-playback'
 import { JsonViewer } from '../json-viewer'
 import { PageHeader } from '../page-header'
+import { PhoneFrame } from '../phone-frame'
 import { StatusBadge } from '../status-badge'
+import { WhatsAppChatViewer } from '../whatsapp-chat-viewer'
 
 // ─── Types ───
 
@@ -667,6 +674,9 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
   const [showMeta, setShowMeta] = useState(false)
   const [newTag, setNewTag] = useState('')
   const [apiTools, setApiTools] = useState<ToolDefinition[] | null>(null)
+  const [viewMode, setViewMode] = useState<'standard' | 'whatsapp'>('standard')
+  const [showPhoneFrame, setShowPhoneFrame] = useState(false)
+  const [showPlayback, setShowPlayback] = useState(false)
 
   // Load tools from API (best-effort)
   useEffect(() => {
@@ -799,7 +809,46 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
         title={`Conversation ${conversation.conversation_id.slice(0, 12)}...`}
         description={`${conversation.turnos.length} messages — ${conversation.dominio} — ${conversation.es_sintetica ? 'Synthetic' : 'Real'}`}
         actions={
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            {/* View mode toggle */}
+            <div className="flex rounded-lg border p-0.5">
+              <Button
+                variant={viewMode === 'standard' ? 'default' : 'ghost'}
+                size="sm"
+                className="h-7 gap-1 text-xs"
+                onClick={() => setViewMode('standard')}
+              >
+                <Monitor className="size-3" /> Standard
+              </Button>
+              <Button
+                variant={viewMode === 'whatsapp' ? 'default' : 'ghost'}
+                size="sm"
+                className="h-7 gap-1 text-xs"
+                onClick={() => setViewMode('whatsapp')}
+              >
+                <MessageSquare className="size-3" /> WhatsApp
+              </Button>
+            </div>
+            {viewMode === 'whatsapp' && (
+              <>
+                <Button
+                  variant={showPhoneFrame ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-7 gap-1 text-xs"
+                  onClick={() => setShowPhoneFrame(!showPhoneFrame)}
+                >
+                  <Phone className="size-3" /> Frame
+                </Button>
+                <Button
+                  variant={showPlayback ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-7 gap-1 text-xs"
+                  onClick={() => setShowPlayback(!showPlayback)}
+                >
+                  <Play className="size-3" /> Playback
+                </Button>
+              </>
+            )}
             <Button variant="outline" size="sm" onClick={() => setShowMeta(!showMeta)}>
               {showMeta ? 'Hide' : 'Show'} Metadata
             </Button>
@@ -843,6 +892,78 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
       <div className="flex gap-4">
         {/* Messages */}
         <div className="flex-1 space-y-2">
+          {viewMode === 'whatsapp' ? (
+            (() => {
+              const whatsappContent = (
+                <WhatsAppChatViewer
+                  conversation={conversation}
+                  editingTurn={editingTurn}
+                  editValue={editValue}
+                  onEditStart={handleEditStart}
+                  onEditChange={setEditValue}
+                  onEditSave={handleEditSave}
+                  onEditCancel={handleEditCancel}
+                />
+              )
+
+              const framed = showPhoneFrame ? (
+                <PhoneFrame title={conversation.dominio}>
+                  {whatsappContent}
+                </PhoneFrame>
+              ) : whatsappContent
+
+              if (showPlayback) {
+                return (
+                  <ChatPlayback totalMessages={conversation.turnos.length}>
+                    {(visibleCount, isTyping) => {
+                      const slicedConv = { ...conversation, turnos: conversation.turnos.slice(0, visibleCount) }
+                      const playbackContent = (
+                        <WhatsAppChatViewer
+                          conversation={slicedConv}
+                          editingTurn={editingTurn}
+                          editValue={editValue}
+                          onEditStart={handleEditStart}
+                          onEditChange={setEditValue}
+                          onEditSave={handleEditSave}
+                          onEditCancel={handleEditCancel}
+                        />
+                      )
+                      return showPhoneFrame ? (
+                        <PhoneFrame title={conversation.dominio}>
+                          {playbackContent}
+                          {isTyping && (
+                            <div className="flex gap-2 px-3 py-1">
+                              <div className="flex items-center gap-1 rounded-lg bg-white px-4 py-2 shadow-sm dark:bg-zinc-800">
+                                <span className="inline-block size-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '0ms' }} />
+                                <span className="inline-block size-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '150ms' }} />
+                                <span className="inline-block size-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '300ms' }} />
+                              </div>
+                            </div>
+                          )}
+                        </PhoneFrame>
+                      ) : (
+                        <>
+                          {playbackContent}
+                          {isTyping && (
+                            <div className="flex gap-2 px-3 py-1">
+                              <div className="flex items-center gap-1 rounded-lg bg-white px-4 py-2 shadow-sm dark:bg-zinc-800">
+                                <span className="inline-block size-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '0ms' }} />
+                                <span className="inline-block size-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '150ms' }} />
+                                <span className="inline-block size-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: '300ms' }} />
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )
+                    }}
+                  </ChatPlayback>
+                )
+              }
+
+              return framed
+            })()
+          ) : (
+          <>
           {flatItems.map(item => {
             const isMainMsg = item.role === 'user' || item.role === 'assistant' || item.role === 'system'
 
@@ -939,6 +1060,8 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
               Delete
             </Button>
           </div>
+          </>
+          )}
         </div>
 
         {/* Metadata sidebar */}

@@ -29,6 +29,7 @@ from uncase.api.routers.health import router as health_router
 from uncase.api.routers.imports import router as imports_router
 from uncase.api.routers.jobs import router as jobs_router
 from uncase.api.routers.knowledge import router as knowledge_router
+from uncase.api.routers.layer0 import router as layer0_router
 from uncase.api.routers.organizations import router as organizations_router
 from uncase.api.routers.pipeline import router as pipeline_router
 from uncase.api.routers.plugins import router as plugins_router
@@ -267,6 +268,7 @@ def create_app() -> FastAPI:
     application.include_router(conversations_router)
     application.include_router(gateway_router)
     application.include_router(knowledge_router)
+    application.include_router(layer0_router)
     application.include_router(usage_router)
     application.include_router(webhooks_router)
     application.include_router(e2b_webhooks_router)
