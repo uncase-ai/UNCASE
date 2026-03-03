@@ -184,7 +184,7 @@ export function PipelinePage() {
           const stageContent = (
             <div
               className={cn(
-                'group relative flex items-start gap-4 rounded-lg border px-5 py-4 transition-colors',
+                'group relative flex items-start gap-3 rounded-lg border px-3 py-3 transition-colors sm:gap-4 sm:px-5 sm:py-4',
                 ready
                   ? 'bg-background hover:bg-muted/50'
                   : 'cursor-default border-dashed bg-muted/20 opacity-60'

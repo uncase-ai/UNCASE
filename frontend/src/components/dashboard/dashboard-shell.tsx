@@ -1,8 +1,9 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
+import { ensureDemoFresh } from '@/lib/demo'
 import { useSidebar } from '@/hooks/use-dashboard'
 
 import { DemoBanner } from './demo-banner'
@@ -14,6 +15,8 @@ import { WelcomeModal } from './welcome-modal'
 export function DashboardShell({ children }: { children: ReactNode }) {
   const { collapsed, toggle } = useSidebar()
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  useEffect(() => { ensureDemoFresh() }, [])
 
   return (
     <div className="flex h-dvh overflow-hidden">

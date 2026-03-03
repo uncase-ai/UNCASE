@@ -525,7 +525,7 @@ export function ExportPage() {
               {/* Preview */}
               <div className="rounded-md border bg-muted/50 p-3">
                 <p className="text-xs font-medium">Export Preview</p>
-                <div className="mt-1 grid grid-cols-3 gap-2 text-[11px] text-muted-foreground">
+                <div className="mt-1 grid grid-cols-1 gap-1 text-[11px] text-muted-foreground sm:grid-cols-3 sm:gap-2">
                   <div>
                     Conversations: <strong className="text-foreground">{filteredConversations.length}</strong>
                   </div>

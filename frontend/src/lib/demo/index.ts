@@ -1,4 +1,6 @@
 const DEMO_MODE_KEY = 'uncase-demo-mode'
+const DEMO_VERSION_KEY = 'uncase-demo-version'
+const CURRENT_DEMO_VERSION = '2'
 
 const STORAGE_KEYS = [
   'uncase-seeds',
@@ -55,6 +57,7 @@ export async function populateDemoData(): Promise<void> {
   const entries = await loadDemoData()
 
   writeAndDispatch(entries)
+  localStorage.setItem(DEMO_VERSION_KEY, CURRENT_DEMO_VERSION)
 }
 
 export async function activateDemo(): Promise<void> {
@@ -63,8 +66,19 @@ export async function activateDemo(): Promise<void> {
   await populateDemoData()
 }
 
+export async function ensureDemoFresh(): Promise<void> {
+  if (typeof window === 'undefined') return
+
+  if (localStorage.getItem(DEMO_MODE_KEY) !== 'true') return
+
+  if (localStorage.getItem(DEMO_VERSION_KEY) === CURRENT_DEMO_VERSION) return
+
+  await populateDemoData()
+}
+
 export function deactivateDemo(): void {
   localStorage.removeItem(DEMO_MODE_KEY)
+  localStorage.removeItem(DEMO_VERSION_KEY)
 
   for (const key of STORAGE_KEYS) {
     localStorage.removeItem(key)

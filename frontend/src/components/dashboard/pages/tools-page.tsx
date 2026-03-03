@@ -269,9 +269,9 @@ export function ToolsPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
-        <SearchInput value={search} onChange={setSearch} placeholder="Search tools..." className="w-64" />
+        <SearchInput value={search} onChange={setSearch} placeholder="Search tools..." className="w-full sm:w-64" />
         <Select value={domainFilter} onValueChange={setDomainFilter}>
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-full sm:w-44">
             <SelectValue placeholder="Domain" />
           </SelectTrigger>
           <SelectContent>
@@ -284,7 +284,7 @@ export function ToolsPage() {
           </SelectContent>
         </Select>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-36">
+          <SelectTrigger className="w-full sm:w-36">
             <SelectValue placeholder="Category" />
           </SelectTrigger>
           <SelectContent>

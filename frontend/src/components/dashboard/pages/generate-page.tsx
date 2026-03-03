@@ -536,7 +536,7 @@ export function GeneratePage() {
         <CardContent className="flex items-start gap-3 p-4">
           <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
           <div className="space-y-1 text-xs text-muted-foreground">
-            <p className="font-medium text-foreground">How Synthetic Generation Works</p>
+            <p className="text-[15px] font-semibold text-foreground">How Synthetic Generation Works</p>
             <p>
               Select one or more seeds and configure generation parameters. The SCSF engine uses your seed&apos;s
               domain context, role definitions, and conversation flow to generate realistic synthetic conversations
@@ -610,7 +610,7 @@ export function GeneratePage() {
         <Card className="border-l-4 border-l-foreground/20">
           <CardContent className="p-4">
             <p className="mb-2 text-sm font-semibold">Quality Evaluation Results</p>
-            <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="grid grid-cols-3 gap-2 text-center sm:gap-4">
               <div>
                 <p className="text-lg font-bold">{qualityResults.total}</p>
                 <p className="text-[10px] text-muted-foreground">Evaluated</p>
@@ -655,7 +655,7 @@ export function GeneratePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="max-h-[400px] space-y-1.5 overflow-y-auto">
+              <div className="max-h-[280px] space-y-1.5 overflow-y-auto sm:max-h-[400px]">
                 {seeds.map(seed => (
                   <label
                     key={seed.seed_id}

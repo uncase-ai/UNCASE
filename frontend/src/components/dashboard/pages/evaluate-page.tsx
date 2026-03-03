@@ -518,7 +518,7 @@ export function EvaluatePage() {
           <CardContent className="flex items-start gap-3 p-4">
             <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
             <div className="space-y-1 text-xs text-muted-foreground">
-              <p className="font-medium text-foreground">How Quality Evaluation Works</p>
+              <p className="text-[15px] font-semibold text-foreground">How Quality Evaluation Works</p>
               <p>
                 Each conversation is evaluated against its origin seed using 6 quality metrics.
                 The composite score formula is: Q = min(ROUGE-L, Fidelity, TTR, Coherence) if privacy=0.0

@@ -1700,7 +1700,11 @@ export function ConversationsPage() {
 
       <div className="flex min-h-0 flex-1 gap-0 overflow-hidden rounded-lg border">
         {/* ─── Left: Conversation list ─── */}
-        <div className="flex w-96 shrink-0 flex-col overflow-hidden border-r bg-muted/20">
+        <div className={cn(
+          'flex shrink-0 flex-col overflow-hidden border-r bg-muted/20',
+          'w-full sm:w-80 lg:w-96',
+          selectedId && 'hidden sm:flex'
+        )}>
           {/* Filters */}
           <div className="shrink-0 space-y-2 border-b p-3">
             <SearchInput
@@ -1829,15 +1833,28 @@ export function ConversationsPage() {
         </div>
 
         {/* ─── Right: Detail panel ─── */}
-        <div className="min-w-0 flex-1 overflow-hidden bg-background">
+        <div className={cn(
+          'min-w-0 flex-1 overflow-hidden bg-background',
+          !selectedId && 'hidden sm:block'
+        )}>
           {selectedConversation ? (
-            <DetailPanel
-              key={selectedConversation.conversation_id}
-              conversation={selectedConversation}
-              availableTools={availableTools}
-              onPersist={handlePersistConversation}
-              onDelete={() => handleDeleteConversation(selectedConversation.conversation_id)}
-            />
+            <div className="flex h-full flex-col">
+              <button
+                className="flex items-center gap-1 border-b px-3 py-2 text-xs text-muted-foreground sm:hidden"
+                onClick={() => setSelectedId(null)}
+              >
+                <ChevronRight className="size-3 rotate-180" /> Back to list
+              </button>
+              <div className="min-h-0 flex-1">
+                <DetailPanel
+                  key={selectedConversation.conversation_id}
+                  conversation={selectedConversation}
+                  availableTools={availableTools}
+                  onPersist={handlePersistConversation}
+                  onDelete={() => handleDeleteConversation(selectedConversation.conversation_id)}
+                />
+              </div>
+            </div>
           ) : (
             <div className="flex h-full items-center justify-center">
               <div className="text-center">
