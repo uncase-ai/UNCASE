@@ -103,7 +103,9 @@ export function EvaluationsPage() {
               coherencia_dialogica: item.coherencia_dialogica,
               tool_call_validity: item.tool_call_validity ?? 1.0,
               privacy_score: item.privacy_score,
-              memorizacion: item.memorizacion
+              memorizacion: item.memorizacion,
+              semantic_fidelity: item.semantic_fidelity,
+              embedding_drift: item.embedding_drift
             } as QualityMetrics,
             composite_score: item.composite_score,
             passed: item.passed,

@@ -263,9 +263,15 @@ function generateDemoQualityReport(conv: Conversation, seed: SeedSchema): Qualit
     tool_call_validity: 1.0,
     privacy_score: 0.0,
     memorizacion: 0.001 + Math.random() * 0.005,
+    semantic_fidelity: r(),
+    embedding_drift: 0.65 + Math.random() * 0.25,
   }
 
-  const composite = Math.min(metrics.rouge_l, metrics.fidelidad_factual, metrics.diversidad_lexica, metrics.coherencia_dialogica)
+  const composite = Math.min(
+    metrics.rouge_l, metrics.fidelidad_factual, metrics.diversidad_lexica,
+    metrics.coherencia_dialogica, metrics.tool_call_validity,
+    metrics.semantic_fidelity, metrics.embedding_drift
+  )
 
   return {
     conversation_id: conv.conversation_id,

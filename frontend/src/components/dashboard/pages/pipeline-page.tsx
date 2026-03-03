@@ -95,13 +95,13 @@ const STAGES: StageConfig[] = [
   {
     id: 'evaluate',
     label: 'Quality Evaluation',
-    description: 'Run quality metrics: ROUGE-L, fidelity, diversity, coherence, and privacy gate.',
+    description: 'Run 9 quality metrics: ROUGE-L, fidelity, diversity, coherence, tool validity, privacy gate, memorization, and optional LLM-as-Judge scoring.',
     icon: FlaskConical,
     href: '/dashboard/pipeline/evaluate',
     details: [
-      'ROUGE-L >= 0.65',
-      'Factual Fidelity >= 0.90',
-      'Privacy Score = 0.00'
+      '5 core + 2 gate + 2 optional metrics',
+      'Factual Fidelity >= 0.85',
+      'Zero PII tolerance + memorization < 1%'
     ],
     isReady: () => getLocalCount('uncase-conversations') > 0,
     lockedReason: 'Import or generate conversations first'
@@ -114,8 +114,8 @@ const STAGES: StageConfig[] = [
     href: '/dashboard/pipeline/generate',
     details: [
       'Multi-provider LLM support',
-      'Domain-aware generation',
-      'Re-evaluation after generation'
+      'Knowledge-grounded generation',
+      'Auto re-evaluation after generation'
     ],
     isReady: () => getLocalCount('uncase-seeds') > 0,
     lockedReason: 'Create seeds first'
@@ -129,7 +129,7 @@ const STAGES: StageConfig[] = [
     details: [
       '10 chat template formats',
       'Export as JSONL for fine-tuning',
-      'Quality certificate per export'
+      'Blockchain-anchored quality certificate'
     ],
     isReady: () => getLocalCount('uncase-conversations') > 0,
     lockedReason: 'Import or generate conversations first'

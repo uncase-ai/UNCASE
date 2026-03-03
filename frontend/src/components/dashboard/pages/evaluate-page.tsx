@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Cloud,
   CloudOff,
+  ExternalLink,
   FlaskConical,
   HelpCircle,
   Info,
@@ -103,9 +104,11 @@ function generateMockMetrics(): QualityMetrics {
     fidelidad_factual: randomInRange(0.75, 0.98),
     diversidad_lexica: randomInRange(0.40, 0.85),
     coherencia_dialogica: randomInRange(0.70, 0.98),
-    tool_call_validity: randomInRange(0.85, 1.0),
+    tool_call_validity: randomInRange(0.75, 1.0),
     privacy_score: Math.random() < 0.9 ? 0.0 : randomInRange(0.0, 0.05),
-    memorizacion: Math.random() < 0.85 ? randomInRange(0.0, 0.009) : randomInRange(0.01, 0.05)
+    memorizacion: Math.random() < 0.85 ? randomInRange(0.0, 0.009) : randomInRange(0.01, 0.05),
+    semantic_fidelity: randomInRange(0.45, 0.95),
+    embedding_drift: randomInRange(0.30, 0.90)
   }
 }
 
@@ -114,14 +117,24 @@ function computeCompositeScore(metrics: QualityMetrics): number {
     return 0
   }
 
-  return Math.round(
-    Math.min(
-      metrics.rouge_l,
-      metrics.fidelidad_factual,
-      metrics.diversidad_lexica,
-      metrics.coherencia_dialogica
-    ) * 1000
-  ) / 1000
+  const coreValues = [
+    metrics.rouge_l,
+    metrics.fidelidad_factual,
+    metrics.diversidad_lexica,
+    metrics.coherencia_dialogica,
+    metrics.tool_call_validity
+  ]
+
+  // Optional metrics only factor in when actually computed (not at neutral 0.5)
+  if (metrics.semantic_fidelity != null && metrics.semantic_fidelity !== 0.5) {
+    coreValues.push(metrics.semantic_fidelity)
+  }
+
+  if (metrics.embedding_drift != null && metrics.embedding_drift !== 0.5) {
+    coreValues.push(metrics.embedding_drift)
+  }
+
+  return Math.round(Math.min(...coreValues) * 1000) / 1000
 }
 
 function evaluateConversationMock(conversation: Conversation): QualityReport {
@@ -134,8 +147,11 @@ function evaluateConversationMock(conversation: Conversation): QualityReport {
   if (metrics.fidelidad_factual < QUALITY_THRESHOLDS.fidelidad_factual) failures.push('Factual fidelity below threshold')
   if (metrics.diversidad_lexica < QUALITY_THRESHOLDS.diversidad_lexica) failures.push('Lexical diversity below threshold')
   if (metrics.coherencia_dialogica < QUALITY_THRESHOLDS.coherencia_dialogica) failures.push('Dialogic coherence below threshold')
+  if (metrics.tool_call_validity < QUALITY_THRESHOLDS.tool_call_validity) failures.push('Tool call validity below threshold')
   if (metrics.privacy_score !== QUALITY_THRESHOLDS.privacy_score) failures.push('Privacy score must be 0.0')
   if (metrics.memorizacion >= QUALITY_THRESHOLDS.memorizacion) failures.push('Memorization rate too high')
+  if (metrics.semantic_fidelity != null && metrics.semantic_fidelity < QUALITY_THRESHOLDS.semantic_fidelity) failures.push('Semantic fidelity below threshold')
+  if (metrics.embedding_drift != null && metrics.embedding_drift < QUALITY_THRESHOLDS.embedding_drift) failures.push('Embedding drift below threshold')
 
   return {
     conversation_id: conversation.conversation_id,
@@ -149,36 +165,66 @@ function evaluateConversationMock(conversation: Conversation): QualityReport {
 }
 
 // ─── Metric display config ───
-const METRIC_CONFIG = [
+const METRIC_CONFIG: {
+  key: keyof QualityMetrics
+  label: string
+  description: string
+  threshold: number
+  tooltip: string
+  optional?: boolean
+}[] = [
   {
-    key: 'rouge_l' as const,
+    key: 'rouge_l',
     label: 'ROUGE-L',
     description: 'Structural coherence with seed',
     threshold: QUALITY_THRESHOLDS.rouge_l,
     tooltip: 'Measures structural coherence between the generated conversation and its seed. Higher values mean the conversation follows the expected flow more closely.'
   },
   {
-    key: 'fidelidad_factual' as const,
+    key: 'fidelidad_factual',
     label: 'Factual Fidelity',
     description: 'Domain fact accuracy',
     threshold: QUALITY_THRESHOLDS.fidelidad_factual,
     tooltip: 'Measures accuracy of domain-specific facts. Checks that entities, procedures, and terminology match the seed\'s factual parameters.'
   },
   {
-    key: 'diversidad_lexica' as const,
+    key: 'diversidad_lexica',
     label: 'Lexical Diversity',
     description: 'Type-Token Ratio',
     threshold: QUALITY_THRESHOLDS.diversidad_lexica,
     tooltip: 'Type-Token Ratio (TTR) — measures vocabulary variety. Higher values indicate more diverse, natural-sounding language.'
   },
   {
-    key: 'coherencia_dialogica' as const,
+    key: 'coherencia_dialogica',
     label: 'Dialogic Coherence',
     description: 'Inter-turn role consistency',
     threshold: QUALITY_THRESHOLDS.coherencia_dialogica,
     tooltip: 'Measures inter-turn consistency of roles and context. Ensures each participant maintains their role and references remain consistent.'
+  },
+  {
+    key: 'tool_call_validity',
+    label: 'Tool Validity',
+    description: 'Tool call schema compliance',
+    threshold: QUALITY_THRESHOLDS.tool_call_validity,
+    tooltip: 'Validates that tool calls in the conversation use correct function names, parameters, and return types as defined in the seed.'
+  },
+  {
+    key: 'semantic_fidelity',
+    label: 'Semantic Fidelity',
+    description: 'LLM-as-Judge scoring',
+    threshold: QUALITY_THRESHOLDS.semantic_fidelity,
+    tooltip: 'LLM-as-Judge evaluation of semantic accuracy and intent preservation. Requires an LLM API — omitted from composite if unavailable.',
+    optional: true
+  },
+  {
+    key: 'embedding_drift',
+    label: 'Embedding Drift',
+    description: 'Semantic similarity drift',
+    threshold: QUALITY_THRESHOLDS.embedding_drift,
+    tooltip: 'Cosine similarity between seed and generated conversation embeddings. Detects semantic drift from the original intent. Requires an LLM API.',
+    optional: true
   }
-] as const
+]
 
 export function EvaluatePage() {
   const [conversations] = useState<Conversation[]>(() => loadConversations())
@@ -370,11 +416,19 @@ export function EvaluatePage() {
   const radarData = useMemo(() => {
     if (!selectedReport) return []
 
-    return METRIC_CONFIG.map(m => ({
-      metric: m.label,
-      value: selectedReport.metrics[m.key],
-      threshold: m.threshold
-    }))
+    return METRIC_CONFIG
+      .filter(m => {
+        if (!m.optional) return true
+
+        const val = selectedReport.metrics[m.key]
+
+        return val != null && val !== 0.5
+      })
+      .map(m => ({
+        metric: m.label,
+        value: selectedReport.metrics[m.key] ?? 0,
+        threshold: m.threshold
+      }))
   }, [selectedReport])
 
   // ─── Table columns ───
@@ -383,21 +437,28 @@ export function EvaluatePage() {
       key: 'conversation',
       header: 'Conversation',
       cell: row => (
-        <button
-          className="font-mono text-xs hover:underline"
-          onClick={e => { e.stopPropagation(); setSelectedReport(row) }}
-        >
-          {row.conversation_id.slice(0, 12)}...
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            className="font-mono text-xs hover:underline"
+            onClick={e => { e.stopPropagation(); setSelectedReport(row) }}
+          >
+            {row.conversation_id}
+          </button>
+          <Link
+            href={`/dashboard/conversations?id=${encodeURIComponent(row.conversation_id)}`}
+            onClick={e => e.stopPropagation()}
+            title="Open conversation"
+          >
+            <ExternalLink className="size-3 text-muted-foreground hover:text-foreground" />
+          </Link>
+        </div>
       )
     },
     {
       key: 'composite',
       header: 'Score',
       cell: row => (
-        <span
-          className="font-mono text-sm font-medium"
-        >
+        <span className="font-mono text-sm font-medium">
           {row.composite_score.toFixed(3)}
         </span>
       )
@@ -444,6 +505,15 @@ export function EvaluatePage() {
       cell: row => (
         <span className={cn('text-xs', row.metrics.coherencia_dialogica < QUALITY_THRESHOLDS.coherencia_dialogica ? 'text-destructive' : 'text-muted-foreground')}>
           {row.metrics.coherencia_dialogica.toFixed(3)}
+        </span>
+      )
+    },
+    {
+      key: 'tool_validity',
+      header: 'Tools',
+      cell: row => (
+        <span className={cn('text-xs', row.metrics.tool_call_validity < QUALITY_THRESHOLDS.tool_call_validity ? 'text-destructive' : 'text-muted-foreground')}>
+          {row.metrics.tool_call_validity.toFixed(3)}
         </span>
       )
     },
@@ -520,10 +590,10 @@ export function EvaluatePage() {
             <div className="space-y-1 text-xs text-muted-foreground">
               <p className="text-[15px] font-semibold text-foreground">How Quality Evaluation Works</p>
               <p>
-                Each conversation is evaluated against its origin seed using 6 quality metrics.
-                The composite score formula is: Q = min(ROUGE-L, Fidelity, TTR, Coherence) if privacy=0.0
-                AND memorization{'<'}0.01, else Q=0. A conversation must pass ALL thresholds to be certified
-                for training use.
+                Each conversation is evaluated against its origin seed using up to 9 quality metrics.
+                Five core metrics (ROUGE-L, Fidelity, TTR, Coherence, Tool Validity), two gate metrics
+                (Privacy=0, Memorization{'<'}1%), and two optional LLM-powered metrics (Semantic Fidelity,
+                Embedding Drift). Composite score: Q = min(all computed metrics) when gates pass, else Q=0.
               </p>
             </div>
           </CardContent>
@@ -701,7 +771,7 @@ export function EvaluatePage() {
                     />
                     <div className="flex-1 overflow-hidden">
                       <span className="block truncate font-mono text-xs">
-                        {conv.conversation_id.slice(0, 20)}...
+                        {conv.conversation_id}
                       </span>
                       <span className="text-[10px] text-muted-foreground">
                         {conv.dominio} | {conv.turnos.length} turns
@@ -730,7 +800,7 @@ export function EvaluatePage() {
               <CardTitle className="text-sm font-medium">Quality Radar</CardTitle>
               <CardDescription className="text-xs">
                 {selectedReport
-                  ? `Metrics for ${selectedReport.conversation_id.slice(0, 16)}...`
+                  ? `Metrics for ${selectedReport.conversation_id}`
                   : 'Run an evaluation and click a result to view the radar chart.'}
               </CardDescription>
             </CardHeader>
@@ -772,40 +842,49 @@ export function EvaluatePage() {
         {/* Metric detail cards */}
         {selectedReport && (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {METRIC_CONFIG.map(m => {
-              const value = selectedReport.metrics[m.key]
-              const passed = value >= m.threshold
-              const percentage = Math.min(Math.round((value / 1) * 100), 100)
+            {METRIC_CONFIG
+              .filter(m => {
+                if (!m.optional) return true
 
-              return (
-                <Card key={m.key}>
-                  <CardContent className="p-4">
-                    <div className="mb-2 flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-xs font-medium">
-                        {m.label}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="size-3 text-muted-foreground" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-xs text-xs">{m.tooltip}</TooltipContent>
-                        </Tooltip>
-                      </span>
-                      <span className={cn(
-                        'text-sm font-bold',
-                        !passed && 'text-destructive'
-                      )}>
-                        {value.toFixed(3)}
-                      </span>
-                    </div>
-                    <Progress value={percentage} className={cn('h-2', !passed && '[&>div]:bg-destructive')} />
-                    <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
-                      <span>{m.description}</span>
-                      <span>Threshold: {m.threshold}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
+                const val = selectedReport.metrics[m.key]
+
+                return val != null && val !== 0.5
+              })
+              .map(m => {
+                const value = selectedReport.metrics[m.key] ?? 0
+                const passed = value >= m.threshold
+                const percentage = Math.min(Math.round((value / 1) * 100), 100)
+
+                return (
+                  <Card key={m.key}>
+                    <CardContent className="p-4">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-xs font-medium">
+                          {m.label}
+                          {m.optional && <Badge variant="outline" className="text-[8px]">optional</Badge>}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="size-3 text-muted-foreground" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs text-xs">{m.tooltip}</TooltipContent>
+                          </Tooltip>
+                        </span>
+                        <span className={cn(
+                          'text-sm font-bold',
+                          !passed && 'text-destructive'
+                        )}>
+                          {value.toFixed(3)}
+                        </span>
+                      </div>
+                      <Progress value={percentage} className={cn('h-2', !passed && '[&>div]:bg-destructive')} />
+                      <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
+                        <span>{m.description}</span>
+                        <span>Threshold: {m.threshold}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
 
             {/* Privacy Score card */}
             <Card>

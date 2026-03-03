@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import {
   Ban,
   Bot,
@@ -1401,6 +1402,7 @@ function Pagination({
 // ─── Main page ───
 
 export function ConversationsPage() {
+  const searchParams = useSearchParams()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [mounted, setMounted] = useState(false)
   const [search, setSearch] = useState('')
@@ -1408,7 +1410,7 @@ export function ConversationsPage() {
   const [syntheticFilter, setSyntheticFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [ratingFilter, setRatingFilter] = useState<string>('all')
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(() => searchParams.get('id'))
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set())
   const [selectMode, setSelectMode] = useState(false)
   const [showBulkDelete, setShowBulkDelete] = useState(false)

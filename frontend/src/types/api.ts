@@ -211,9 +211,11 @@ export interface QualityMetrics {
   fidelidad_factual: number
   diversidad_lexica: number
   coherencia_dialogica: number
-  tool_call_validity?: number
+  tool_call_validity: number
   privacy_score: number
   memorizacion: number
+  semantic_fidelity?: number
+  embedding_drift?: number
 }
 
 export interface QualityReport {
@@ -321,12 +323,14 @@ export interface QualityThresholdsResponse {
 // ─── Quality Thresholds (constants) ───
 export const QUALITY_THRESHOLDS = {
   rouge_l: 0.65,
-  fidelidad_factual: 0.90,
+  fidelidad_factual: 0.85,
   diversidad_lexica: 0.55,
-  coherencia_dialogica: 0.85,
-  tool_call_validity: 0.90,
+  coherencia_dialogica: 0.80,
+  tool_call_validity: 0.80,
   privacy_score: 0.0,
-  memorizacion: 0.01
+  memorizacion: 0.01,
+  semantic_fidelity: 0.60,
+  embedding_drift: 0.40
 } as const
 
 export const SUPPORTED_DOMAINS = [

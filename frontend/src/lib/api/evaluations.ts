@@ -48,6 +48,8 @@ export interface EvaluationReportResponse {
   privacy_score: number
   memorizacion: number
   tool_call_validity: number | null
+  semantic_fidelity?: number
+  embedding_drift?: number
   composite_score: number
   passed: boolean
   failures: string[]
