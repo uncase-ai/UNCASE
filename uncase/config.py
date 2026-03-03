@@ -42,6 +42,13 @@ class UNCASESettings(BaseSettings):
     litellm_api_key: str = ""
     anthropic_api_key: str = ""
     gemini_api_key: str = ""
+    google_api_key: str = ""
+
+    # -- Layer 0: Agentic Extraction Loop --
+    layer0_max_turns: int = Field(default=15, ge=3, le=50)
+    layer0_extractor_model: str = "claude-sonnet-4-20250514"
+    layer0_interviewer_provider: str = "gemini"
+    layer0_interviewer_model: str = "gemini-2.5-pro"
 
     # -- MLflow --
     mlflow_tracking_uri: str = "http://localhost:5000"

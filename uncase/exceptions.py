@@ -259,3 +259,27 @@ class BlockchainAnchorError(UNCASEError):
 
     status_code = 502
     detail = "Blockchain anchoring failed"
+
+
+# -- Layer 0: Agentic Extraction Loop --
+
+
+class ExtractionLoopError(UNCASEError):
+    """Agentic extraction loop failed."""
+
+    status_code = 500
+    detail = "Extraction loop error"
+
+
+class ExtractionTimeoutError(ExtractionLoopError):
+    """Agentic extraction loop timed out waiting for user response."""
+
+    status_code = 504
+    detail = "Extraction loop timed out"
+
+
+class ProviderConfigError(UNCASEError):
+    """LLM provider for the extraction loop is misconfigured."""
+
+    status_code = 503
+    detail = "Interviewer LLM provider not configured"
