@@ -267,7 +267,7 @@ export function TemplatesPage() {
     )
   }
 
-  if (!templates || templates.length === 0) {
+  if (!templates || !Array.isArray(templates) || templates.length === 0) {
     return (
       <div className="space-y-6">
         <PageHeader title="Templates" description="Chat template browser and renderer" />
@@ -505,7 +505,7 @@ export function TemplatesPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {templates.map(t => (
+                  {(Array.isArray(templates) ? templates : []).map(t => (
                     <SelectItem key={t.name} value={t.name}>
                       {t.display_name}
                     </SelectItem>

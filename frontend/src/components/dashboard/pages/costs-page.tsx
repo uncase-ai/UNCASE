@@ -29,7 +29,10 @@ export function CostsPage() {
   const dailyFetcher = useCallback(() => fetchDailyCosts(Number(period)), [period])
 
   const { data: summary, loading: summaryLoading } = useApi<CostSummary>(summaryFetcher)
-  const { data: dailyCosts, loading: dailyLoading } = useApi<DailyCost[]>(dailyFetcher)
+  const { data: rawDailyCosts, loading: dailyLoading } = useApi<DailyCost[]>(dailyFetcher)
+
+  // Normalize: sandboxFallback may return { items: [], total: 0 } instead of an array
+  const dailyCosts = Array.isArray(rawDailyCosts) ? rawDailyCosts : null
 
   const formatUsd = (amount: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
@@ -123,7 +126,7 @@ export function CostsPage() {
             <CardTitle className="text-base">Cost by Provider</CardTitle>
           </CardHeader>
           <CardContent>
-            {!summary || Object.keys(summary.cost_by_provider).length === 0 ? (
+            {!summary?.cost_by_provider || Object.keys(summary.cost_by_provider).length === 0 ? (
               <p className="text-sm text-muted-foreground">No provider data yet</p>
             ) : (
               <div className="space-y-3">
@@ -161,7 +164,7 @@ export function CostsPage() {
             <CardTitle className="text-base">Cost by Event Type</CardTitle>
           </CardHeader>
           <CardContent>
-            {!summary || Object.keys(summary.cost_by_event_type).length === 0 ? (
+            {!summary?.cost_by_event_type || Object.keys(summary.cost_by_event_type).length === 0 ? (
               <p className="text-sm text-muted-foreground">No event data yet</p>
             ) : (
               <div className="space-y-3">

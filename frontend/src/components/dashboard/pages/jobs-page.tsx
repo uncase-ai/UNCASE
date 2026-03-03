@@ -66,7 +66,10 @@ export function JobsPage() {
     [filter, refreshKey]
   )
 
-  const { data: jobs, loading, error } = useApi<JobResponse[]>(fetcher)
+  const { data: rawJobs, loading, error } = useApi<JobResponse[]>(fetcher)
+
+  // Normalize: sandboxFallback may return { items: [], total: 0 } instead of an array
+  const jobs = Array.isArray(rawJobs) ? rawJobs : null
 
   const handleRefresh = () => setRefreshKey(k => k + 1)
 
