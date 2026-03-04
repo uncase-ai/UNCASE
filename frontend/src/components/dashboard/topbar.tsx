@@ -51,7 +51,6 @@ export function Topbar({ sidebarCollapsed, onToggleSidebar, onOpenMobile }: Topb
       {/* Logo */}
       <img src="/images/logo/logo-dark.svg" alt="UNCASE" className="h-4 w-auto dark:hidden" />
       <img src="/images/logo/logo-white.svg" alt="UNCASE" className="hidden h-4 w-auto dark:block" />
-      <span className="text-sm font-bold tracking-tight">UNCASE</span>
 
       {/* Breadcrumbs */}
       <div className="ml-2 hidden md:block">

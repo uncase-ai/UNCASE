@@ -143,8 +143,12 @@ frontend/public/images/dashboard.webp
 frontend/public/images/dashboard-dark.webp
 frontend/public/images/og-image.png
 
-# Logo files (keep favicon.png for dashboard)
+# Logo files (keep favicon.png and active logos for dashboard)
 frontend/public/images/logo/logo*
+!frontend/public/images/logo/logo-dark.svg
+!frontend/public/images/logo/logo-white.svg
+!frontend/public/images/logo/logo-dark.png
+!frontend/public/images/logo/logo-white.png
 frontend/public/images/logo/screenshot-*
 frontend/public/images/logo/whitepaper-*
 frontend/public/images/logo/UNCASE*
