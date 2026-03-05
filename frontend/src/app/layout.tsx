@@ -36,7 +36,17 @@ export const metadata: Metadata = {
     'regulated industries',
     'conversational AI',
     'GDPR compliant AI',
-    'seed engineering'
+    'seed engineering',
+    'synthetic conversational data',
+    'QLoRA fine-tuning',
+    'privacy-preserving AI',
+    'differential privacy machine learning',
+    'HIPAA compliant synthetic data',
+    'LLM fine-tuning healthcare',
+    'LLM fine-tuning finance',
+    'PII-free training data',
+    'blockchain data certification',
+    'AI data quality assurance'
   ],
   icons: {
     icon: [
@@ -113,7 +123,7 @@ export const metadata: Metadata = {
 const RootLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
   return (
     <html
-      lang='es'
+      lang='en'
       className={cn(geistSans.variable, geistMono.variable, 'flex min-h-full w-full scroll-smooth antialiased')}
       suppressHydrationWarning
     >

@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   title: {
     template: '%s | UNCASE Dashboard',
     default: 'Dashboard | UNCASE'
+  },
+  robots: {
+    index: false,
+    follow: false
   }
 }
 
