@@ -98,17 +98,82 @@ function randomInRange(min: number, max: number): number {
   return Math.round((Math.random() * (max - min) + min) * 1000) / 1000
 }
 
-function generateMockMetrics(): QualityMetrics {
+// Generates metrics that consistently pass thresholds (demo content is premium)
+// ~85% of conversations pass; ~15% fail with clear, realistic failures
+function generateMockMetrics(): { metrics: QualityMetrics; shouldFail: boolean } {
+  const shouldFail = Math.random() < 0.15
+
+  if (shouldFail) {
+    // Pick 1-2 metrics to fail for a realistic failure case
+    const failType = Math.random()
+
+    if (failType < 0.4) {
+      // Lexical diversity failure — most common in synthetic data
+      return {
+        metrics: {
+          rouge_l: randomInRange(0.70, 0.92),
+          fidelidad_factual: randomInRange(0.87, 0.96),
+          diversidad_lexica: randomInRange(0.38, 0.53),
+          coherencia_dialogica: randomInRange(0.82, 0.95),
+          tool_call_validity: 1.0,
+          privacy_score: 0.0,
+          memorizacion: randomInRange(0.001, 0.006),
+          semantic_fidelity: randomInRange(0.65, 0.88),
+          embedding_drift: randomInRange(0.55, 0.85),
+        },
+        shouldFail: true,
+      }
+    }
+
+    if (failType < 0.7) {
+      // Factual fidelity failure — hallucinated domain facts
+      return {
+        metrics: {
+          rouge_l: randomInRange(0.65, 0.88),
+          fidelidad_factual: randomInRange(0.68, 0.83),
+          diversidad_lexica: randomInRange(0.58, 0.78),
+          coherencia_dialogica: randomInRange(0.83, 0.94),
+          tool_call_validity: 1.0,
+          privacy_score: 0.0,
+          memorizacion: randomInRange(0.001, 0.005),
+          semantic_fidelity: randomInRange(0.55, 0.72),
+          embedding_drift: randomInRange(0.50, 0.80),
+        },
+        shouldFail: true,
+      }
+    }
+
+    // Memorization gate failure — extraction attack detected
+    return {
+      metrics: {
+        rouge_l: randomInRange(0.75, 0.93),
+        fidelidad_factual: randomInRange(0.88, 0.96),
+        diversidad_lexica: randomInRange(0.60, 0.80),
+        coherencia_dialogica: randomInRange(0.85, 0.95),
+        tool_call_validity: 1.0,
+        privacy_score: 0.0,
+        memorizacion: randomInRange(0.012, 0.035),
+        semantic_fidelity: randomInRange(0.70, 0.90),
+        embedding_drift: randomInRange(0.60, 0.85),
+      },
+      shouldFail: true,
+    }
+  }
+
+  // Passing case — all metrics well above thresholds
   return {
-    rouge_l: randomInRange(0.50, 0.95),
-    fidelidad_factual: randomInRange(0.75, 0.98),
-    diversidad_lexica: randomInRange(0.40, 0.85),
-    coherencia_dialogica: randomInRange(0.70, 0.98),
-    tool_call_validity: randomInRange(0.75, 1.0),
-    privacy_score: Math.random() < 0.97 ? 0.0 : randomInRange(0.0, 0.05),
-    memorizacion: Math.random() < 0.85 ? randomInRange(0.0, 0.009) : randomInRange(0.01, 0.05),
-    semantic_fidelity: randomInRange(0.45, 0.95),
-    embedding_drift: randomInRange(0.30, 0.90)
+    metrics: {
+      rouge_l: randomInRange(0.70, 0.95),
+      fidelidad_factual: randomInRange(0.87, 0.98),
+      diversidad_lexica: randomInRange(0.58, 0.82),
+      coherencia_dialogica: randomInRange(0.83, 0.97),
+      tool_call_validity: 1.0,
+      privacy_score: 0.0,
+      memorizacion: randomInRange(0.001, 0.007),
+      semantic_fidelity: randomInRange(0.65, 0.93),
+      embedding_drift: randomInRange(0.55, 0.88),
+    },
+    shouldFail: false,
   }
 }
 
@@ -138,7 +203,7 @@ function computeCompositeScore(metrics: QualityMetrics): number {
 }
 
 function evaluateConversationMock(conversation: Conversation): QualityReport {
-  const metrics = generateMockMetrics()
+  const { metrics } = generateMockMetrics()
   const composite_score = computeCompositeScore(metrics)
 
   const failures: string[] = []
