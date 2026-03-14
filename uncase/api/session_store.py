@@ -9,7 +9,7 @@ import time
 import uuid
 from typing import TYPE_CHECKING
 
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 
 if TYPE_CHECKING:
     from uncase.core.seed_engine.layer0.engine import AgenticExtractionEngine

@@ -14,7 +14,7 @@ from sqlalchemy import select
 from uncase.config import UNCASESettings
 from uncase.db.models.provider import LLMProviderModel
 from uncase.exceptions import ProviderNotFoundError, ValidationError
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession

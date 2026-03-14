@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 
 from uncase.connectors.base import BaseConnector, ConnectorResult
 from uncase.core.privacy.scanner import PIIScanner
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 from uncase.schemas.conversation import Conversation, ConversationTurn
 
 logger = get_logger(__name__)

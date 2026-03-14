@@ -22,7 +22,7 @@ from tenacity import (
 )
 
 from uncase.core.seed_engine.layer0.config import Layer0Config
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 
 logger = get_logger(__name__)
 

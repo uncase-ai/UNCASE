@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import select
 
 from uncase.db.models.template_config import TemplateConfigModel
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 from uncase.schemas.template_config import TemplateConfigResponse, TemplateConfigUpdateRequest
 from uncase.templates import get_template_registry, register_all_templates
 

@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 
 from uncase.db.models.knowledge import KnowledgeChunkModel, KnowledgeDocumentModel
 from uncase.exceptions import KnowledgeDocumentNotFoundError, ValidationError
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 from uncase.schemas.knowledge import (
     KnowledgeChunkResponse,
     KnowledgeDocumentResponse,

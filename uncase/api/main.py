@@ -43,7 +43,7 @@ from uncase.api.routers.usage import router as usage_router
 from uncase.api.routers.webhooks import router as webhooks_router
 from uncase.config import UNCASESettings
 from uncase.db.engine import close_engine, init_engine
-from uncase.logging import setup_logging
+from uncase.log_config import setup_logging
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
@@ -53,7 +53,7 @@ _WEBHOOK_INTERVAL_SECONDS = 30
 
 def _validate_secret_key(settings: UNCASESettings) -> None:
     """Abort startup if the API secret key is still the default in production."""
-    from uncase.logging import get_logger
+    from uncase.log_config import get_logger
 
     _logger = get_logger("uncase.startup")
 
@@ -75,7 +75,7 @@ def _validate_secret_key(settings: UNCASESettings) -> None:
 async def _webhook_scheduler() -> None:
     """Background loop that processes pending webhook deliveries."""
     from uncase.db.engine import get_async_session
-    from uncase.logging import get_logger
+    from uncase.log_config import get_logger
     from uncase.services.webhook import WebhookService
 
     _logger = get_logger("uncase.webhook_scheduler")
@@ -98,7 +98,7 @@ async def _blockchain_scheduler() -> None:
     """Background loop that auto-batches and anchors evaluation hashes."""
     from uncase.api.routers.blockchain import get_anchor_client_from_settings
     from uncase.db.engine import get_async_session
-    from uncase.logging import get_logger
+    from uncase.log_config import get_logger
     from uncase.services.blockchain import BlockchainService
 
     _logger = get_logger("uncase.blockchain_scheduler")
@@ -158,7 +158,7 @@ async def _hydrate_tools_from_db() -> None:
     """
     import contextlib
 
-    from uncase.logging import get_logger
+    from uncase.log_config import get_logger
 
     _logger = get_logger("uncase.hydration")
 

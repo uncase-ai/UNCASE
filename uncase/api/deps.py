@@ -12,7 +12,7 @@ from uncase.config import UNCASESettings
 from uncase.db.engine import get_async_session
 from uncase.db.models.organization import OrganizationModel
 from uncase.exceptions import AuthenticationError, AuthorizationError
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 from uncase.services.organization import OrganizationService
 
 _settings: UNCASESettings | None = None

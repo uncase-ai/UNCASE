@@ -10,7 +10,7 @@ from sqlalchemy import func, select
 
 from uncase.db.models.conversation import ConversationModel
 from uncase.exceptions import ConversationNotFoundError, ValidationError
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 from uncase.schemas.conversation_api import (
     ConversationBulkCreateResponse,
     ConversationCreateRequest,

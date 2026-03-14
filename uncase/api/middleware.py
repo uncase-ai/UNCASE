@@ -8,7 +8,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from uncase.exceptions import UNCASEError
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 
 if TYPE_CHECKING:
     from fastapi import FastAPI, Request

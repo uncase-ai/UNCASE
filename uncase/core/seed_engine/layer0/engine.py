@@ -26,7 +26,7 @@ from uncase.core.seed_engine.layer0.extractor import SeedExtractor
 from uncase.core.seed_engine.layer0.interviewer.interviewer import Interviewer
 from uncase.core.seed_engine.layer0.schemas.automotriz import SeedAutomotriz
 from uncase.core.seed_engine.layer0.state_manager import ActionType, StateManager
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 
 if TYPE_CHECKING:
     from uncase.core.seed_engine.layer0.interviewer.base_provider import BaseLLMProvider

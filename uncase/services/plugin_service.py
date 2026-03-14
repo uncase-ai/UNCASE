@@ -9,7 +9,7 @@ from sqlalchemy import select
 
 from uncase.db.models.installed_plugin import InstalledPluginModel
 from uncase.exceptions import PluginAlreadyInstalledError, PluginNotFoundError
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 from uncase.plugins import get_registry as get_plugin_registry
 from uncase.schemas.installed_plugin import (
     InstalledPluginListResponse,

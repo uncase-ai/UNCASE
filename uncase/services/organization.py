@@ -17,7 +17,7 @@ from uncase.exceptions import (
     DuplicateError,
     OrganizationNotFoundError,
 )
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 from uncase.schemas.organization import (
     APIKeyCreate,
     APIKeyCreatedResponse,

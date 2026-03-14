@@ -10,7 +10,7 @@ from sqlalchemy import func, select
 
 from uncase.db.models.seed import SeedModel
 from uncase.exceptions import SeedNotFoundError, ValidationError
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 from uncase.schemas.seed import SeedSchema
 from uncase.schemas.seed_api import SeedCreateRequest, SeedListResponse, SeedResponse, SeedUpdateRequest
 

@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from uncase.connectors.base import BaseConnector, ConnectorResult
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 
 logger = get_logger(__name__)
 

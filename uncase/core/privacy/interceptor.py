@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from uncase.core.privacy.scanner import PIIScanner, PIIScanResult
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 
 logger = get_logger(__name__)
 

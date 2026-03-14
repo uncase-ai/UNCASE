@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import func, select, text
 
 from uncase.db.models.usage import UsageEventModel
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 from uncase.schemas.usage import (
     UsageEventRecord,
     UsageEventResponse,

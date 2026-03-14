@@ -11,7 +11,7 @@ from sqlalchemy import func, select
 from uncase.db.models.custom_tool import CustomToolModel
 from uncase.db.models.installed_plugin import InstalledPluginModel
 from uncase.exceptions import CustomToolNotFoundError, DuplicateError, ValidationError
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 from uncase.schemas.custom_tool import (
     CustomToolCreateRequest,
     CustomToolListResponse,

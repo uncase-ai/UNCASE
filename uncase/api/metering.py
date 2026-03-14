@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 from uncase.schemas.usage import UsageEventRecord
 from uncase.services.usage import UsageMeteringService
 

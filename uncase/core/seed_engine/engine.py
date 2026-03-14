@@ -15,7 +15,7 @@ from uncase.core.seed_engine.parsers import (
     detect_format,
 )
 from uncase.exceptions import ImportParsingError, PIIDetectedError
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 from uncase.schemas.seed import (
     ParametrosFactuales,
     PasosTurnos,

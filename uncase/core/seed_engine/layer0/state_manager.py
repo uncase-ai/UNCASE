@@ -22,7 +22,7 @@ from uncase.core.seed_engine.layer0.schemas.base import (
     FieldMeta,
     FieldStatus,
 )
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 
 logger = get_logger(__name__)
 

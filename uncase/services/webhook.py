@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import and_, func, or_, select
 
 from uncase.db.models.webhook import WebhookDeliveryModel, WebhookSubscriptionModel
-from uncase.logging import get_logger
+from uncase.log_config import get_logger
 from uncase.schemas.webhook import (
     WebhookDeliveryResponse,
     WebhookEventPayload,
