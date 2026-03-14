@@ -553,5 +553,445 @@ export const DEMO_SEEDS: SeedSchema[] = [
     avg_quality_score: 0.91,
     created_at: daysAgo(5),
     updated_at: daysAgo(4)
+  },
+
+  // ── Finance Advisory Seeds ──
+  {
+    seed_id: 'demo-seed-011',
+    version: '1.0',
+    dominio: 'finance.advisory',
+    idioma: 'en',
+    etiquetas: ['retirement', 'portfolio', 'rebalancing'],
+    roles: ['client', 'financial_advisor'],
+    descripcion_roles: {
+      client: 'Pre-retiree client seeking portfolio review and retirement income strategy',
+      financial_advisor: 'CFP-certified advisor with access to portfolio analytics and retirement projection tools'
+    },
+    objetivo: 'Review current retirement portfolio allocation, assess risk tolerance changes, and recommend rebalancing strategy aligned with 5-year retirement horizon',
+    tono: 'professional-consultative',
+    pasos_turnos: {
+      turnos_min: 5,
+      turnos_max: 8,
+      flujo_esperado: [
+        'Current portfolio review and performance summary',
+        'Updated risk tolerance and retirement timeline assessment',
+        'Market outlook and allocation analysis',
+        'Rebalancing recommendations with tax implications',
+        'Implementation plan and monitoring schedule'
+      ]
+    },
+    parametros_factuales: {
+      contexto: 'Wealth management firm with portfolio analytics, tax-loss harvesting tools, and retirement projection models',
+      restricciones: [
+        'Past performance does not guarantee future results',
+        'All recommendations must align with client risk profile',
+        'Tax implications must be disclosed for any proposed trades',
+        'Regulatory compliance (FINRA/SEC) required for all advice'
+      ],
+      herramientas: ['credit_calculator'],
+      metadata: { specialty: 'retirement-planning', avg_portfolio_size: 750000 }
+    },
+    privacidad: {
+      pii_eliminado: true,
+      metodo_anonimizacion: 'presidio_v2',
+      nivel_confianza: 0.99,
+      campos_sensibles_detectados: []
+    },
+    metricas_calidad: {
+      rouge_l_min: 0.65,
+      fidelidad_min: 0.90,
+      diversidad_lexica_min: 0.55,
+      coherencia_dialogica_min: 0.85
+    },
+    rating: 4.7,
+    rating_count: 15,
+    run_count: 41,
+    avg_quality_score: 0.92,
+    created_at: daysAgo(14),
+    updated_at: daysAgo(12)
+  },
+  {
+    seed_id: 'demo-seed-012',
+    version: '1.0',
+    dominio: 'finance.advisory',
+    idioma: 'es',
+    etiquetas: ['credito-hipotecario', 'primera-vivienda', 'simulacion'],
+    roles: ['cliente', 'asesor_hipotecario'],
+    descripcion_roles: {
+      cliente: 'Comprador de primera vivienda buscando opciones de crédito hipotecario',
+      asesor_hipotecario: 'Asesor hipotecario certificado con acceso a simuladores de crédito y tablas de tasas'
+    },
+    objetivo: 'Evaluar capacidad de endeudamiento, comparar opciones de crédito hipotecario y guiar al cliente hacia la pre-aprobación',
+    tono: 'profesional',
+    pasos_turnos: {
+      turnos_min: 5,
+      turnos_max: 8,
+      flujo_esperado: [
+        'Detección de necesidad y perfil del comprador',
+        'Evaluación de capacidad de pago',
+        'Comparativa de productos hipotecarios',
+        'Simulación de crédito personalizada',
+        'Documentos para pre-aprobación y siguientes pasos'
+      ]
+    },
+    parametros_factuales: {
+      contexto: 'Institución financiera con productos hipotecarios a tasa fija y variable, plazos de 10 a 20 años',
+      restricciones: [
+        'Enganche mínimo del 10% del valor de la propiedad',
+        'Tasa sujeta a calificación crediticia del solicitante',
+        'Seguro de vida y daños obligatorio',
+        'No compartir tasas preferenciales de otros clientes'
+      ],
+      herramientas: ['credit_calculator'],
+      metadata: { product_type: 'mortgage', avg_loan_amount: 2500000 }
+    },
+    privacidad: {
+      pii_eliminado: true,
+      metodo_anonimizacion: 'presidio_v2',
+      nivel_confianza: 0.98,
+      campos_sensibles_detectados: []
+    },
+    metricas_calidad: {
+      rouge_l_min: 0.65,
+      fidelidad_min: 0.90,
+      diversidad_lexica_min: 0.55,
+      coherencia_dialogica_min: 0.85
+    },
+    rating: 4.5,
+    rating_count: 10,
+    run_count: 29,
+    avg_quality_score: 0.90,
+    created_at: daysAgo(10),
+    updated_at: daysAgo(8)
+  },
+
+  // ── Legal Advisory Seeds ──
+  {
+    seed_id: 'demo-seed-013',
+    version: '1.0',
+    dominio: 'legal.advisory',
+    idioma: 'en',
+    etiquetas: ['contract-dispute', 'breach', 'litigation'],
+    roles: ['client', 'attorney'],
+    descripcion_roles: {
+      client: 'Business owner consulting about a breach of contract claim against a former supplier',
+      attorney: 'Commercial litigation attorney with access to case law databases and contract review tools'
+    },
+    objetivo: 'Assess the merits of a breach of contract claim, review key evidence, and outline litigation strategy including timeline and estimated costs',
+    tono: 'professional-authoritative',
+    pasos_turnos: {
+      turnos_min: 5,
+      turnos_max: 8,
+      flujo_esperado: [
+        'Case intake and factual background',
+        'Contract review and breach identification',
+        'Damages assessment and evidence strength',
+        'Legal strategy options (negotiation, mediation, litigation)',
+        'Timeline, costs, and engagement terms'
+      ]
+    },
+    parametros_factuales: {
+      contexto: 'Commercial law firm with access to Westlaw/LexisNexis, contract analytics, and case management system',
+      restricciones: [
+        'Cannot guarantee specific litigation outcomes',
+        'Attorney-client privilege must be established before disclosure',
+        'Conflict of interest check required',
+        'Statute of limitations must be verified before proceeding'
+      ],
+      herramientas: [],
+      metadata: { practice_area: 'commercial-litigation', avg_case_value: 250000 }
+    },
+    privacidad: {
+      pii_eliminado: true,
+      metodo_anonimizacion: 'presidio_v2',
+      nivel_confianza: 0.99,
+      campos_sensibles_detectados: []
+    },
+    metricas_calidad: {
+      rouge_l_min: 0.65,
+      fidelidad_min: 0.90,
+      diversidad_lexica_min: 0.55,
+      coherencia_dialogica_min: 0.85
+    },
+    rating: 4.6,
+    rating_count: 11,
+    run_count: 35,
+    avg_quality_score: 0.91,
+    created_at: daysAgo(15),
+    updated_at: daysAgo(13)
+  },
+  {
+    seed_id: 'demo-seed-014',
+    version: '1.0',
+    dominio: 'legal.advisory',
+    idioma: 'es',
+    etiquetas: ['laboral', 'despido', 'indemnizacion'],
+    roles: ['cliente', 'abogado_laboral'],
+    descripcion_roles: {
+      cliente: 'Trabajador que fue despedido y busca asesoría sobre sus derechos laborales e indemnización',
+      abogado_laboral: 'Abogado especialista en derecho laboral con acceso a la Ley Federal del Trabajo y jurisprudencia'
+    },
+    objetivo: 'Evaluar las circunstancias del despido, determinar si fue justificado o injustificado, y calcular la indemnización correspondiente',
+    tono: 'profesional',
+    pasos_turnos: {
+      turnos_min: 5,
+      turnos_max: 8,
+      flujo_esperado: [
+        'Relato de hechos y circunstancias del despido',
+        'Revisión de contrato y antigüedad laboral',
+        'Determinación del tipo de despido (justificado/injustificado)',
+        'Cálculo de liquidación e indemnización',
+        'Opciones legales y próximos pasos'
+      ]
+    },
+    parametros_factuales: {
+      contexto: 'Despacho de abogados laborales con acceso a calculadoras de liquidación y base de datos de jurisprudencia',
+      restricciones: [
+        'No garantizar resultados específicos de juicio',
+        'Plazos legales deben verificarse antes de proceder',
+        'Honorarios deben ser transparentes desde el inicio',
+        'Confidencialidad del caso es obligatoria'
+      ],
+      herramientas: [],
+      metadata: { practice_area: 'labor-law', jurisdiction: 'Mexico' }
+    },
+    privacidad: {
+      pii_eliminado: true,
+      metodo_anonimizacion: 'presidio_v2',
+      nivel_confianza: 0.98,
+      campos_sensibles_detectados: []
+    },
+    metricas_calidad: {
+      rouge_l_min: 0.65,
+      fidelidad_min: 0.90,
+      diversidad_lexica_min: 0.55,
+      coherencia_dialogica_min: 0.85
+    },
+    rating: 4.4,
+    rating_count: 8,
+    run_count: 24,
+    avg_quality_score: 0.89,
+    created_at: daysAgo(11),
+    updated_at: daysAgo(9)
+  },
+
+  // ── Industrial Support Seeds ──
+  {
+    seed_id: 'demo-seed-015',
+    version: '1.0',
+    dominio: 'industrial.support',
+    idioma: 'en',
+    etiquetas: ['cnc-machine', 'error-code', 'remote-diagnostic'],
+    roles: ['operator', 'technician'],
+    descripcion_roles: {
+      operator: 'CNC machine operator reporting error code E-47 during production run',
+      technician: 'Senior maintenance technician with remote diagnostic access and equipment manuals'
+    },
+    objetivo: 'Diagnose CNC error code E-47, guide operator through safe troubleshooting steps, and determine if on-site maintenance is required',
+    tono: 'professional-technical',
+    pasos_turnos: {
+      turnos_min: 5,
+      turnos_max: 8,
+      flujo_esperado: [
+        'Error code report and machine status',
+        'Safety verification and lockout confirmation',
+        'Remote diagnostic data review',
+        'Guided troubleshooting steps',
+        'Resolution or maintenance dispatch'
+      ]
+    },
+    parametros_factuales: {
+      contexto: 'Manufacturing plant with SCADA monitoring, remote diagnostic capabilities, and preventive maintenance scheduling system',
+      restricciones: [
+        'Safety lockout/tagout must be verified before any physical intervention',
+        'Only certified personnel may access electrical panels',
+        'All troubleshooting steps must be logged in CMMS',
+        'Production impact must be reported to shift supervisor'
+      ],
+      herramientas: [],
+      metadata: { equipment_type: 'CNC', facility: 'Plant-A', shift: '2nd' }
+    },
+    privacidad: {
+      pii_eliminado: true,
+      metodo_anonimizacion: 'presidio_v2',
+      nivel_confianza: 0.97,
+      campos_sensibles_detectados: []
+    },
+    metricas_calidad: {
+      rouge_l_min: 0.65,
+      fidelidad_min: 0.90,
+      diversidad_lexica_min: 0.55,
+      coherencia_dialogica_min: 0.85
+    },
+    rating: 4.3,
+    rating_count: 7,
+    run_count: 21,
+    avg_quality_score: 0.88,
+    created_at: daysAgo(16),
+    updated_at: daysAgo(14)
+  },
+  {
+    seed_id: 'demo-seed-016',
+    version: '1.0',
+    dominio: 'industrial.support',
+    idioma: 'es',
+    etiquetas: ['linea-produccion', 'mantenimiento-preventivo', 'programacion'],
+    roles: ['supervisor_planta', 'coordinador_mantenimiento'],
+    descripcion_roles: {
+      supervisor_planta: 'Supervisor de planta solicitando programación de mantenimiento preventivo para línea de producción',
+      coordinador_mantenimiento: 'Coordinador de mantenimiento con acceso al sistema CMMS y calendario de intervenciones'
+    },
+    objetivo: 'Programar mantenimiento preventivo para la línea de producción 3, coordinando ventanas de paro con el plan de producción semanal',
+    tono: 'profesional',
+    pasos_turnos: {
+      turnos_min: 4,
+      turnos_max: 7,
+      flujo_esperado: [
+        'Identificación de equipos y programa de mantenimiento',
+        'Revisión de historial y últimas intervenciones',
+        'Coordinación de ventana de paro con producción',
+        'Asignación de técnicos y refacciones',
+        'Confirmación de programa y notificaciones'
+      ]
+    },
+    parametros_factuales: {
+      contexto: 'Planta de manufactura con sistema CMMS, inventario de refacciones y calendario de producción',
+      restricciones: [
+        'Mantenimiento no debe exceder la ventana de paro autorizada',
+        'Refacciones deben estar disponibles antes de programar',
+        'Técnicos certificados obligatorios para equipos críticos',
+        'Toda intervención debe documentarse en el sistema CMMS'
+      ],
+      herramientas: [],
+      metadata: { facility: 'Planta-Norte', production_line: 'L3' }
+    },
+    privacidad: {
+      pii_eliminado: true,
+      metodo_anonimizacion: 'presidio_v2',
+      nivel_confianza: 0.97,
+      campos_sensibles_detectados: []
+    },
+    metricas_calidad: {
+      rouge_l_min: 0.65,
+      fidelidad_min: 0.90,
+      diversidad_lexica_min: 0.55,
+      coherencia_dialogica_min: 0.85
+    },
+    rating: 4.1,
+    rating_count: 6,
+    run_count: 17,
+    avg_quality_score: 0.87,
+    created_at: daysAgo(12),
+    updated_at: daysAgo(10)
+  },
+
+  // ── Education Tutoring Seeds ──
+  {
+    seed_id: 'demo-seed-017',
+    version: '1.0',
+    dominio: 'education.tutoring',
+    idioma: 'en',
+    etiquetas: ['mathematics', 'algebra', 'quadratic-equations'],
+    roles: ['student', 'tutor'],
+    descripcion_roles: {
+      student: 'High school student struggling with solving quadratic equations by factoring',
+      tutor: 'Mathematics tutor with adaptive teaching methods and access to practice problem sets'
+    },
+    objetivo: 'Guide the student through understanding and solving quadratic equations using factoring, completing the square, and the quadratic formula',
+    tono: 'professional-encouraging',
+    pasos_turnos: {
+      turnos_min: 5,
+      turnos_max: 8,
+      flujo_esperado: [
+        'Identify specific difficulty and current understanding',
+        'Explain the concept with visual examples',
+        'Work through a guided example together',
+        'Student attempts independent practice with hints',
+        'Review, correct errors, and assign follow-up exercises'
+      ]
+    },
+    parametros_factuales: {
+      contexto: 'Online tutoring platform with interactive whiteboard, practice exercises, and curriculum-aligned content',
+      restricciones: [
+        'Never give direct answers — guide through the problem-solving process',
+        'Adapt explanations to the student\'s demonstrated level',
+        'Use positive reinforcement for effort, not just correct answers',
+        'Suggest visual or alternative methods when standard approach fails'
+      ],
+      herramientas: [],
+      metadata: { subject: 'mathematics', level: 'high-school', topic: 'quadratic-equations' }
+    },
+    privacidad: {
+      pii_eliminado: true,
+      metodo_anonimizacion: 'presidio_v2',
+      nivel_confianza: 0.98,
+      campos_sensibles_detectados: []
+    },
+    metricas_calidad: {
+      rouge_l_min: 0.65,
+      fidelidad_min: 0.90,
+      diversidad_lexica_min: 0.55,
+      coherencia_dialogica_min: 0.85
+    },
+    rating: 4.8,
+    rating_count: 18,
+    run_count: 52,
+    avg_quality_score: 0.93,
+    created_at: daysAgo(17),
+    updated_at: daysAgo(15)
+  },
+  {
+    seed_id: 'demo-seed-018',
+    version: '1.0',
+    dominio: 'education.tutoring',
+    idioma: 'es',
+    etiquetas: ['ciencias', 'biologia', 'celula'],
+    roles: ['estudiante', 'tutor'],
+    descripcion_roles: {
+      estudiante: 'Estudiante de secundaria preparándose para examen de biología sobre la célula y sus organelos',
+      tutor: 'Tutor de ciencias con materiales didácticos interactivos y banco de preguntas de examen'
+    },
+    objetivo: 'Repasar la estructura celular, funciones de los principales organelos, y diferencias entre célula animal y vegetal para preparación de examen',
+    tono: 'amigable',
+    pasos_turnos: {
+      turnos_min: 5,
+      turnos_max: 8,
+      flujo_esperado: [
+        'Evaluación de conocimientos previos',
+        'Explicación de estructura celular con analogías',
+        'Repaso de organelos y sus funciones',
+        'Comparación célula animal vs vegetal',
+        'Preguntas de práctica tipo examen y retroalimentación'
+      ]
+    },
+    parametros_factuales: {
+      contexto: 'Plataforma de tutoría en línea con recursos multimedia, diagramas interactivos y banco de preguntas',
+      restricciones: [
+        'Usar analogías cotidianas para conceptos abstractos',
+        'No dar respuestas directas — guiar el razonamiento',
+        'Adaptar complejidad al nivel del estudiante',
+        'Reforzar con ejemplos de la vida diaria'
+      ],
+      herramientas: [],
+      metadata: { subject: 'biology', level: 'middle-school', topic: 'cell-structure' }
+    },
+    privacidad: {
+      pii_eliminado: true,
+      metodo_anonimizacion: 'presidio_v2',
+      nivel_confianza: 0.98,
+      campos_sensibles_detectados: []
+    },
+    metricas_calidad: {
+      rouge_l_min: 0.65,
+      fidelidad_min: 0.90,
+      diversidad_lexica_min: 0.55,
+      coherencia_dialogica_min: 0.85
+    },
+    rating: 4.6,
+    rating_count: 12,
+    run_count: 36,
+    avg_quality_score: 0.91,
+    created_at: daysAgo(13),
+    updated_at: daysAgo(11)
   }
 ]

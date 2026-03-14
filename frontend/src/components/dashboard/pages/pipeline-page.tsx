@@ -12,6 +12,7 @@ import {
   Loader2,
   Lock,
   PackageOpen,
+  Plus,
   Rocket,
   Sprout
 } from 'lucide-react'
@@ -41,6 +42,19 @@ function getLocalCount(key: string): number {
   }
 }
 
+function getEvalPassCount(): number {
+  if (typeof window === 'undefined') return 0
+
+  try {
+    const raw = localStorage.getItem('uncase-evaluations')
+    if (!raw) return 0
+    const evals = JSON.parse(raw) as { passed?: boolean }[]
+    return evals.filter(e => e.passed).length
+  } catch {
+    return 0
+  }
+}
+
 interface StageConfig {
   id: string
   label: string
@@ -50,6 +64,10 @@ interface StageConfig {
   details: string[]
   isReady: () => boolean
   lockedReason?: string
+  getCount: () => number
+  countLabel: string
+  cta: string
+  ctaHref: string
 }
 
 const STAGES: StageConfig[] = [
@@ -64,7 +82,11 @@ const STAGES: StageConfig[] = [
       'Set roles and turn structure',
       'Configure factual parameters'
     ],
-    isReady: () => true
+    isReady: () => true,
+    getCount: () => getLocalCount('uncase-seeds'),
+    countLabel: 'seeds',
+    cta: 'Create Seed',
+    ctaHref: '/dashboard/pipeline/seeds/new'
   },
   {
     id: 'knowledge',
@@ -77,12 +99,16 @@ const STAGES: StageConfig[] = [
       'Auto-chunking with overlap',
       'Feeds into seed enrichment and generation'
     ],
-    isReady: () => true
+    isReady: () => true,
+    getCount: () => 0,
+    countLabel: 'documents',
+    cta: 'Upload Documents',
+    ctaHref: '/dashboard/knowledge'
   },
   {
     id: 'import',
     label: 'Data Import',
-    description: 'Upload raw conversational data in CSV or JSONL format.',
+    description: 'Upload raw conversational data in CSV or JSONL format for seed extraction.',
     icon: ArrowDownToLine,
     href: '/dashboard/pipeline/import',
     details: [
@@ -90,21 +116,11 @@ const STAGES: StageConfig[] = [
       'Auto-detect format',
       'PII removal at ingestion'
     ],
-    isReady: () => true
-  },
-  {
-    id: 'evaluate',
-    label: 'Quality Evaluation',
-    description: 'Run 9 quality metrics: ROUGE-L, fidelity, diversity, coherence, tool validity, privacy gate, memorization, and optional LLM-as-Judge scoring.',
-    icon: FlaskConical,
-    href: '/dashboard/pipeline/evaluate',
-    details: [
-      '5 core + 2 gate + 2 optional metrics',
-      'Factual Fidelity >= 0.85',
-      'Zero PII tolerance + memorization < 1%'
-    ],
-    isReady: () => getLocalCount('uncase-conversations') > 0,
-    lockedReason: 'Import or generate conversations first'
+    isReady: () => true,
+    getCount: () => 0,
+    countLabel: 'imports',
+    cta: 'Import Data',
+    ctaHref: '/dashboard/pipeline/import'
   },
   {
     id: 'generate',
@@ -118,7 +134,29 @@ const STAGES: StageConfig[] = [
       'Auto re-evaluation after generation'
     ],
     isReady: () => getLocalCount('uncase-seeds') > 0,
-    lockedReason: 'Create seeds first'
+    lockedReason: 'Create seeds first',
+    getCount: () => getLocalCount('uncase-conversations'),
+    countLabel: 'conversations',
+    cta: 'Generate',
+    ctaHref: '/dashboard/pipeline/generate'
+  },
+  {
+    id: 'evaluate',
+    label: 'Quality Evaluation',
+    description: 'Run 9 quality metrics: ROUGE-L, fidelity, diversity, coherence, tool validity, privacy gate, memorization, and optional LLM-as-Judge scoring.',
+    icon: FlaskConical,
+    href: '/dashboard/pipeline/evaluate',
+    details: [
+      '5 core + 2 gate + 2 optional metrics',
+      'Factual Fidelity >= 0.85',
+      'Zero PII tolerance + memorization < 1%'
+    ],
+    isReady: () => getLocalCount('uncase-conversations') > 0,
+    lockedReason: 'Generate or import conversations first',
+    getCount: () => getEvalPassCount(),
+    countLabel: 'passed',
+    cta: 'Evaluate',
+    ctaHref: '/dashboard/pipeline/evaluate'
   },
   {
     id: 'export',
@@ -132,12 +170,17 @@ const STAGES: StageConfig[] = [
       'Blockchain-anchored quality certificate'
     ],
     isReady: () => getLocalCount('uncase-conversations') > 0,
-    lockedReason: 'Import or generate conversations first'
+    lockedReason: 'Generate or import conversations first',
+    getCount: () => getLocalCount('uncase-exports'),
+    countLabel: 'exports',
+    cta: 'Export',
+    ctaHref: '/dashboard/pipeline/export'
   }
 ]
 
 export function PipelinePage() {
   const readiness = STAGES.map(s => s.isReady())
+  const counts = STAGES.map(s => s.getCount())
   const [recentJobs, setRecentJobs] = useState<JobResponse[]>([])
   const [error, setError] = useState<string | null>(null)
 
@@ -162,6 +205,19 @@ export function PipelinePage() {
     }
   }, [])
 
+  // Determine the recommended next step
+  const seedCount = counts[0]
+  const convCount = counts[3]
+  const evalCount = counts[4]
+  const exportCount = counts[5]
+
+  let nextStepIdx = 0
+  if (seedCount > 0 && convCount === 0) nextStepIdx = 3 // generate
+  else if (convCount > 0 && evalCount === 0) nextStepIdx = 4 // evaluate
+  else if (evalCount > 0 && exportCount === 0) nextStepIdx = 5 // export
+  else if (exportCount > 0) nextStepIdx = -1 // all done
+  else nextStepIdx = 0 // create seeds
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -175,19 +231,60 @@ export function PipelinePage() {
         </div>
       )}
 
+      {/* Recommended next step */}
+      {nextStepIdx >= 0 && (
+        <Card className="bg-primary/5 border-primary/20">
+          <CardContent className="flex items-center gap-3 p-4">
+            <ArrowRight className="size-4 shrink-0 text-primary" />
+            <div className="flex-1">
+              <p className="text-xs font-medium">Recommended next step</p>
+              <p className="text-[11px] text-muted-foreground">
+                {nextStepIdx === 0 && 'Create your first seed to define the conversation structure for your domain.'}
+                {nextStepIdx === 3 && `You have ${seedCount} seed${seedCount !== 1 ? 's' : ''} ready. Generate synthetic conversations from them.`}
+                {nextStepIdx === 4 && `You have ${convCount} conversation${convCount !== 1 ? 's' : ''} to evaluate. Run quality checks to certify them.`}
+                {nextStepIdx === 5 && `${evalCount} conversation${evalCount !== 1 ? 's' : ''} passed quality checks. Export your certified dataset.`}
+              </p>
+            </div>
+            <Link href={STAGES[nextStepIdx].ctaHref}>
+              <Button size="sm" className="gap-1.5">
+                {nextStepIdx === 0 && <Plus className="size-3" />}
+                {STAGES[nextStepIdx].cta}
+                <ArrowRight className="size-3" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
+
+      {nextStepIdx === -1 && (
+        <Card className="bg-green-50/50 border-green-200 dark:bg-green-950/20 dark:border-green-800">
+          <CardContent className="flex items-center gap-3 p-4">
+            <CheckCircle2 className="size-4 shrink-0 text-green-600 dark:text-green-400" />
+            <div className="flex-1">
+              <p className="text-xs font-medium text-green-800 dark:text-green-300">Pipeline complete</p>
+              <p className="text-[11px] text-green-700/80 dark:text-green-400/70">
+                You have certified datasets ready for fine-tuning. Create more seeds or iterate to improve quality.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Pipeline stages */}
       <div className="relative">
         {STAGES.map((stage, i) => {
           const ready = readiness[i]
+          const count = counts[i]
+          const isNext = i === nextStepIdx
           const StageIcon = stage.icon
 
           const stageContent = (
             <div
               className={cn(
                 'group relative flex items-start gap-3 rounded-lg border px-3 py-3 transition-colors sm:gap-4 sm:px-5 sm:py-4',
-                ready
-                  ? 'bg-background hover:bg-muted/50'
-                  : 'cursor-default border-dashed bg-muted/20 opacity-60'
+                isNext && ready && 'border-primary/40 bg-primary/5',
+                ready && !isNext && 'bg-background hover:bg-muted/50',
+                !ready && 'cursor-default border-dashed bg-muted/20 opacity-60'
               )}
             >
               {/* Step number */}
@@ -195,12 +292,18 @@ export function PipelinePage() {
                 <div
                   className={cn(
                     'flex size-9 shrink-0 items-center justify-center rounded-full border text-sm font-medium',
-                    ready
-                      ? 'border-foreground/20 bg-background text-foreground'
-                      : 'border-muted-foreground/20 text-muted-foreground'
+                    count > 0 && ready
+                      ? 'border-green-300 bg-green-50 text-green-700 dark:border-green-700 dark:bg-green-950 dark:text-green-400'
+                      : ready
+                        ? 'border-foreground/20 bg-background text-foreground'
+                        : 'border-muted-foreground/20 text-muted-foreground'
                   )}
                 >
-                  <StageIcon className="size-4" />
+                  {count > 0 && ready ? (
+                    <CheckCircle2 className="size-4" />
+                  ) : (
+                    <StageIcon className="size-4" />
+                  )}
                 </div>
               </div>
 
@@ -215,6 +318,11 @@ export function PipelinePage() {
                   </span>
                   {!ready && (
                     <Lock className="size-3 text-muted-foreground" />
+                  )}
+                  {count > 0 && ready && (
+                    <Badge variant="secondary" className="text-[10px]">
+                      {count} {stage.countLabel}
+                    </Badge>
                   )}
                 </div>
                 <p className={cn('mt-0.5 text-xs', ready ? 'text-muted-foreground' : 'text-muted-foreground/60')}>
@@ -232,8 +340,8 @@ export function PipelinePage() {
               {/* Action */}
               <div className="shrink-0 self-center">
                 {ready ? (
-                  <Button variant="outline" size="sm" className="gap-1.5">
-                    Open
+                  <Button variant={isNext ? 'default' : 'outline'} size="sm" className="gap-1.5">
+                    {isNext ? stage.cta : 'Open'}
                     <ArrowRight className="size-3" />
                   </Button>
                 ) : (

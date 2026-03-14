@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -25,6 +25,14 @@ import { SUPPORTED_DOMAINS } from '@/types/api'
 import { checkApiHealth } from '@/lib/api/client'
 import { fetchScenarioPack } from '@/lib/api/scenarios'
 import { createEmptySeed, createSeedApi, validateSeed } from '@/lib/api/seeds'
+import {
+  getObjectiveTemplates,
+  getRestrictions,
+  getTagSuggestions,
+  searchFlows,
+  searchRoles,
+} from '@/lib/seed-prefetch'
+import type { FlowTemplate, RolePreset } from '@/lib/seed-prefetch'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -42,6 +50,172 @@ const TONES_ES = ['profesional', 'informal', 'tecnico', 'empatico', 'amigable', 
 const LANGUAGES = ['es', 'en'] as const
 const ANONYMIZATION_METHODS = ['presidio', 'regex', 'spacy', 'manual', 'none'] as const
 const TOTAL_STEPS = 6
+
+// ─── Domain-specific smart defaults ───
+const DOMAIN_DEFAULTS: Record<string, {
+  roles: string[]
+  descripcion_roles: Record<string, string>
+  flujo_esperado: string[]
+  contexto: string
+  restricciones: string[]
+  tono: string
+}> = {
+  'automotive.sales': {
+    roles: ['cliente', 'asesor_ventas'],
+    descripcion_roles: {
+      cliente: 'Cliente interesado en adquirir un vehículo nuevo o seminuevo',
+      asesor_ventas: 'Asesor de ventas certificado con acceso a inventario y financiamiento'
+    },
+    flujo_esperado: [
+      'Saludo y detección de necesidad',
+      'Presentación de opciones disponibles',
+      'Comparativa de modelos y características',
+      'Cotización y opciones de financiamiento',
+      'Siguiente paso (prueba de manejo o cierre)'
+    ],
+    contexto: 'Agencia automotriz con inventario de vehículos nuevos y seminuevos',
+    restricciones: [
+      'Solo mencionar vehículos del inventario actual',
+      'Precios deben incluir IVA',
+      'No prometer descuentos sin autorización del gerente'
+    ],
+    tono: 'profesional'
+  },
+  'medical.consultation': {
+    roles: ['patient', 'physician'],
+    descripcion_roles: {
+      patient: 'Patient seeking medical evaluation and treatment guidance',
+      physician: 'Board-certified physician with access to patient records and diagnostic tools'
+    },
+    flujo_esperado: [
+      'Chief complaint and history of present illness',
+      'Review of medical history and medications',
+      'Physical examination findings',
+      'Diagnostic plan and orders',
+      'Treatment recommendations and follow-up'
+    ],
+    contexto: 'Outpatient clinic with access to EHR, lab results, and scheduling system',
+    restricciones: [
+      'Must review complete medical history before recommendations',
+      'All medication changes require allergy verification',
+      'Emergency symptoms require immediate escalation'
+    ],
+    tono: 'professional'
+  },
+  'legal.advisory': {
+    roles: ['client', 'attorney'],
+    descripcion_roles: {
+      client: 'Client seeking legal advice on a specific matter or dispute',
+      attorney: 'Licensed attorney with expertise in the relevant area of law'
+    },
+    flujo_esperado: [
+      'Case intake and initial assessment',
+      'Review of facts and evidence',
+      'Legal analysis and applicable law',
+      'Strategy options and recommendations',
+      'Next steps and engagement terms'
+    ],
+    contexto: 'Law firm with access to case management system and legal databases',
+    restricciones: [
+      'Cannot guarantee specific outcomes',
+      'Must clarify attorney-client privilege boundaries',
+      'Conflict of interest check required before engagement',
+      'Fee structure must be disclosed upfront'
+    ],
+    tono: 'formal'
+  },
+  'finance.advisory': {
+    roles: ['client', 'financial_advisor'],
+    descripcion_roles: {
+      client: 'Client seeking financial planning, investment, or portfolio management advice',
+      financial_advisor: 'Certified financial advisor with access to market data and portfolio tools'
+    },
+    flujo_esperado: [
+      'Financial goals and risk tolerance assessment',
+      'Current portfolio and asset review',
+      'Market analysis and recommendations',
+      'Investment strategy proposal',
+      'Implementation plan and monitoring schedule'
+    ],
+    contexto: 'Financial advisory firm with portfolio management tools and market data access',
+    restricciones: [
+      'Past performance does not guarantee future results',
+      'Must disclose all fees and commissions',
+      'Recommendations must align with client risk profile',
+      'Regulatory compliance (SOX/FINRA) required'
+    ],
+    tono: 'professional'
+  },
+  'industrial.support': {
+    roles: ['operator', 'technician'],
+    descripcion_roles: {
+      operator: 'Plant operator reporting equipment issues or requesting maintenance support',
+      technician: 'Certified maintenance technician with access to diagnostic systems and manuals'
+    },
+    flujo_esperado: [
+      'Issue report and error code identification',
+      'Remote diagnostic assessment',
+      'Troubleshooting steps and guided resolution',
+      'Parts and maintenance scheduling',
+      'Resolution verification and documentation'
+    ],
+    contexto: 'Manufacturing facility with SCADA systems, equipment manuals, and maintenance scheduling',
+    restricciones: [
+      'Safety protocols must be followed at all times',
+      'Equipment lockout/tagout required before physical intervention',
+      'Only certified personnel may perform electrical work',
+      'All incidents must be logged in maintenance system'
+    ],
+    tono: 'technical'
+  },
+  'education.tutoring': {
+    roles: ['student', 'tutor'],
+    descripcion_roles: {
+      student: 'Student seeking help understanding a specific topic or solving problems',
+      tutor: 'Qualified tutor with expertise in the subject area and adaptive teaching methods'
+    },
+    flujo_esperado: [
+      'Topic identification and knowledge assessment',
+      'Concept explanation with examples',
+      'Guided practice with scaffolding',
+      'Independent problem solving',
+      'Summary and next study steps'
+    ],
+    contexto: 'Online tutoring platform with access to curriculum materials and practice exercises',
+    restricciones: [
+      'Do not provide direct answers — guide through problem-solving process',
+      'Adapt difficulty level to student comprehension',
+      'Use age-appropriate language and examples',
+      'Encourage questions and active participation'
+    ],
+    tono: 'empathetic'
+  }
+}
+
+// ─── Per-step validation ───
+function getStepErrors(step: number, draft: Partial<SeedSchema>): string[] {
+  const errors: string[] = []
+
+  switch (step) {
+    case 1:
+      if (!draft.dominio) errors.push('Select a domain to continue')
+      if (!draft.objetivo?.trim()) errors.push('Write an objective for this seed')
+      break
+    case 2:
+      if (!draft.roles || draft.roles.length < 2) errors.push('Add at least 2 roles')
+      if (draft.roles?.some(r => !r.trim())) errors.push('All roles must have a name')
+      break
+    case 3:
+      if (!draft.pasos_turnos?.flujo_esperado?.length || draft.pasos_turnos.flujo_esperado.every(f => !f.trim()))
+        errors.push('Add at least 1 expected flow step')
+      if ((draft.pasos_turnos?.turnos_min ?? 3) >= (draft.pasos_turnos?.turnos_max ?? 10))
+        errors.push('Min turns must be less than max turns')
+      break
+    // Steps 4-5 have no hard requirements
+  }
+
+  return errors
+}
 
 const OBJECTIVE_EXAMPLES: Record<string, { en: string; es: string }> = {
   'automotive.sales': {
@@ -87,6 +261,24 @@ const STEP_LABELS = [
   'Privacy',
   'Review'
 ]
+
+const CATEGORY_LABELS: Record<string, string> = {
+  customer: 'Customers',
+  professional: 'Professionals',
+  support: 'Support',
+  specialist: 'Specialists',
+  authority: 'Authority',
+  other: 'Other'
+}
+
+const RESTRICTION_CATEGORY_LABELS: Record<string, string> = {
+  compliance: 'Compliance',
+  safety: 'Safety',
+  privacy: 'Privacy',
+  quality: 'Quality',
+  boundary: 'Boundaries',
+  operational: 'Operational'
+}
 
 function loadProjectTools(): ToolDefinition[] {
   if (typeof window === 'undefined') return []
@@ -155,6 +347,14 @@ export function SeedCreatePage() {
   // Source seed banner
   const [sourceSeed, setSourceSeed] = useState<SeedSchema | null>(null)
 
+  // ─── Role search state ───
+  const [roleSearchQueries, setRoleSearchQueries] = useState<Record<number, string>>({})
+  const [roleSearchOpen, setRoleSearchOpen] = useState<Record<number, boolean>>({})
+  const roleInputRefs = useRef<Record<number, HTMLInputElement | null>>({})
+
+  // ─── Flow template state ───
+  const [selectedFlowId, setSelectedFlowId] = useState<string | null>(null)
+
   // Load source seed when duplicating
   useEffect(() => {
     if (!fromId) return
@@ -220,6 +420,58 @@ export function SeedCreatePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step])
 
+  // ─── Step validation state ───
+  const [stepErrors, setStepErrors] = useState<string[]>([])
+
+  function canProceed(): boolean {
+    const errors = getStepErrors(step, draft)
+    setStepErrors(errors)
+    return errors.length === 0
+  }
+
+  // Clear step errors when step or draft changes
+  useEffect(() => {
+    setStepErrors([])
+  }, [step])
+
+  // ─── Domain auto-population ───
+  function applyDomainDefaults(domain: string) {
+    const defaults = DOMAIN_DEFAULTS[domain]
+    if (!defaults) return
+
+    // Only auto-populate empty fields — never overwrite user input
+    const patch: Partial<SeedSchema> = { dominio: domain }
+
+    if (!draft.roles?.length || draft.roles.every(r => !r.trim())) {
+      patch.roles = defaults.roles
+      patch.descripcion_roles = defaults.descripcion_roles
+    }
+
+    if (!draft.pasos_turnos?.flujo_esperado?.length || draft.pasos_turnos.flujo_esperado.every(f => !f.trim())) {
+      patch.pasos_turnos = {
+        ...(draft.pasos_turnos || { turnos_min: 3, turnos_max: 10, flujo_esperado: [] }),
+        flujo_esperado: defaults.flujo_esperado
+      }
+    }
+
+    if (!draft.parametros_factuales?.contexto?.trim()) {
+      patch.parametros_factuales = {
+        ...(draft.parametros_factuales || { contexto: '', restricciones: [], herramientas: [], metadata: {} }),
+        contexto: defaults.contexto,
+        restricciones: defaults.restricciones
+      }
+    }
+
+    // Match tone to domain language
+    const lang = draft.idioma || 'es'
+    const toneIdx = (lang === 'es' ? TONES_ES : TONES_EN).indexOf(defaults.tono as never)
+    if (toneIdx >= 0) {
+      patch.tono = (lang === 'es' ? TONES_ES : TONES_EN)[toneIdx]
+    }
+
+    setDraft(prev => ({ ...prev, ...patch }))
+  }
+
   // ─── Draft update helpers ───
   function updateDraft(patch: Partial<SeedSchema>) {
     setDraft(prev => ({ ...prev, ...patch }))
@@ -260,6 +512,18 @@ export function SeedCreatePage() {
 
     if (removed) delete descripcion_roles[removed]
     updateDraft({ roles, descripcion_roles })
+
+    // Clean up search state for removed index
+    setRoleSearchQueries(prev => {
+      const next = { ...prev }
+      delete next[index]
+      return next
+    })
+    setRoleSearchOpen(prev => {
+      const next = { ...prev }
+      delete next[index]
+      return next
+    })
   }
 
   function updateRole(index: number, value: string) {
@@ -281,6 +545,27 @@ export function SeedCreatePage() {
     updateDraft({
       descripcion_roles: { ...(draft.descripcion_roles || {}), [role]: description }
     })
+  }
+
+  function addRoleFromPreset(preset: RolePreset) {
+    const roles = [...(draft.roles || [])]
+    // Don't add if already present
+    if (roles.includes(preset.id)) return
+    roles.push(preset.id)
+    const descripcion_roles = { ...(draft.descripcion_roles || {}), [preset.id]: preset.description }
+    updateDraft({ roles, descripcion_roles })
+  }
+
+  function selectRolePreset(index: number, preset: RolePreset) {
+    const roles = [...(draft.roles || [])]
+    const oldName = roles[index]
+    roles[index] = preset.id
+    const descripcion_roles = { ...(draft.descripcion_roles || {}) }
+    if (oldName && oldName !== preset.id) delete descripcion_roles[oldName]
+    descripcion_roles[preset.id] = preset.description
+    updateDraft({ roles, descripcion_roles })
+    setRoleSearchQueries(prev => ({ ...prev, [index]: '' }))
+    setRoleSearchOpen(prev => ({ ...prev, [index]: false }))
   }
 
   // ─── List helpers ───
@@ -325,12 +610,12 @@ export function SeedCreatePage() {
   }
 
   // ─── Tags ───
-  function addTag() {
-    const tag = tagInput.trim()
+  function addTag(value?: string) {
+    const tag = (value ?? tagInput).trim()
 
     if (tag && !(draft.etiquetas || []).includes(tag)) {
       updateDraft({ etiquetas: [...(draft.etiquetas || []), tag] })
-      setTagInput('')
+      if (!value) setTagInput('')
     }
   }
 
@@ -339,6 +624,35 @@ export function SeedCreatePage() {
 
     tags.splice(index, 1)
     updateDraft({ etiquetas: tags })
+  }
+
+  // ─── Flow template application ───
+  function applyFlowTemplate(flow: FlowTemplate) {
+    setSelectedFlowId(flow.id)
+    updatePasosTurnos({
+      flujo_esperado: [...flow.steps],
+      turnos_min: flow.turnRange[0],
+      turnos_max: flow.turnRange[1]
+    })
+  }
+
+  function clearFlowTemplate() {
+    setSelectedFlowId(null)
+    updatePasosTurnos({
+      flujo_esperado: [''],
+      turnos_min: 3,
+      turnos_max: 10
+    })
+  }
+
+  // ─── Restriction presets ───
+  function toggleRestrictionPreset(text: string) {
+    const current = draft.parametros_factuales?.restricciones || []
+    if (current.includes(text)) {
+      updateParametros({ restricciones: current.filter(r => r !== text) })
+    } else {
+      updateParametros({ restricciones: [...current, text] })
+    }
   }
 
   // ─── Validation ───
@@ -492,6 +806,19 @@ export function SeedCreatePage() {
         </CardContent>
       </Card>
 
+      {/* Step-level validation errors */}
+      {stepErrors.length > 0 && (
+        <div className="rounded-md border border-destructive/50 bg-destructive/5 px-4 py-2.5">
+          <ul className="space-y-0.5">
+            {stepErrors.map((err, i) => (
+              <li key={i} className="flex items-center gap-1.5 text-xs text-destructive">
+                <AlertTriangle className="size-3 shrink-0" /> {err}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Footer navigation */}
       <div className="sticky bottom-0 flex items-center justify-between rounded-lg border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <Button
@@ -505,7 +832,7 @@ export function SeedCreatePage() {
         <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground">{step}/{TOTAL_STEPS}</span>
           {step < TOTAL_STEPS ? (
-            <Button size="sm" onClick={() => setStep(s => s + 1)}>
+            <Button size="sm" onClick={() => { if (canProceed()) setStep(s => s + 1) }}>
               Next <ArrowRight className="ml-1.5 size-4" />
             </Button>
           ) : (
@@ -537,6 +864,9 @@ export function SeedCreatePage() {
             ? 'Cliente negociando una SUV seminueva con opciones de financiamiento'
             : 'Customer negotiating a certified pre-owned SUV with financing options'
 
+        const objectiveTemplates = getObjectiveTemplates(draft.dominio || undefined)
+        const tagSuggestions = getTagSuggestions(draft.dominio || undefined, draft.etiquetas || [])
+
         return (
           <div className="space-y-4">
             <div>
@@ -550,22 +880,53 @@ export function SeedCreatePage() {
                 Domain
                 <FieldTooltip text="The industry vertical this seed targets. Each domain has specific terminology, compliance requirements, and conversation patterns." />
               </Label>
-              <Select value={draft.dominio || ''} onValueChange={v => updateDraft({ dominio: v })}>
+              <Select value={draft.dominio || ''} onValueChange={v => applyDomainDefaults(v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select domain" />
                 </SelectTrigger>
                 <SelectContent>
                   {SUPPORTED_DOMAINS.map(d => (
-                    <SelectItem key={d} value={d}>{d}</SelectItem>
+                    <SelectItem key={d} value={d}>
+                      {DOMAIN_LABELS[d] || d} — <span className="text-muted-foreground">{d}</span>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {draft.dominio && DOMAIN_DEFAULTS[draft.dominio] && (
+                <p className="text-[10px] text-muted-foreground">
+                  Roles, flow steps, and context have been pre-filled for this domain. You can customize them in the following steps.
+                </p>
+              )}
             </div>
+
+            {/* Objective with template suggestions */}
             <div className="space-y-2">
               <Label className="flex items-center gap-1">
                 Objective
                 <FieldTooltip text="A clear description of what the conversation should achieve. This guides the LLM during generation." />
               </Label>
+              {objectiveTemplates.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Suggested objectives
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {objectiveTemplates.map(tmpl => (
+                      <button
+                        key={tmpl.id}
+                        type="button"
+                        onClick={() => updateDraft({ objetivo: tmpl.text })}
+                        className={cn(
+                          'rounded-md border px-2 py-1 text-left text-[11px] transition-colors hover:bg-muted/60',
+                          draft.objetivo === tmpl.text && 'border-primary bg-primary/5 text-primary'
+                        )}
+                      >
+                        {tmpl.text.length > 80 ? tmpl.text.slice(0, 80) + '...' : tmpl.text}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <Textarea
                 value={draft.objetivo || ''}
                 onChange={e => updateDraft({ objetivo: e.target.value })}
@@ -573,6 +934,7 @@ export function SeedCreatePage() {
                 className="min-h-[60px]"
               />
             </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label className="flex items-center gap-1">
@@ -616,6 +978,8 @@ export function SeedCreatePage() {
                 </Select>
               </div>
             </div>
+
+            {/* Tags with suggestions */}
             <div className="space-y-2">
               <Label>Tags</Label>
               <div className="flex gap-2">
@@ -625,7 +989,7 @@ export function SeedCreatePage() {
                   placeholder="Add a tag..."
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
                 />
-                <Button type="button" variant="outline" size="sm" onClick={addTag}>Add</Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => addTag()}>Add</Button>
               </div>
               {(draft.etiquetas || []).length > 0 && (
                 <div className="flex flex-wrap gap-1.5 pt-1">
@@ -639,12 +1003,38 @@ export function SeedCreatePage() {
                   ))}
                 </div>
               )}
+              {tagSuggestions.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Suggested tags
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {tagSuggestions.map(tag => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => addTag(tag)}
+                        className="rounded-full border border-dashed px-2 py-0.5 text-[11px] text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                      >
+                        <Plus className="mr-0.5 inline size-2.5" />
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )
       }
 
-      case 2:
+      case 2: {
+        const domainRoles = searchRoles('', draft.dominio || undefined)
+        const existingRoleIds = new Set(draft.roles || [])
+        const quickAddRoles = domainRoles
+          .filter(r => (r.domains.includes(draft.dominio || '') || r.domains.length === 0) && !existingRoleIds.has(r.id))
+          .slice(0, 8)
+
         return (
           <div className="space-y-4">
             <div>
@@ -653,53 +1043,215 @@ export function SeedCreatePage() {
                 Define at least 2 participants. Common patterns: user/assistant, patient/doctor, client/advisor.
               </p>
             </div>
-            {(draft.roles || []).map((role, i) => (
-              <div key={i} className="space-y-2 rounded-md border p-3">
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={role}
-                    onChange={e => updateRole(i, e.target.value)}
-                    placeholder={`Role ${i + 1} name`}
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 shrink-0"
-                    onClick={() => removeRole(i)}
-                  >
-                    <Trash2 className="size-3.5 text-destructive" />
-                  </Button>
+
+            {/* Quick add section */}
+            {quickAddRoles.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Quick add
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {quickAddRoles.map(role => (
+                    <button
+                      key={role.id}
+                      type="button"
+                      onClick={() => addRoleFromPreset(role)}
+                      className="flex items-center gap-1 rounded-full border border-dashed px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                    >
+                      <Plus className="size-3" />
+                      {role.label}
+                    </button>
+                  ))}
                 </div>
-                {role && (
-                  <div className="space-y-1">
-                    <Label className="text-xs">Description for &ldquo;{role}&rdquo;</Label>
-                    <Textarea
-                      value={draft.descripcion_roles?.[role] || ''}
-                      onChange={e => updateRoleDescription(role, e.target.value)}
-                      placeholder={`Describe the ${role} role...`}
-                      className="min-h-[60px]"
-                    />
-                  </div>
-                )}
               </div>
-            ))}
+            )}
+
+            {(draft.roles || []).map((role, i) => {
+              const searchQuery = roleSearchQueries[i] ?? ''
+              const isSearchOpen = roleSearchOpen[i] ?? false
+              const searchResults = searchQuery.trim()
+                ? searchRoles(searchQuery, draft.dominio || undefined)
+                : []
+
+              // Group search results by category
+              const groupedResults: Record<string, RolePreset[]> = {}
+              for (const r of searchResults) {
+                if (!groupedResults[r.category]) groupedResults[r.category] = []
+                groupedResults[r.category].push(r)
+              }
+
+              return (
+                <div key={i} className="space-y-2 rounded-md border p-3">
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        ref={el => { roleInputRefs.current[i] = el }}
+                        value={isSearchOpen ? searchQuery : role}
+                        onChange={e => {
+                          const val = e.target.value
+                          setRoleSearchQueries(prev => ({ ...prev, [i]: val }))
+                          setRoleSearchOpen(prev => ({ ...prev, [i]: true }))
+                          // Also update the role name live
+                          updateRole(i, val)
+                        }}
+                        onFocus={() => {
+                          setRoleSearchQueries(prev => ({ ...prev, [i]: role }))
+                          setRoleSearchOpen(prev => ({ ...prev, [i]: true }))
+                        }}
+                        onBlur={() => {
+                          // Delay closing to allow click on results
+                          setTimeout(() => {
+                            setRoleSearchOpen(prev => ({ ...prev, [i]: false }))
+                          }, 200)
+                        }}
+                        placeholder={`Role ${i + 1} — type to search catalog`}
+                        className="flex-1"
+                      />
+                      {/* Search results dropdown */}
+                      {isSearchOpen && searchResults.length > 0 && (
+                        <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                          {Object.entries(groupedResults).map(([category, roles]) => (
+                            <div key={category}>
+                              <p className="px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                                {CATEGORY_LABELS[category] || category}
+                              </p>
+                              {roles.map(preset => (
+                                <button
+                                  key={preset.id}
+                                  type="button"
+                                  className="flex w-full items-start gap-2 rounded-sm px-2 py-1.5 text-left transition-colors hover:bg-muted"
+                                  onMouseDown={e => {
+                                    e.preventDefault()
+                                    selectRolePreset(i, preset)
+                                  }}
+                                >
+                                  <div className="min-w-0 flex-1">
+                                    <span className="text-xs font-medium">{preset.label}</span>
+                                    <p className="truncate text-[10px] text-muted-foreground">{preset.description}</p>
+                                  </div>
+                                  {preset.domains.length > 0 && (
+                                    <Badge variant="outline" className="shrink-0 text-[9px]">
+                                      {preset.domains[0].split('.')[0]}
+                                    </Badge>
+                                  )}
+                                </button>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 shrink-0"
+                      onClick={() => removeRole(i)}
+                    >
+                      <Trash2 className="size-3.5 text-destructive" />
+                    </Button>
+                  </div>
+                  {role && (
+                    <div className="space-y-1">
+                      <Label className="text-xs">Description for &ldquo;{role}&rdquo;</Label>
+                      <Textarea
+                        value={draft.descripcion_roles?.[role] || ''}
+                        onChange={e => updateRoleDescription(role, e.target.value)}
+                        placeholder={`Describe the ${role} role...`}
+                        className="min-h-[60px]"
+                      />
+                    </div>
+                  )}
+                </div>
+              )
+            })}
             <Button type="button" variant="outline" size="sm" onClick={addRole}>
               <Plus className="mr-1.5 size-4" /> Add Role
             </Button>
           </div>
         )
+      }
 
-      case 3:
+      case 3: {
+        const availableFlows = searchFlows('', draft.dominio || undefined)
+
         return (
           <div className="space-y-4">
             <div>
               <h3 className="text-sm font-semibold">Step 3: Turn Structure</h3>
               <p className="text-xs text-muted-foreground">
-                Controls conversation length and flow. Min/max turns define the range, and expected flow provides step-by-step guidance to the generator.
+                Controls conversation length and flow. Pick a template or build a custom flow from scratch.
               </p>
             </div>
+
+            {/* Flow template selector */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1">
+                Flow Template
+                <FieldTooltip text="Pre-built conversation flow patterns. Selecting one auto-fills flow steps and turn range. Choose 'Custom' to start from scratch." />
+              </Label>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {/* Custom option */}
+                <button
+                  type="button"
+                  onClick={clearFlowTemplate}
+                  className={cn(
+                    'rounded-md border p-3 text-left transition-colors hover:bg-muted/50',
+                    !selectedFlowId && 'border-primary bg-primary/5'
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className={cn(
+                      'flex size-5 items-center justify-center rounded-full border text-[10px]',
+                      !selectedFlowId ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/30'
+                    )}>
+                      {!selectedFlowId && <Check className="size-3" />}
+                    </div>
+                    <span className="text-xs font-medium">Custom</span>
+                  </div>
+                  <p className="mt-1 pl-7 text-[10px] text-muted-foreground">Build your own flow from scratch</p>
+                </button>
+
+                {/* Flow template cards */}
+                {availableFlows.map(flow => {
+                  const isSelected = selectedFlowId === flow.id
+                  const isDomainSpecific = flow.domains.length > 0
+
+                  return (
+                    <button
+                      key={flow.id}
+                      type="button"
+                      onClick={() => applyFlowTemplate(flow)}
+                      className={cn(
+                        'rounded-md border p-3 text-left transition-colors hover:bg-muted/50',
+                        isSelected && 'border-primary bg-primary/5'
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={cn(
+                          'flex size-5 items-center justify-center rounded-full border text-[10px]',
+                          isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/30'
+                        )}>
+                          {isSelected && <Check className="size-3" />}
+                        </div>
+                        <span className="text-xs font-medium">{flow.label}</span>
+                        {isDomainSpecific && (
+                          <Badge variant="outline" className="ml-auto text-[9px]">
+                            {flow.domains[0].split('.')[0]}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="mt-1 pl-7 text-[10px] text-muted-foreground">{flow.description}</p>
+                      <p className="mt-0.5 pl-7 text-[10px] text-muted-foreground/70">
+                        {flow.steps.length} steps &middot; {flow.turnRange[0]}-{flow.turnRange[1]} turns
+                      </p>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Turn range */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Min Turns</Label>
@@ -720,6 +1272,8 @@ export function SeedCreatePage() {
                 />
               </div>
             </div>
+
+            {/* Manual flow step editor */}
             <div className="space-y-2">
               <Label className="flex items-center gap-1">
                 Expected Flow
@@ -752,6 +1306,7 @@ export function SeedCreatePage() {
             </div>
           </div>
         )
+      }
 
       case 4: {
         const selectedDomain = draft.dominio || ''
@@ -772,6 +1327,16 @@ export function SeedCreatePage() {
           if (current.has(toolName)) current.delete(toolName)
           else current.add(toolName)
           updateParametros({ herramientas: [...current] })
+        }
+
+        const restrictionPresets = getRestrictions(draft.dominio || undefined)
+        const currentRestrictions = new Set(draft.parametros_factuales?.restricciones || [])
+
+        // Group restriction presets by category
+        const groupedRestrictions: Record<string, typeof restrictionPresets> = {}
+        for (const r of restrictionPresets) {
+          if (!groupedRestrictions[r.category]) groupedRestrictions[r.category] = []
+          groupedRestrictions[r.category].push(r)
         }
 
         return (
@@ -825,28 +1390,85 @@ export function SeedCreatePage() {
               </div>
             </div>
 
-            {/* Restrictions */}
+            {/* Restrictions with presets */}
             <div className="space-y-2">
-              <Label>Restrictions</Label>
-              {(draft.parametros_factuales?.restricciones || []).map((item, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Input
-                    value={item}
-                    onChange={e => updateParamListItem('restricciones', i, e.target.value)}
-                    placeholder={`Restriction ${i + 1}`}
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 shrink-0"
-                    onClick={() => removeFromParamList('restricciones', i)}
-                  >
-                    <X className="size-3.5" />
-                  </Button>
+              <Label className="flex items-center gap-1">
+                Restrictions
+                <FieldTooltip text="Constraints the assistant must follow. Toggle preset restrictions or add custom ones below." />
+              </Label>
+
+              {/* Restriction preset pills grouped by category */}
+              {Object.keys(groupedRestrictions).length > 0 && (
+                <div className="space-y-2 rounded-md border p-3">
+                  <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Preset restrictions
+                  </p>
+                  {Object.entries(groupedRestrictions).map(([category, presets]) => (
+                    <div key={category} className="space-y-1">
+                      <p className="text-[10px] font-medium text-muted-foreground">
+                        {RESTRICTION_CATEGORY_LABELS[category] || category}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {presets.map(preset => {
+                          const isActive = currentRestrictions.has(preset.text)
+                          return (
+                            <button
+                              key={preset.id}
+                              type="button"
+                              onClick={() => toggleRestrictionPreset(preset.text)}
+                              className={cn(
+                                'flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] transition-colors',
+                                isActive
+                                  ? 'border-primary bg-primary/10 text-primary'
+                                  : 'border-dashed text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                              )}
+                            >
+                              <div className={cn(
+                                'flex size-3.5 items-center justify-center rounded border',
+                                isActive ? 'border-primary bg-primary' : 'border-muted-foreground/30'
+                              )}>
+                                {isActive && <Check className="size-2.5 text-primary-foreground" />}
+                              </div>
+                              {preset.text.length > 60 ? preset.text.slice(0, 60) + '...' : preset.text}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
+
+              {/* Custom restrictions */}
+              <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                Custom restrictions
+              </p>
+              {(draft.parametros_factuales?.restricciones || [])
+                .map((item, i) => {
+                  // Check if this item came from a preset
+                  const isPreset = restrictionPresets.some(p => p.text === item)
+                  if (isPreset) return null
+                  return (
+                    <div key={i} className="flex items-center gap-2">
+                      <Input
+                        value={item}
+                        onChange={e => updateParamListItem('restricciones', i, e.target.value)}
+                        placeholder={`Restriction ${i + 1}`}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 shrink-0"
+                        onClick={() => removeFromParamList('restricciones', i)}
+                      >
+                        <X className="size-3.5" />
+                      </Button>
+                    </div>
+                  )
+                })
+                .filter(Boolean)}
               <Button type="button" variant="outline" size="sm" onClick={() => addToParamList('restricciones')}>
                 <Plus className="mr-1.5 size-4" /> Add Restriction
               </Button>
