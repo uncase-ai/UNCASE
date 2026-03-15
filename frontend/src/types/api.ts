@@ -846,3 +846,62 @@ export interface BatchBuildResponse {
   tx_hash: string | null
   anchor_error: string | null
 }
+
+// ─── Tool Scanning ───
+
+export interface ToolScanResult {
+  conversation_id: string
+  requires_tools: boolean
+  reasoning: string
+  identified_tools: ScannedToolPreview[]
+  confidence: number
+}
+
+export interface ScannedToolPreview {
+  name: string
+  description: string
+  category: string
+  domains: string[]
+  parameter_count: number
+  endpoint_hint: string
+  confidence: number
+}
+
+// ─── MCP Server ───
+
+export interface MCPServerDeployment {
+  id: string
+  server_name: string
+  function_slug: string
+  tool_names: string[]
+  deploy_status: 'draft' | 'generated' | 'deploying' | 'deployed' | 'error'
+  rate_limit_per_min: number
+  created_at: string
+  updated_at: string
+}
+
+// ─── Tool Visibility & Sharing ───
+
+export type ToolVisibility = 'private' | 'organization' | 'public'
+
+export interface ToolShareConfig {
+  visibility: ToolVisibility
+  marketplace_listed: boolean
+  marketplace_tags: string[]
+  author: string
+  license: string
+  downloads: number
+}
+
+// ─── Import with Tool Scan ───
+
+export interface ImportWithToolScan extends ImportResult {
+  tool_scan_results: ToolScanResult[]
+  suggested_tools: ToolDefinition[]
+  scan_summary: {
+    conversations_scanned: number
+    tools_identified: number
+    unique_tools: number
+    domains_detected: string[]
+  }
+}
