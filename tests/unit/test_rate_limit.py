@@ -80,4 +80,5 @@ class TestRateLimitConfig:
         assert "/docs" in EXEMPT_PATHS
         assert "/redoc" in EXEMPT_PATHS
         assert "/openapi.json" in EXEMPT_PATHS
-        assert "/api/v1/health" in EXEMPT_PATHS
+        assert "/health" in EXEMPT_PATHS
+        assert "/health/db" in EXEMPT_PATHS

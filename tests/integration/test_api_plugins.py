@@ -146,7 +146,9 @@ class TestInstalledPlugins:
     async def test_list_installed_empty(self, client: AsyncClient) -> None:
         response = await client.get("/api/v1/plugins/installed")
         assert response.status_code == 200
-        assert response.json() == []
+        data = response.json()
+        assert data["items"] == []
+        assert data["total"] == 0
 
     async def test_list_installed_after_install(self, client: AsyncClient) -> None:
         catalog = get_catalog()
@@ -158,8 +160,9 @@ class TestInstalledPlugins:
         response = await client.get("/api/v1/plugins/installed")
         assert response.status_code == 200
         data = response.json()
-        assert len(data) == 1
-        assert data[0]["plugin_id"] == plugin_id
+        assert data["total"] == 1
+        assert len(data["items"]) == 1
+        assert data["items"][0]["plugin_id"] == plugin_id
 
 
 @pytest.mark.integration

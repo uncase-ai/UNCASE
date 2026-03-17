@@ -19,9 +19,7 @@ from uncase.core.generator.litellm_generator import (
     _parse_llm_response,
 )
 from uncase.exceptions import GenerationError
-from uncase.schemas.conversation import ConversationTurn
 from uncase.schemas.quality import QualityMetrics, QualityReport
-
 
 # ─── GenerationConfig tests ───
 
@@ -36,7 +34,7 @@ class TestGenerationConfig:
         assert config.temperature == 0.7
         assert config.max_tokens == 4096
         assert config.language_override is None
-        assert config.max_retries == 2
+        assert config.max_retries == 3
         assert config.temperature_variation == 0.05
         assert config.api_base is None
 
@@ -282,11 +280,13 @@ class TestBuildFeedbackAugmentation:
         assert "Originality" in result
 
     def test_multiple_failures_all_addressed(self) -> None:
-        report = self._make_report([
-            "coherencia_dialogica=0.60 (min 0.85)",
-            "diversidad_lexica=0.40 (min 0.55)",
-            "privacy_score=0.05 (must be 0.0)",
-        ])
+        report = self._make_report(
+            [
+                "coherencia_dialogica=0.60 (min 0.85)",
+                "diversidad_lexica=0.40 (min 0.55)",
+                "privacy_score=0.05 (must be 0.0)",
+            ]
+        )
         result = _build_feedback_augmentation(report)
 
         assert "Dialog Coherence" in result
@@ -305,10 +305,12 @@ class TestParseLlmResponse:
 
     def test_parse_clean_json_array(self) -> None:
         seed = make_seed()
-        raw = json.dumps([
-            {"turno": 1, "rol": "vendedor", "contenido": "Hola, en que puedo ayudarle?", "herramientas_usadas": []},
-            {"turno": 2, "rol": "cliente", "contenido": "Busco un vehiculo.", "herramientas_usadas": []},
-        ])
+        raw = json.dumps(
+            [
+                {"turno": 1, "rol": "vendedor", "contenido": "Hola, en que puedo ayudarle?", "herramientas_usadas": []},
+                {"turno": 2, "rol": "cliente", "contenido": "Busco un vehiculo.", "herramientas_usadas": []},
+            ]
+        )
 
         turns = _parse_llm_response(raw, seed)
 
@@ -346,10 +348,12 @@ That's the output."""
 
     def test_parse_renumbers_turns_sequentially(self) -> None:
         seed = make_seed()
-        raw = json.dumps([
-            {"turno": 5, "rol": "vendedor", "contenido": "Primera linea.", "herramientas_usadas": []},
-            {"turno": 10, "rol": "cliente", "contenido": "Segunda linea.", "herramientas_usadas": []},
-        ])
+        raw = json.dumps(
+            [
+                {"turno": 5, "rol": "vendedor", "contenido": "Primera linea.", "herramientas_usadas": []},
+                {"turno": 10, "rol": "cliente", "contenido": "Segunda linea.", "herramientas_usadas": []},
+            ]
+        )
 
         turns = _parse_llm_response(raw, seed)
 
@@ -358,11 +362,13 @@ That's the output."""
 
     def test_parse_skips_empty_content(self) -> None:
         seed = make_seed()
-        raw = json.dumps([
-            {"turno": 1, "rol": "vendedor", "contenido": "Hola.", "herramientas_usadas": []},
-            {"turno": 2, "rol": "cliente", "contenido": "", "herramientas_usadas": []},
-            {"turno": 3, "rol": "vendedor", "contenido": "Que necesita?", "herramientas_usadas": []},
-        ])
+        raw = json.dumps(
+            [
+                {"turno": 1, "rol": "vendedor", "contenido": "Hola.", "herramientas_usadas": []},
+                {"turno": 2, "rol": "cliente", "contenido": "", "herramientas_usadas": []},
+                {"turno": 3, "rol": "vendedor", "contenido": "Que necesita?", "herramientas_usadas": []},
+            ]
+        )
 
         turns = _parse_llm_response(raw, seed)
 
@@ -372,10 +378,12 @@ That's the output."""
 
     def test_parse_handles_missing_turno_field(self) -> None:
         seed = make_seed()
-        raw = json.dumps([
-            {"rol": "vendedor", "contenido": "Buenos dias.", "herramientas_usadas": []},
-            {"rol": "cliente", "contenido": "Hola.", "herramientas_usadas": []},
-        ])
+        raw = json.dumps(
+            [
+                {"rol": "vendedor", "contenido": "Buenos dias.", "herramientas_usadas": []},
+                {"rol": "cliente", "contenido": "Hola.", "herramientas_usadas": []},
+            ]
+        )
 
         turns = _parse_llm_response(raw, seed)
 
@@ -385,10 +393,12 @@ That's the output."""
 
     def test_parse_handles_missing_herramientas(self) -> None:
         seed = make_seed()
-        raw = json.dumps([
-            {"turno": 1, "rol": "vendedor", "contenido": "Buenos dias."},
-            {"turno": 2, "rol": "cliente", "contenido": "Hola."},
-        ])
+        raw = json.dumps(
+            [
+                {"turno": 1, "rol": "vendedor", "contenido": "Buenos dias."},
+                {"turno": 2, "rol": "cliente", "contenido": "Hola."},
+            ]
+        )
 
         turns = _parse_llm_response(raw, seed)
 
@@ -397,10 +407,12 @@ That's the output."""
 
     def test_parse_preserves_tool_usage(self) -> None:
         seed = make_seed()
-        raw = json.dumps([
-            {"turno": 1, "rol": "vendedor", "contenido": "Busco en inventario.", "herramientas_usadas": ["crm"]},
-            {"turno": 2, "rol": "cliente", "contenido": "Gracias.", "herramientas_usadas": []},
-        ])
+        raw = json.dumps(
+            [
+                {"turno": 1, "rol": "vendedor", "contenido": "Busco en inventario.", "herramientas_usadas": ["crm"]},
+                {"turno": 2, "rol": "cliente", "contenido": "Gracias.", "herramientas_usadas": []},
+            ]
+        )
 
         turns = _parse_llm_response(raw, seed)
 
@@ -409,9 +421,11 @@ That's the output."""
 
     def test_parse_unknown_role_assigned_from_seed(self) -> None:
         seed = make_seed(roles=["vendedor", "cliente"])
-        raw = json.dumps([
-            {"turno": 1, "rol": "", "contenido": "Buenos dias.", "herramientas_usadas": []},
-        ])
+        raw = json.dumps(
+            [
+                {"turno": 1, "rol": "", "contenido": "Buenos dias.", "herramientas_usadas": []},
+            ]
+        )
 
         turns = _parse_llm_response(raw, seed)
 
@@ -421,13 +435,13 @@ That's the output."""
     def test_parse_raises_on_invalid_json(self) -> None:
         seed = make_seed()
 
-        with pytest.raises(GenerationError, match="Failed to parse"):
+        with pytest.raises(GenerationError, match="Failed to extract"):
             _parse_llm_response("This is not JSON at all", seed)
 
     def test_parse_raises_on_json_object_not_array(self) -> None:
         seed = make_seed()
 
-        with pytest.raises(GenerationError, match="Expected JSON array"):
+        with pytest.raises(GenerationError, match="Failed to extract"):
             _parse_llm_response('{"key": "value"}', seed)
 
     def test_parse_raises_on_empty_array(self) -> None:
@@ -438,20 +452,24 @@ That's the output."""
 
     def test_parse_raises_when_all_turns_invalid(self) -> None:
         seed = make_seed()
-        raw = json.dumps([
-            {"turno": 1, "rol": "vendedor", "contenido": ""},
-            {"turno": 2, "rol": "cliente", "contenido": "   "},
-        ])
+        raw = json.dumps(
+            [
+                {"turno": 1, "rol": "vendedor", "contenido": ""},
+                {"turno": 2, "rol": "cliente", "contenido": "   "},
+            ]
+        )
 
         with pytest.raises(GenerationError, match="No valid turns"):
             _parse_llm_response(raw, seed)
 
     def test_parse_skips_non_dict_items(self) -> None:
         seed = make_seed()
-        raw = json.dumps([
-            "not a dict",
-            {"turno": 1, "rol": "vendedor", "contenido": "Hola.", "herramientas_usadas": []},
-        ])
+        raw = json.dumps(
+            [
+                "not a dict",
+                {"turno": 1, "rol": "vendedor", "contenido": "Hola.", "herramientas_usadas": []},
+            ]
+        )
 
         turns = _parse_llm_response(raw, seed)
 
@@ -496,11 +514,18 @@ class TestLiteLLMGenerator:
     @patch("litellm.acompletion", new_callable=AsyncMock)
     async def test_generate_single_conversation(self, mock_acompletion: AsyncMock) -> None:
         seed = make_seed()
-        raw_response = json.dumps([
-            {"turno": 1, "rol": "vendedor", "contenido": "Buenos dias, bienvenido al concesionario.", "herramientas_usadas": []},
-            {"turno": 2, "rol": "cliente", "contenido": "Hola, estoy interesado en un vehiculo.", "herramientas_usadas": []},
-            {"turno": 3, "rol": "vendedor", "contenido": "Con gusto, que tipo de vehiculo busca?", "herramientas_usadas": []},
-        ])
+        raw_response = json.dumps(
+            [
+                {"turno": 1, "rol": "vendedor", "contenido": "Buenos dias, bienvenido.", "herramientas_usadas": []},
+                {
+                    "turno": 2,
+                    "rol": "cliente",
+                    "contenido": "Estoy interesado en un vehiculo.",
+                    "herramientas_usadas": [],
+                },
+                {"turno": 3, "rol": "vendedor", "contenido": "Con gusto, que tipo busca?", "herramientas_usadas": []},
+            ]
+        )
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock(message=MagicMock(content=raw_response))]
@@ -521,10 +546,12 @@ class TestLiteLLMGenerator:
     @patch("litellm.acompletion", new_callable=AsyncMock)
     async def test_generate_multiple_conversations(self, mock_acompletion: AsyncMock) -> None:
         seed = make_seed()
-        raw_response = json.dumps([
-            {"turno": 1, "rol": "vendedor", "contenido": "Bienvenido.", "herramientas_usadas": []},
-            {"turno": 2, "rol": "cliente", "contenido": "Gracias.", "herramientas_usadas": []},
-        ])
+        raw_response = json.dumps(
+            [
+                {"turno": 1, "rol": "vendedor", "contenido": "Bienvenido.", "herramientas_usadas": []},
+                {"turno": 2, "rol": "cliente", "contenido": "Gracias.", "herramientas_usadas": []},
+            ]
+        )
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock(message=MagicMock(content=raw_response))]
@@ -544,10 +571,12 @@ class TestLiteLLMGenerator:
     @patch("litellm.acompletion", new_callable=AsyncMock)
     async def test_generate_temperature_variation(self, mock_acompletion: AsyncMock) -> None:
         seed = make_seed()
-        raw_response = json.dumps([
-            {"turno": 1, "rol": "vendedor", "contenido": "Hola.", "herramientas_usadas": []},
-            {"turno": 2, "rol": "cliente", "contenido": "Hola.", "herramientas_usadas": []},
-        ])
+        raw_response = json.dumps(
+            [
+                {"turno": 1, "rol": "vendedor", "contenido": "Hola.", "herramientas_usadas": []},
+                {"turno": 2, "rol": "cliente", "contenido": "Hola.", "herramientas_usadas": []},
+            ]
+        )
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock(message=MagicMock(content=raw_response))]
@@ -564,10 +593,12 @@ class TestLiteLLMGenerator:
     @patch("litellm.acompletion", new_callable=AsyncMock)
     async def test_generate_language_override(self, mock_acompletion: AsyncMock) -> None:
         seed = make_seed(idioma="es")
-        raw_response = json.dumps([
-            {"turno": 1, "rol": "vendedor", "contenido": "Hello, how can I help you?", "herramientas_usadas": []},
-            {"turno": 2, "rol": "cliente", "contenido": "I need information about vehicles.", "herramientas_usadas": []},
-        ])
+        raw_response = json.dumps(
+            [
+                {"turno": 1, "rol": "vendedor", "contenido": "Hello, how can I help you?", "herramientas_usadas": []},
+                {"turno": 2, "rol": "cliente", "contenido": "I need info about vehicles.", "herramientas_usadas": []},
+            ]
+        )
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock(message=MagicMock(content=raw_response))]
@@ -587,9 +618,9 @@ class TestLiteLLMGenerator:
         mock_response.choices = [MagicMock(message=MagicMock(content=""))]
         mock_acompletion.return_value = mock_response
 
-        gen = LiteLLMGenerator()
+        gen = LiteLLMGenerator(config=GenerationConfig(max_retries=0))
 
-        with pytest.raises(GenerationError, match="empty response"):
+        with pytest.raises(GenerationError, match="failed after"):
             await gen.generate(seed, count=1)
 
     @patch("litellm.acompletion", new_callable=AsyncMock)
@@ -600,18 +631,20 @@ class TestLiteLLMGenerator:
         mock_response.choices = [MagicMock(message=MagicMock(content="This is not valid JSON"))]
         mock_acompletion.return_value = mock_response
 
-        gen = LiteLLMGenerator()
+        gen = LiteLLMGenerator(config=GenerationConfig(max_retries=0))
 
-        with pytest.raises(GenerationError, match="Failed to parse"):
+        with pytest.raises(GenerationError, match="Failed to extract"):
             await gen.generate(seed, count=1)
 
     @patch("litellm.acompletion", new_callable=AsyncMock)
     async def test_generate_retries_without_response_format(self, mock_acompletion: AsyncMock) -> None:
         seed = make_seed()
-        raw_response = json.dumps([
-            {"turno": 1, "rol": "vendedor", "contenido": "Hola.", "herramientas_usadas": []},
-            {"turno": 2, "rol": "cliente", "contenido": "Hola.", "herramientas_usadas": []},
-        ])
+        raw_response = json.dumps(
+            [
+                {"turno": 1, "rol": "vendedor", "contenido": "Hola.", "herramientas_usadas": []},
+                {"turno": 2, "rol": "cliente", "contenido": "Hola.", "herramientas_usadas": []},
+            ]
+        )
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock(message=MagicMock(content=raw_response))]
@@ -640,10 +673,12 @@ class TestLiteLLMGenerator:
     @patch("litellm.acompletion", new_callable=AsyncMock)
     async def test_generate_passes_api_key(self, mock_acompletion: AsyncMock) -> None:
         seed = make_seed()
-        raw_response = json.dumps([
-            {"turno": 1, "rol": "vendedor", "contenido": "Hola.", "herramientas_usadas": []},
-            {"turno": 2, "rol": "cliente", "contenido": "Hola.", "herramientas_usadas": []},
-        ])
+        raw_response = json.dumps(
+            [
+                {"turno": 1, "rol": "vendedor", "contenido": "Hola.", "herramientas_usadas": []},
+                {"turno": 2, "rol": "cliente", "contenido": "Hola.", "herramientas_usadas": []},
+            ]
+        )
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock(message=MagicMock(content=raw_response))]
@@ -658,10 +693,12 @@ class TestLiteLLMGenerator:
     @patch("litellm.acompletion", new_callable=AsyncMock)
     async def test_generate_metadata_includes_model_and_index(self, mock_acompletion: AsyncMock) -> None:
         seed = make_seed()
-        raw_response = json.dumps([
-            {"turno": 1, "rol": "vendedor", "contenido": "Buenos dias.", "herramientas_usadas": []},
-            {"turno": 2, "rol": "cliente", "contenido": "Hola.", "herramientas_usadas": []},
-        ])
+        raw_response = json.dumps(
+            [
+                {"turno": 1, "rol": "vendedor", "contenido": "Buenos dias.", "herramientas_usadas": []},
+                {"turno": 2, "rol": "cliente", "contenido": "Hola.", "herramientas_usadas": []},
+            ]
+        )
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock(message=MagicMock(content=raw_response))]
@@ -677,10 +714,12 @@ class TestLiteLLMGenerator:
     @patch("litellm.acompletion", new_callable=AsyncMock)
     async def test_generate_with_feedback(self, mock_acompletion: AsyncMock) -> None:
         seed = make_seed()
-        raw_response = json.dumps([
-            {"turno": 1, "rol": "vendedor", "contenido": "Bienvenido al concesionario.", "herramientas_usadas": []},
-            {"turno": 2, "rol": "cliente", "contenido": "Gracias, busco informacion.", "herramientas_usadas": []},
-        ])
+        raw_response = json.dumps(
+            [
+                {"turno": 1, "rol": "vendedor", "contenido": "Bienvenido al concesionario.", "herramientas_usadas": []},
+                {"turno": 2, "rol": "cliente", "contenido": "Gracias, busco informacion.", "herramientas_usadas": []},
+            ]
+        )
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock(message=MagicMock(content=raw_response))]

@@ -30,6 +30,8 @@ EXCLUDE_PATTERNS = [
     "test_evaluator.py",  # Evaluator tests reference synthetic PII for privacy gate checks
     "test_known_scores.py",  # Known-score evaluator tests use intentional synthetic PII
     "test_usage_service.py",  # Uses RFC 5737 documentation IPs (192.0.2.x, 198.51.100.x)
+    "test_edge_cases.py",  # Privacy false-positive tests use intentional synthetic PII-like patterns
+    "test_anchor.py",  # Blockchain anchor tests use synthetic timestamps that match phone patterns
     "__pycache__",
     ".pyc",
 ]

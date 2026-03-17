@@ -184,11 +184,7 @@ def _build_system_prompt(
     roles_block = "\n".join(role_lines)
 
     # Build flow steps — scenario flow_steps override seed defaults when present
-    flow_source = (
-        scenario.flow_steps
-        if scenario and scenario.flow_steps
-        else seed.pasos_turnos.flujo_esperado
-    )
+    flow_source = scenario.flow_steps if scenario and scenario.flow_steps else seed.pasos_turnos.flujo_esperado
     flow_lines = [f"  {i + 1}. {step}" for i, step in enumerate(flow_source)]
     flow_block = "\n".join(flow_lines)
 
@@ -381,7 +377,7 @@ def _extract_json_array(raw_content: str) -> list[dict[str, Any]]:
     with contextlib.suppress(json.JSONDecodeError):
         parsed: Any = json.loads(content)
         if isinstance(parsed, list):
-            return parsed        # Some models wrap array in an object: {"turns": [...]}
+            return parsed  # Some models wrap array in an object: {"turns": [...]}
         if isinstance(parsed, dict):
             for key in ("turns", "conversation", "messages", "data"):
                 val = parsed.get(key)
@@ -394,6 +390,17 @@ def _extract_json_array(raw_content: str) -> list[dict[str, Any]]:
             parsed = json.loads(code_block_match.group(1).strip())
             if isinstance(parsed, list):
                 return parsed
+
+    # Strategy 3: Find bare JSON array in surrounding prose text
+    # LLMs often wrap the JSON array in explanatory text before/after
+    first_bracket = content.find("[")
+    last_bracket = content.rfind("]")
+    if first_bracket != -1 and last_bracket > first_bracket:
+        with contextlib.suppress(json.JSONDecodeError):
+            parsed = json.loads(content[first_bracket : last_bracket + 1])
+            if isinstance(parsed, list):
+                return parsed
+
     msg = "Failed to extract JSON array from LLM response"
     raise GenerationError(msg)
 
@@ -566,10 +573,7 @@ class LiteLLMGenerator(BaseGenerator):
         # Request JSON output format when supported.
         # Gemini models don't fully support response_format — skip it entirely.
         model_lower = self._config.model.lower()
-        supports_response_format = not (
-            "gemini" in model_lower
-            or "google" in model_lower
-        )
+        supports_response_format = not ("gemini" in model_lower or "google" in model_lower)
 
         last_error: Exception | None = None
         for attempt in range(self._config.max_retries + 1):
