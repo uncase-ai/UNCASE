@@ -248,6 +248,20 @@ export async function checkApiHealth(): Promise<boolean> {
   }
 }
 
+export async function checkApiHealthDetailed(): Promise<{ ok: boolean; llmConfigured: boolean }> {
+  try {
+    const res = await fetch(`${getApiBase()}/health`, { signal: AbortSignal.timeout(3000) })
+
+    if (!res.ok) return { ok: false, llmConfigured: false }
+
+    const data = await res.json()
+
+    return { ok: true, llmConfigured: data.llm_configured ?? false }
+  } catch {
+    return { ok: false, llmConfigured: false }
+  }
+}
+
 const API_BASE = DEFAULT_API_BASE
 
 export { API_BASE, getApiBase }

@@ -5,6 +5,7 @@
 export interface HealthResponse {
   status: string
   version: string
+  llm_configured?: boolean
 }
 
 export interface HealthDbResponse extends HealthResponse {

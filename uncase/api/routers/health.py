@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from uncase._version import __version__
 from uncase.api.deps import get_db
+from uncase.config import get_settings
 
 router = APIRouter(tags=["system"])
 
@@ -23,14 +24,20 @@ async def root() -> RedirectResponse:
 
 
 @router.get("/health")
-async def health() -> dict[str, str]:
-    """Basic health check."""
-    return {"status": "ok", "version": __version__}
+async def health() -> dict[str, object]:
+    """Basic health check with LLM availability."""
+    settings = get_settings()
+    return {
+        "status": "ok",
+        "version": __version__,
+        "llm_configured": settings.llm_available,
+    }
 
 
 @router.get("/health/db")
-async def health_db(session: Annotated[AsyncSession, Depends(get_db)]) -> dict[str, str]:
+async def health_db(session: Annotated[AsyncSession, Depends(get_db)]) -> dict[str, object]:
     """Health check including database connectivity."""
+    settings = get_settings()
     try:
         await session.execute(text("SELECT 1"))
         db_status = "connected"
@@ -38,4 +45,9 @@ async def health_db(session: Annotated[AsyncSession, Depends(get_db)]) -> dict[s
         logger.warning("health_db_check_failed", version=__version__)
         db_status = "disconnected"
 
-    return {"status": "ok", "version": __version__, "database": db_status}
+    return {
+        "status": "ok",
+        "version": __version__,
+        "database": db_status,
+        "llm_configured": settings.llm_available,
+    }

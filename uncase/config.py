@@ -111,6 +111,16 @@ class UNCASESettings(BaseSettings):
         return self.e2b_enabled and bool(self.e2b_api_key)
 
     @property
+    def llm_available(self) -> bool:
+        """Check if at least one LLM provider API key is configured."""
+        return bool(
+            self.litellm_api_key
+            or self.anthropic_api_key
+            or self.gemini_api_key
+            or self.google_api_key
+        )
+
+    @property
     def cors_origins_list(self) -> list[str]:
         """Parse CORS origins string into a list."""
         return [o.strip() for o in self.api_cors_origins.split(",") if o.strip()]

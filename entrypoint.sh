@@ -15,4 +15,4 @@ echo "Starting UNCASE API..."
 exec /app/.venv/bin/python -m uvicorn uncase.api.main:app \
     --host 0.0.0.0 \
     --port "${PORT:-8000}" \
-    --workers "${WORKERS:-4}"
+    --workers "${WORKERS:-1}"

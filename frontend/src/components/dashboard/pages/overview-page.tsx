@@ -17,6 +17,7 @@ import {
   FlaskConical,
   HelpCircle,
   Key,
+  Layers,
   Library,
   MessageSquare,
   PackageOpen,
@@ -24,6 +25,8 @@ import {
   Puzzle,
   Rocket,
   Server,
+  Shield,
+  Sparkles,
   Sprout
 } from 'lucide-react'
 
@@ -52,6 +55,7 @@ const PIPELINE_STEPS = [
   { label: 'Seeds', href: '/dashboard/pipeline/seeds', icon: Sprout, description: 'Define knowledge structures' },
   { label: 'Knowledge', href: '/dashboard/knowledge', icon: Library, description: 'Upload domain literature' },
   { label: 'Import', href: '/dashboard/pipeline/import', icon: ArrowDownToLine, description: 'Ingest conversation data' },
+  { label: 'Scenarios', href: '/dashboard/pipeline/scenarios', icon: Layers, description: 'Build variation packs' },
   { label: 'Evaluate', href: '/dashboard/pipeline/evaluate', icon: FlaskConical, description: 'Run quality gates' },
   { label: 'Generate', href: '/dashboard/pipeline/generate', icon: Rocket, description: 'Synthesize conversations' },
   { label: 'Export', href: '/dashboard/pipeline/export', icon: PackageOpen, description: 'Output LoRA-ready data' }
@@ -277,11 +281,11 @@ export function OverviewPage() {
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-medium">Pipeline</CardTitle>
-            <span className="text-[11px] text-muted-foreground">6 stages</span>
+            <span className="text-[11px] text-muted-foreground">7 stages</span>
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="grid grid-cols-6 gap-0">
+          <div className="grid grid-cols-7 gap-0">
             {PIPELINE_STEPS.map((step, i) => (
               <Link
                 key={step.label}
@@ -378,6 +382,38 @@ export function OverviewPage() {
                 </div>
               </div>
               <ExternalLink className="size-3.5 text-muted-foreground" />
+            </Link>
+            <Separator />
+            <Link
+              href="/dashboard/pipeline/seeds/extract"
+              className="flex items-center justify-between rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-muted"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex size-8 items-center justify-center rounded-md border">
+                  <Sparkles className="size-3.5 text-muted-foreground" />
+                </div>
+                <div>
+                  <div className="text-sm font-medium">AI Interview</div>
+                  <div className="text-xs text-muted-foreground">Extract seeds through guided conversation</div>
+                </div>
+              </div>
+              <ArrowRight className="size-3.5 text-muted-foreground" />
+            </Link>
+            <Separator />
+            <Link
+              href="/dashboard/blockchain"
+              className="flex items-center justify-between rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-muted"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex size-8 items-center justify-center rounded-md border">
+                  <Shield className="size-3.5 text-muted-foreground" />
+                </div>
+                <div>
+                  <div className="text-sm font-medium">Blockchain certification</div>
+                  <div className="text-xs text-muted-foreground">Anchor quality reports on Polygon PoS</div>
+                </div>
+              </div>
+              <ArrowRight className="size-3.5 text-muted-foreground" />
             </Link>
           </CardContent>
         </Card>

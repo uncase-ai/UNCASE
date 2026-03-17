@@ -802,7 +802,12 @@ async def list_connectors():
 
 @app.get("/api/v1/audit/logs")
 async def list_audit_logs(page: int = 1, page_size: int = 50):
-    return {{"items": [], "total": 0, "page": page, "page_size": page_size}}
+    logs = [
+        {{"id": "log-1", "event_type": "seed.created", "actor": "demo-user", "resource_type": "seed", "resource_id": "demo-seed-1", "details": {{"domain": "{domain}"}}, "created_at": NOW}},
+        {{"id": "log-2", "event_type": "generation.completed", "actor": "system", "resource_type": "job", "resource_id": "demo-job-1", "details": {{"count": 3}}, "created_at": NOW}},
+        {{"id": "log-3", "event_type": "evaluation.passed", "actor": "system", "resource_type": "report", "resource_id": "demo-report-1", "details": {{"score": 0.92}}, "created_at": NOW}},
+    ]
+    return {{"items": logs, "total": len(logs), "page": page, "page_size": page_size}}
 
 
 # ─── Blockchain ───
@@ -810,18 +815,22 @@ async def list_audit_logs(page: int = 1, page_size: int = 50):
 @app.get("/api/v1/blockchain/stats")
 async def blockchain_stats():
     return {{
-        "total_hashed": 0,
-        "total_batched": 0,
-        "total_unbatched": 0,
-        "total_batches": 0,
-        "total_anchored": 0,
-        "total_pending_anchor": 0,
+        "total_hashed": 12,
+        "total_batched": 10,
+        "total_unbatched": 2,
+        "total_batches": 3,
+        "total_anchored": 2,
+        "total_pending_anchor": 1,
         "total_failed_anchor": 0,
     }}
 
 @app.get("/api/v1/blockchain/batches")
 async def blockchain_batches():
-    return []
+    return [
+        {{"batch_id": "batch-001", "merkle_root": "0xabc123...", "report_count": 5, "status": "anchored", "tx_hash": "0xdef456...", "chain": "polygon", "created_at": NOW}},
+        {{"batch_id": "batch-002", "merkle_root": "0x789abc...", "report_count": 5, "status": "anchored", "tx_hash": "0x012def...", "chain": "polygon", "created_at": NOW}},
+        {{"batch_id": "batch-003", "merkle_root": "0xcde345...", "report_count": 2, "status": "pending", "tx_hash": None, "chain": "polygon", "created_at": NOW}},
+    ]
 
 @app.get("/api/v1/blockchain/verify/{{report_id}}")
 async def blockchain_verify(report_id: str):
@@ -879,6 +888,161 @@ async def sandbox_info():
 @app.get("/api/v1/sandbox/status")
 async def sandbox_status():
     return {{"enabled": True, "max_parallel": 5, "template_id": "demo"}}
+
+
+# ─── Seed Extraction (AI Interview) ───
+
+EXTRACTION_SESSIONS: dict[str, dict] = {{}}
+
+@app.post("/api/v1/seeds/extract/start", status_code=201)
+async def start_extraction(request: Request):
+    body = await request.json()
+    industry = body.get("industry", "automotive")
+    locale = body.get("locale", "en")
+    session_id = uuid.uuid4().hex
+
+    if locale == "es":
+        question = (
+            f"Hola! Soy tu asistente de captura de datos para {{industry}}. "
+            "Para comenzar, ¿podrias decirme que tipo de interaccion quieres modelar?"
+        )
+    else:
+        question = (
+            f"Hello! I'm your data capture assistant for {{industry}}. "
+            "To get started, could you tell me what type of interaction you want to model?"
+        )
+
+    EXTRACTION_SESSIONS[session_id] = {{"turn": 0, "industry": industry, "locale": locale}}
+    return {{
+        "session_id": session_id,
+        "message": {{
+            "type": "question",
+            "content": question,
+            "progress": {{
+                "turn": 0,
+                "max_turns": 7,
+                "total_fields": 10,
+                "filled_fields": 0,
+                "required_total": 7,
+                "required_filled": 0,
+                "is_complete": False,
+                "fields": {{
+                    "dominio": {{"status": "empty", "confidence": 0, "is_required": True}},
+                    "roles": {{"status": "empty", "confidence": 0, "is_required": True}},
+                    "descripcion_roles": {{"status": "empty", "confidence": 0, "is_required": True}},
+                    "objetivo": {{"status": "empty", "confidence": 0, "is_required": True}},
+                    "tono": {{"status": "empty", "confidence": 0, "is_required": True}},
+                    "pasos_turnos": {{"status": "empty", "confidence": 0, "is_required": True}},
+                    "restricciones": {{"status": "empty", "confidence": 0, "is_required": True}},
+                    "flujo_esperado": {{"status": "empty", "confidence": 0, "is_required": False}},
+                    "contexto": {{"status": "empty", "confidence": 0, "is_required": False}},
+                    "herramientas": {{"status": "empty", "confidence": 0, "is_required": False}},
+                }},
+            }},
+        }},
+    }}
+
+@app.post("/api/v1/seeds/extract/turn")
+async def extraction_turn(request: Request):
+    body = await request.json()
+    session_id = body.get("session_id", "")
+    session = EXTRACTION_SESSIONS.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail=f"Session '{{session_id}}' not found or expired.")
+
+    session["turn"] += 1
+    turn = session["turn"]
+    locale = session.get("locale", "en")
+
+    demo_questions_en = [
+        "Great! Now, who are the participants in this conversation? Describe the two main roles.",
+        "What is the main objective of this conversation?",
+        "What tone should the conversation have? And how many turns should it take (min and max)?",
+        "What are the key constraints the assistant must follow?",
+        "Describe the expected conversation flow from beginning to end.",
+    ]
+    demo_questions_es = [
+        "Excelente! Ahora, ¿quienes son los participantes? Describe los dos roles principales.",
+        "¿Cual es el objetivo principal de esta conversacion?",
+        "¿Que tono debe tener la conversacion? ¿Y cuantos turnos deberia tener (min y max)?",
+        "¿Cuales son las restricciones clave que debe seguir el asistente?",
+        "Describe el flujo esperado de la conversacion de principio a fin.",
+    ]
+    questions = demo_questions_es if locale == "es" else demo_questions_en
+
+    field_names = ["dominio", "roles", "descripcion_roles", "objetivo", "tono", "pasos_turnos", "restricciones"]
+    fields = {{}}
+    for i, fname in enumerate(field_names):
+        if i < turn:
+            fields[fname] = {{"status": "confirmed", "confidence": 0.95, "is_required": True}}
+        elif i == turn:
+            fields[fname] = {{"status": "extracted", "confidence": 0.85, "is_required": True}}
+        else:
+            fields[fname] = {{"status": "empty", "confidence": 0, "is_required": True}}
+    for extra in ["flujo_esperado", "contexto", "herramientas"]:
+        fields[extra] = {{"status": "empty", "confidence": 0, "is_required": False}}
+
+    is_complete = turn >= len(questions)
+
+    if is_complete:
+        content = "Extraction complete! I've gathered all parameters." if locale == "en" else "Extraccion completada! He recopilado todos los parametros."
+        msg_type = "summary"
+        seed_data = DEMO_SEEDS[0] if DEMO_SEEDS else None
+        del EXTRACTION_SESSIONS[session_id]
+    else:
+        content = questions[turn - 1] if turn <= len(questions) else questions[-1]
+        msg_type = "question"
+        seed_data = None
+
+    result = {{
+        "session_id": session_id,
+        "message": {{
+            "type": msg_type,
+            "content": content,
+            "progress": {{
+                "turn": turn,
+                "max_turns": 7,
+                "total_fields": 10,
+                "filled_fields": min(turn, 7),
+                "required_total": 7,
+                "required_filled": min(turn, 7),
+                "is_complete": is_complete,
+                "fields": fields,
+            }},
+        }},
+        "is_complete": is_complete,
+    }}
+    if seed_data:
+        result["message"]["seed"] = seed_data
+    return result
+
+@app.get("/api/v1/seeds/extract/{{session_id}}/progress")
+async def extraction_progress(session_id: str):
+    session = EXTRACTION_SESSIONS.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail=f"Session '{{session_id}}' not found or expired.")
+    return {{"session_id": session_id, "progress": {{"turn": session["turn"], "max_turns": 7}}}}
+
+@app.delete("/api/v1/seeds/extract/{{session_id}}", status_code=204)
+async def end_extraction(session_id: str):
+    if session_id in EXTRACTION_SESSIONS:
+        del EXTRACTION_SESSIONS[session_id]
+    return None
+
+
+# ─── Import ───
+
+@app.post("/api/v1/import/upload")
+async def import_upload():
+    return {{"status": "uploaded", "file_id": uuid.uuid4().hex[:12], "records": 0}}
+
+@app.post("/api/v1/import/webhook")
+async def import_webhook():
+    return {{"status": "ok", "webhook_id": uuid.uuid4().hex[:12]}}
+
+@app.get("/api/v1/import/sources")
+async def import_sources():
+    return {{"items": [], "total": 0}}
 
 
 # ─── Catch-all: return empty JSON for any unhandled /api/v1/ endpoint ───

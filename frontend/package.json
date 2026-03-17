@@ -1,6 +1,7 @@
 {
-  "name": "shadcn-nextjs-flow-landing-page",
-  "version": "1.0.0",
+  "name": "uncase-dashboard",
+  "version": "2.0.0",
+  "description": "UNCASE Dashboard — Synthetic conversation data engineering platform",
   "private": true,
   "scripts": {
     "dev": "next dev",

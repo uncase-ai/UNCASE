@@ -6,7 +6,7 @@ import { ArrowLeft, Globe, Info, Loader2, MessageSquare, PanelRightClose, PanelR
 import Link from 'next/link'
 
 import type { ChatMessage, ExtractionProgress } from '@/types/layer0'
-import { checkApiHealth } from '@/lib/api/client'
+import { checkApiHealthDetailed } from '@/lib/api/client'
 import { endSession, sendTurn, startExtraction } from '@/lib/api/layer0'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -19,6 +19,69 @@ import { TypingIndicator } from '../chat/typing-indicator'
 import { PageHeader } from '../page-header'
 
 type SessionState = 'idle' | 'active' | 'processing' | 'complete'
+
+// ─── i18n strings ───
+
+const t = {
+  en: {
+    pageTitle: 'AI Interview — Seed Extraction',
+    pageDescIdle: 'Start an AI-guided interview to create a conversation seed',
+    heading: 'Extraction Interview',
+    headingDesc: 'The AI will guide you through questions to extract all the parameters needed to create a conversation seed.',
+    alertTitle: 'API connection required',
+    alertDesc1: 'The AI Interview requires a running UNCASE API with an LLM configured.',
+    alertDemo: 'A scripted demo will run if no API is detected.',
+    alertManual: 'create a seed manually',
+    alertBrowse: 'existing seeds',
+    alertAlso: 'You can also',
+    alertOr: 'or browse',
+    industryLabel: 'Industry',
+    automotive: 'Automotive',
+    medical: 'Medical',
+    languageLabel: 'Language',
+    english: 'English',
+    spanish: 'Spanish',
+    starting: 'Starting...',
+    startInterview: 'Start Interview',
+    dismiss: 'Dismiss',
+    turnsRemaining: (n: number) => `${n} turn${n !== 1 ? 's' : ''} remaining`,
+    extractionComplete: 'Extraction complete',
+    newInterview: 'New Interview',
+    createSeed: 'Create Seed',
+    processing: 'Processing...',
+    typePlaceholder: 'Type your response...',
+    progressTitle: 'Extraction Progress',
+  },
+  es: {
+    pageTitle: 'Entrevista IA — Extracción de Seed',
+    pageDescIdle: 'Inicia una entrevista guiada por IA para crear un seed de conversación',
+    heading: 'Entrevista de Extracción',
+    headingDesc: 'La IA te guiará con preguntas para extraer todos los parámetros necesarios para crear un seed de conversación.',
+    alertTitle: 'Conexión a API requerida',
+    alertDesc1: 'La entrevista IA requiere una API de UNCASE con un LLM configurado.',
+    alertDemo: 'Se ejecutará un demo guionizado si no se detecta la API.',
+    alertManual: 'crear un seed manualmente',
+    alertBrowse: 'seeds existentes',
+    alertAlso: 'También puedes',
+    alertOr: 'o explorar',
+    industryLabel: 'Industria',
+    automotive: 'Automotriz',
+    medical: 'Médica',
+    languageLabel: 'Idioma',
+    english: 'Inglés',
+    spanish: 'Español',
+    starting: 'Iniciando...',
+    startInterview: 'Iniciar Entrevista',
+    dismiss: 'Descartar',
+    turnsRemaining: (n: number) => `${n} turno${n !== 1 ? 's' : ''} restante${n !== 1 ? 's' : ''}`,
+    extractionComplete: 'Extracción completada',
+    newInterview: 'Nueva Entrevista',
+    createSeed: 'Crear Seed',
+    processing: 'Procesando...',
+    typePlaceholder: 'Escribe tu respuesta...',
+    progressTitle: 'Progreso de Extracción',
+  },
+} as const
 
 // ─── Demo interview script ───
 // Pre-built questions and field extraction for when no backend is running.
@@ -300,10 +363,10 @@ export function SeedExtractPage() {
     setDemoMode(false)
     demoStepRef.current = 0
 
-    // Check if API is available first
-    const apiOk = await checkApiHealth()
+    // Check if API is available and LLM is configured
+    const { ok: apiOk, llmConfigured } = await checkApiHealthDetailed()
 
-    if (apiOk) {
+    if (apiOk && llmConfigured) {
       // Real API mode
       const { data, error: apiError } = await startExtraction({ industry, locale })
 
@@ -457,12 +520,13 @@ export function SeedExtractPage() {
   }, [seed])
 
   const turnsLeft = progress ? progress.max_turns - progress.turn : 0
+  const s = locale === 'es' ? t.es : t.en
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
       <PageHeader
-        title="AI Interview — Seed Extraction"
-        description={sessionState === 'idle' ? 'Start an AI-guided interview to create a conversation seed' : `Active session · ${industry} · ${locale.toUpperCase()}${demoMode ? ' · Demo' : ''}`}
+        title={s.pageTitle}
+        description={sessionState === 'idle' ? s.pageDescIdle : `Active session · ${industry} · ${locale.toUpperCase()}${demoMode ? ' · Demo' : ''}`}
         actions={
           <div className="flex items-center gap-2">
             {sessionState !== 'idle' && (
@@ -483,7 +547,7 @@ export function SeedExtractPage() {
       {error && (
         <div className="mx-4 mb-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs text-red-700 dark:border-red-800 dark:bg-red-950/20 dark:text-red-300">
           {error}
-          <button onClick={() => setError(null)} className="ml-2 underline">Dismiss</button>
+          <button onClick={() => setError(null)} className="ml-2 underline">{s.dismiss}</button>
         </div>
       )}
 
@@ -493,63 +557,63 @@ export function SeedExtractPage() {
           <div className="mx-auto w-full max-w-md space-y-6 rounded-xl border bg-card p-8 shadow-sm">
             <div className="text-center">
               <MessageSquare className="mx-auto mb-3 size-12 text-primary" />
-              <h2 className="text-lg font-semibold">Extraction Interview</h2>
+              <h2 className="text-lg font-semibold">{s.heading}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                The AI will guide you through questions to extract all the parameters needed to create a conversation seed.
+                {s.headingDesc}
               </p>
             </div>
 
             <Alert className="text-left">
               <Info className="size-4" />
-              <AlertTitle>API connection required</AlertTitle>
+              <AlertTitle>{s.alertTitle}</AlertTitle>
               <AlertDescription>
-                The AI Interview requires a running UNCASE API with an LLM configured.
-                A <strong>scripted demo</strong> will run if no API is detected.
-                You can also{' '}
+                {s.alertDesc1}{' '}
+                {s.alertDemo}{' '}
+                {s.alertAlso}{' '}
                 <Link href="/dashboard/pipeline/seeds/new" className="font-medium underline underline-offset-2">
-                  create a seed manually
+                  {s.alertManual}
                 </Link>{' '}
-                or browse{' '}
+                {s.alertOr}{' '}
                 <Link href="/dashboard/pipeline/seeds" className="font-medium underline underline-offset-2">
-                  existing seeds
+                  {s.alertBrowse}
                 </Link>.
               </AlertDescription>
             </Alert>
 
             <div className="space-y-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium">Industry</label>
+                <label className="text-xs font-medium">{s.industryLabel}</label>
                 <Select value={industry} onValueChange={setIndustry}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="automotive">Automotive</SelectItem>
-                    <SelectItem value="medical">Medical</SelectItem>
+                    <SelectItem value="automotive">{s.automotive}</SelectItem>
+                    <SelectItem value="medical">{s.medical}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-1">
                 <label className="flex items-center gap-1.5 text-xs font-medium">
-                  <Globe className="size-3" /> Language
+                  <Globe className="size-3" /> {s.languageLabel}
                 </label>
                 <Select value={locale} onValueChange={setLocale}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="es">Spanish</SelectItem>
+                    <SelectItem value="en">{s.english}</SelectItem>
+                    <SelectItem value="es">{s.spanish}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <Button onClick={handleStart} className="w-full gap-2" disabled={starting}>
                 {starting ? (
-                  <><Loader2 className="size-4 animate-spin" /> Starting...</>
+                  <><Loader2 className="size-4 animate-spin" /> {s.starting}</>
                 ) : (
-                  <><Sparkles className="size-4" /> Start Interview</>
+                  <><Sparkles className="size-4" /> {s.startInterview}</>
                 )}
               </Button>
             </div>
@@ -569,7 +633,7 @@ export function SeedExtractPage() {
             {/* Turn warning */}
             {progress && turnsLeft <= 2 && turnsLeft > 0 && sessionState !== 'complete' && (
               <div className="bg-amber-50 px-4 py-1.5 text-center text-xs text-amber-700 dark:bg-amber-950/30 dark:text-amber-300">
-                {turnsLeft} turn{turnsLeft !== 1 ? 's' : ''} remaining
+                {s.turnsRemaining(turnsLeft)}
               </div>
             )}
 
@@ -578,14 +642,14 @@ export function SeedExtractPage() {
               <div className="flex items-center gap-3 border-t bg-emerald-50 p-4 dark:border-zinc-700 dark:bg-emerald-950/20">
                 <Sparkles className="size-5 text-emerald-600" />
                 <span className="flex-1 text-sm font-medium text-emerald-800 dark:text-emerald-200">
-                  Extraction complete
+                  {s.extractionComplete}
                 </span>
                 <Button variant="outline" size="sm" onClick={handleEndSession}>
-                  New Interview
+                  {s.newInterview}
                 </Button>
                 {seed && (
                   <Button size="sm" onClick={handleCreateSeed} className="gap-1.5">
-                    <Sparkles className="size-3" /> Create Seed
+                    <Sparkles className="size-3" /> {s.createSeed}
                   </Button>
                 )}
               </div>
@@ -593,7 +657,7 @@ export function SeedExtractPage() {
               <ChatInput
                 onSend={handleSend}
                 disabled={sessionState !== 'active'}
-                placeholder={sessionState === 'processing' ? 'Processing...' : 'Type your response...'}
+                placeholder={sessionState === 'processing' ? s.processing : s.typePlaceholder}
               />
             )}
           </div>
@@ -602,7 +666,7 @@ export function SeedExtractPage() {
           {showSidebar && (
             <div className="hidden w-80 shrink-0 border-l bg-card lg:block dark:border-zinc-800">
               <div className="border-b px-3 py-2 dark:border-zinc-800">
-                <h3 className="text-xs font-semibold">Extraction Progress</h3>
+                <h3 className="text-xs font-semibold">{s.progressTitle}</h3>
               </div>
               <ExtractionProgressPanel progress={progress} />
             </div>

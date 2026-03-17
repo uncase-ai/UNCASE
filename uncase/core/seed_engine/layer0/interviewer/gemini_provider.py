@@ -72,7 +72,7 @@ class GeminiProvider(BaseLLMProvider):
         user_prompt: str,
         *,
         temperature: float = 0.7,
-        max_tokens: int = 1024,
+        max_tokens: int = 8192,
         **kwargs: Any,
     ) -> str:
         """Generate text using Google Gemini."""
