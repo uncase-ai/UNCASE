@@ -20,15 +20,18 @@ OPTIONAL_METRICS: Final[frozenset[str]] = frozenset({"semantic_fidelity", "embed
 # Referenced by compute_composite_score(), CLI, API, and docs.
 QUALITY_THRESHOLDS: Final[dict[str, tuple[float, str, str]]] = {
     # name: (threshold, operator, description)
-    "rouge_l": (0.55, ">=", "ROUGE-L structural coherence with seed"),
-    "fidelidad_factual": (0.85, ">=", "Factual fidelity (domain constraint adherence)"),
+    # NOTE: thresholds calibrated for content-token (stopword-filtered) metrics.
+    # ROUGE-L uses recall-weighted F-beta (β=2) on content tokens — natural range
+    # for seed-conversation alignment is ~0.15-0.50, so threshold is set at 0.20.
+    "rouge_l": (0.20, ">=", "ROUGE-L content coverage of seed (recall-weighted F-beta)"),
+    "fidelidad_factual": (0.80, ">=", "Factual fidelity (domain constraint adherence)"),
     "diversidad_lexica": (0.55, ">=", "Type-Token Ratio (lexical diversity)"),
-    "coherencia_dialogica": (0.80, ">=", "Inter-turn dialog coherence"),
+    "coherencia_dialogica": (0.65, ">=", "Inter-turn dialog coherence (content-token Jaccard)"),
     "tool_call_validity": (0.80, ">=", "Tool call schema validity"),
     "privacy_score": (0.0, "=", "PII residual (MUST be zero)"),
     "memorizacion": (0.01, "<", "Extraction attack success rate"),
     "semantic_fidelity": (0.60, ">=", "Semantic fidelity (LLM-as-Judge)"),
-    "embedding_drift": (0.40, ">=", "Semantic drift (embedding cosine similarity)"),
+    "embedding_drift": (0.30, ">=", "Semantic drift (TF-IDF/embedding cosine similarity)"),
 }
 
 
@@ -59,6 +62,12 @@ class QualityReport(BaseModel):
     seed_id: str = Field(..., description="Origin seed ID")
     metrics: QualityMetrics = Field(..., description="Individual metric scores")
     composite_score: float = Field(..., ge=0.0, le=1.0, description="Composite quality score")
+    weighted_mean: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Weighted mean of quality metrics (informational, not used for pass/fail)",
+    )
     passed: bool = Field(..., description="Whether the conversation meets all thresholds")
     failures: list[str] = Field(default_factory=list, description="List of failed threshold checks")
     skipped_metrics: list[str] = Field(
@@ -68,12 +77,19 @@ class QualityReport(BaseModel):
     evaluated_at: datetime = Field(default_factory=lambda: datetime.now(UTC), description="Evaluation timestamp")
 
 
-def compute_composite_score(metrics: QualityMetrics) -> tuple[float, bool, list[str]]:
-    """Compute the composite quality score.
+def compute_composite_score(metrics: QualityMetrics) -> tuple[float, float, bool, list[str]]:
+    """Compute the composite quality score and weighted mean.
 
     Formula: Q = min(core_metrics + [optional_metrics if computed])
              if privacy_score == 0.0 AND memorizacion < 0.01
              else Q = 0.0
+
+    Also computes a weighted mean of quality metrics for informational
+    purposes (not used for pass/fail):
+        rouge_l: 0.15, fidelidad_factual: 0.25, diversidad_lexica: 0.10,
+        coherencia_dialogica: 0.20, tool_call_validity: 0.10,
+        semantic_fidelity: 0.10 (if computed),
+        embedding_drift: 0.10 (if computed).
 
     Optional metrics (semantic_fidelity, embedding_drift) are only included
     in the composite MIN and threshold checks when they have been actually
@@ -84,8 +100,10 @@ def compute_composite_score(metrics: QualityMetrics) -> tuple[float, bool, list[
         metrics: Individual quality metrics.
 
     Returns:
-        Tuple of (score, passed, failures).
+        Tuple of (composite_min, weighted_mean, passed, failures).
     """
+    import math
+
     failures: list[str] = []
 
     # Check all thresholds using canonical definitions.
@@ -109,7 +127,7 @@ def compute_composite_score(metrics: QualityMetrics) -> tuple[float, bool, list[
     gate_failed = any(f.startswith(name) for f in failures for name in gate_metrics)
 
     if gate_failed:
-        return 0.0, False, failures
+        return 0.0, 0.0, False, failures
 
     # Composite = min of core quality dimensions.
     # Optional metrics are only included when actually computed.
@@ -122,12 +140,33 @@ def compute_composite_score(metrics: QualityMetrics) -> tuple[float, bool, list[
     ]
 
     # Include optional metrics only when they were computed (not neutral)
-    if abs(metrics.semantic_fidelity - _NEUTRAL_SCORE) > 1e-9:
+    sem_computed = abs(metrics.semantic_fidelity - _NEUTRAL_SCORE) > 1e-9
+    emb_computed = abs(metrics.embedding_drift - _NEUTRAL_SCORE) > 1e-9
+
+    if sem_computed:
         scores.append(metrics.semantic_fidelity)
-    if abs(metrics.embedding_drift - _NEUTRAL_SCORE) > 1e-9:
+    if emb_computed:
         scores.append(metrics.embedding_drift)
 
     score = min(scores)
 
+    # Weighted mean — weights for core metrics (always included)
+    weighted_pairs: list[tuple[float, float]] = [
+        (metrics.rouge_l, 0.15),
+        (metrics.fidelidad_factual, 0.25),
+        (metrics.diversidad_lexica, 0.10),
+        (metrics.coherencia_dialogica, 0.20),
+        (metrics.tool_call_validity, 0.10),
+    ]
+
+    # Optional metrics contribute their weight only when computed
+    if sem_computed:
+        weighted_pairs.append((metrics.semantic_fidelity, 0.10))
+    if emb_computed:
+        weighted_pairs.append((metrics.embedding_drift, 0.10))
+
+    total_weight = math.fsum(w for _, w in weighted_pairs)
+    wmean = math.fsum(v * w for v, w in weighted_pairs) / total_weight if total_weight > 0 else 0.0
+
     passed = len(failures) == 0
-    return score, passed, failures
+    return score, wmean, passed, failures

@@ -26,6 +26,109 @@ _PII_PATTERNS: dict[str, re.Pattern[str]] = {
     "iban": re.compile(r"\b[A-Z]{2}\d{2}[A-Z0-9]{4}\d{7}([A-Z0-9]?){0,16}\b"),
 }
 
+# Context patterns that indicate a match is NOT real PII (version numbers,
+# model IDs, SKUs, serial references, etc.).
+_EXCLUDE_CONTEXT = re.compile(
+    r"(?:\bversion\b|\bver\.?(?:\s|$)|\bv\d|\bmodelo\b|\bmodel\b|\bserie\b|\breferencia\b|\bcodigo\b|\bsku\b|\bid[:\s]|#)",
+    re.IGNORECASE,
+)
+
+# Pattern that precedes an IP-like match and indicates a version string.
+_VERSION_PREFIX = re.compile(r"(?:v|ver\.?|version\s*)$", re.IGNORECASE)
+
+# Pattern that indicates more dotted groups around a match (software versions
+# like "1.2.3.4.5" or "10.0.36.1.2").
+_EXTRA_DOTTED = re.compile(r"(?:^\.?\d|\d\.?$)")
+
+
+def _luhn_check(digits: str) -> bool:
+    """Validate a number string using the Luhn algorithm."""
+    total = 0
+    for i, ch in enumerate(reversed(digits)):
+        d = int(ch)
+        if i % 2 == 1:
+            d *= 2
+            if d > 9:
+                d -= 9
+        total += d
+    return total % 10 == 0
+
+
+def _is_valid_ip(value: str, text: str, start: int, end: int) -> bool:
+    """Check whether an IP-like match is likely a real IP address.
+
+    Rejects version numbers (e.g. v1.2.3.4), octets outside 0-255,
+    and strings with extra dotted segments on either side.
+    """
+    octets = value.split(".")
+    # Each octet must be 0-255
+    for octet in octets:
+        if not octet.isdigit() or int(octet) > 255:
+            return False
+
+    # Check for version-like prefix (v, ver, version, #)
+    prefix = text[max(0, start - 20) : start]
+    if _VERSION_PREFIX.search(prefix):
+        return False
+    # Immediate preceding character: 'v', '#'
+    if start > 0 and text[start - 1] in ("v", "V", "#"):
+        return False
+
+    # Extra dotted groups on either side indicate a software version
+    if start > 0 and text[start - 1] == ".":
+        return False
+    return not (end < len(text) and text[end] == ".")
+
+
+def _is_valid_credit_card(value: str) -> bool:
+    """Check whether a credit-card-like match passes the Luhn algorithm."""
+    digits = re.sub(r"[-\s]", "", value)
+    if not digits.isdigit() or len(digits) != 16:
+        return False
+    return _luhn_check(digits)
+
+
+def _is_valid_rfc_mx(value: str) -> bool:
+    """Validate that an RFC MX match has a plausible date and correct length.
+
+    RFC format: {3-4 letters}{YYMMDD}{3 alphanumeric}
+    Total length must be 12 or 13 characters.
+    """
+    if len(value) not in (12, 13):
+        return False
+    # Extract the 6-digit date portion: skip the letter prefix (3 or 4 chars)
+    prefix_len = len(value) - 9  # 6 date digits + 3 suffix = 9
+    date_str = value[prefix_len : prefix_len + 6]
+    if not date_str.isdigit():
+        return False
+    month = int(date_str[2:4])
+    day = int(date_str[4:6])
+    if month < 1 or month > 12:
+        return False
+    return not (day < 1 or day > 31)
+
+
+def _is_valid_iban(value: str) -> bool:
+    """Validate IBAN length (15-34 chars) and check digits via mod-97."""
+    length = len(value)
+    if length < 15 or length > 34:
+        return False
+    # Move first 4 chars to end and convert letters to digits (A=10, B=11, …)
+    rearranged = value[4:] + value[:4]
+    numeric = ""
+    for ch in rearranged:
+        if ch.isdigit():
+            numeric += ch
+        else:
+            numeric += str(ord(ch) - ord("A") + 10)
+    return int(numeric) % 97 == 1
+
+
+def _has_exclude_context(text: str, start: int) -> bool:
+    """Check whether the 20 characters before *start* contain a false-positive context word."""
+    window = text[max(0, start - 20) : start]
+    return _EXCLUDE_CONTEXT.search(window) is not None
+
 
 class PIIMatch:
     """Represents a detected PII entity in text."""
@@ -59,12 +162,35 @@ def detect_pii_heuristic(text: str) -> list[PIIMatch]:
 
     for category, pattern in _PII_PATTERNS.items():
         for match in pattern.finditer(text):
+            value = match.group()
+            start = match.start()
+            end = match.end()
+
+            # --- False-positive exclusion zone ---
+            # Skip matches preceded by context words that indicate non-PII
+            # (version, model, serial, SKU, etc.). Applies to all categories.
+            if _has_exclude_context(text, start):
+                continue
+
+            # --- Category-specific validation ---
+            if category == "ip_address" and not _is_valid_ip(value, text, start, end):
+                continue
+
+            if category == "credit_card" and not _is_valid_credit_card(value):
+                continue
+
+            if category == "rfc_mx" and not _is_valid_rfc_mx(value):
+                continue
+
+            if category == "iban" and not _is_valid_iban(value):
+                continue
+
             matches.append(
                 PIIMatch(
                     category=category,
-                    value=match.group(),
-                    start=match.start(),
-                    end=match.end(),
+                    value=value,
+                    start=start,
+                    end=end,
                 )
             )
 

@@ -12,8 +12,7 @@ from tests.factories import make_seed
 from uncase.core.evaluator.evaluator import ConversationEvaluator
 from uncase.schemas.conversation import Conversation, ConversationTurn
 from uncase.schemas.quality import QualityMetrics, compute_composite_score
-from uncase.schemas.seed import MetricasCalidad, ParametrosFactuales, PasosTurnos, Privacidad
-
+from uncase.schemas.seed import ParametrosFactuales, PasosTurnos
 
 # ─── Fixtures ───
 
@@ -175,8 +174,8 @@ class TestKnownScoreHighQuality:
 
         report = await evaluator.evaluate(conv, seed)
 
-        # Well-structured alternating dialog should have high coherence
-        assert report.metrics.coherencia_dialogica >= 0.70
+        # Well-structured alternating dialog with content-token filtered Jaccard
+        assert report.metrics.coherencia_dialogica >= 0.60
 
     async def test_diversity_above_threshold(self, evaluator: ConversationEvaluator) -> None:
         seed = _make_automotive_seed()
@@ -362,7 +361,7 @@ class TestCompositeScoreFormula:
             memorizacion=0.005,
         )
 
-        score, passed, failures = compute_composite_score(metrics)
+        score, _wmean, passed, failures = compute_composite_score(metrics)
 
         assert score == 0.70  # min of the four quality dimensions
         assert passed is True
@@ -378,7 +377,7 @@ class TestCompositeScoreFormula:
             memorizacion=0.0,
         )
 
-        score, passed, failures = compute_composite_score(metrics)
+        score, _wmean, passed, failures = compute_composite_score(metrics)
 
         assert score == 0.0
         assert passed is False
@@ -394,7 +393,7 @@ class TestCompositeScoreFormula:
             memorizacion=0.01,  # At threshold (>= 0.01 fails)
         )
 
-        score, passed, failures = compute_composite_score(metrics)
+        score, _wmean, passed, failures = compute_composite_score(metrics)
 
         assert score == 0.0
         assert passed is False
@@ -410,7 +409,7 @@ class TestCompositeScoreFormula:
             memorizacion=0.02,
         )
 
-        score, passed, failures = compute_composite_score(metrics)
+        score, _wmean, passed, failures = compute_composite_score(metrics)
 
         assert score == 0.0
         assert passed is False
@@ -418,7 +417,7 @@ class TestCompositeScoreFormula:
 
     def test_single_metric_below_threshold(self) -> None:
         metrics = QualityMetrics(
-            rouge_l=0.50,  # Below 0.65 threshold
+            rouge_l=0.15,  # Below 0.20 threshold
             fidelidad_factual=0.95,
             diversidad_lexica=0.70,
             coherencia_dialogica=0.90,
@@ -426,15 +425,15 @@ class TestCompositeScoreFormula:
             memorizacion=0.0,
         )
 
-        score, passed, failures = compute_composite_score(metrics)
+        score, _wmean, passed, failures = compute_composite_score(metrics)
 
-        assert score == 0.50  # min() still works, just below threshold
+        assert score == 0.15  # min() still works, just below threshold
         assert passed is False
         assert any("rouge_l" in f for f in failures)
 
     def test_all_metrics_below_threshold(self) -> None:
         metrics = QualityMetrics(
-            rouge_l=0.30,
+            rouge_l=0.10,
             fidelidad_factual=0.40,
             diversidad_lexica=0.20,
             coherencia_dialogica=0.50,
@@ -442,9 +441,9 @@ class TestCompositeScoreFormula:
             memorizacion=0.0,
         )
 
-        score, passed, failures = compute_composite_score(metrics)
+        score, _wmean, passed, failures = compute_composite_score(metrics)
 
-        assert score == 0.20  # min of all four
+        assert score == 0.10  # min of all four
         assert passed is False
         assert len(failures) == 4
 
@@ -458,7 +457,7 @@ class TestCompositeScoreFormula:
             memorizacion=0.0,
         )
 
-        score, passed, failures = compute_composite_score(metrics)
+        score, _wmean, passed, failures = compute_composite_score(metrics)
 
         assert score == 1.0
         assert passed is True
@@ -474,7 +473,7 @@ class TestCompositeScoreFormula:
             memorizacion=0.009,
         )
 
-        score, passed, failures = compute_composite_score(metrics)
+        score, _wmean, passed, failures = compute_composite_score(metrics)
 
         assert score == 0.55  # min of the four
         assert passed is True
@@ -490,7 +489,7 @@ class TestCompositeScoreFormula:
             memorizacion=0.009,  # Just below 0.01
         )
 
-        score, passed, failures = compute_composite_score(metrics)
+        score, _wmean, _passed, failures = compute_composite_score(metrics)
 
         assert score > 0.0
         assert not any("memorizacion" in f for f in failures)

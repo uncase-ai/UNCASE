@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-import re
+from itertools import pairwise
 from typing import TYPE_CHECKING
 
+from uncase.core.evaluator.metrics._stopwords import content_token_set, match_flow_step
 from uncase.core.evaluator.metrics.base import BaseMetric
 
 if TYPE_CHECKING:
@@ -71,29 +72,51 @@ class FactualFidelityMetric(BaseMetric):
         return compliant / len(conv_roles)
 
     def _flow_adherence(self, conversation: Conversation, seed: SeedSchema) -> float:
-        """Check how many expected flow steps appear in the conversation."""
+        """Check how many expected flow steps appear in the conversation.
+
+        For each step, finds the best-matching conversation turn using
+        ``match_flow_step``.  Also checks whether detected steps appear
+        in the expected order; an out-of-order penalty (x0.8) is applied
+        when the earliest detection indices are not monotonically
+        increasing.
+        """
         expected_flow = seed.pasos_turnos.flujo_esperado
         if not expected_flow:
             return 1.0
 
-        conv_text = " ".join(t.contenido.lower() for t in conversation.turnos)
+        # Build per-turn text segments
+        segments = [t.contenido for t in conversation.turnos]
+        if not segments:
+            return 0.0
 
-        # Check for each expected flow step whether it appears in conversation
-        # or whether semantically similar content exists
-        matched: float = 0
+        step_scores: list[float] = []
+        # For each step, record the turn index of the best match (for order check)
+        best_indices: list[int | None] = []
+
         for step in expected_flow:
-            step_lower = step.lower()
-            # Direct keyword match
-            if step_lower in conv_text:
-                matched += 1.0
-                continue
-            # Check individual words from the step (partial match)
-            step_words = step_lower.split()
-            word_hits = sum(1 for w in step_words if w in conv_text)
-            if step_words and word_hits / len(step_words) >= 0.5:
-                matched += 0.7
+            best_score = 0.0
+            best_idx: int | None = None
+            for idx, segment in enumerate(segments):
+                score = match_flow_step(step, segment)
+                if score > best_score:
+                    best_score = score
+                    best_idx = idx
+            step_scores.append(best_score)
+            best_indices.append(best_idx if best_score > 0 else None)
 
-        return min(matched / len(expected_flow), 1.0)
+        if not step_scores:
+            return 0.0
+
+        avg_score = sum(step_scores) / len(step_scores)
+
+        # Order check: collect earliest detection indices for matched steps
+        detected_indices = [i for i in best_indices if i is not None]
+        if len(detected_indices) >= 2:
+            is_ordered = all(a <= b for a, b in pairwise(detected_indices))
+            if not is_ordered:
+                avg_score *= 0.8
+
+        return min(avg_score, 1.0)
 
     def _turn_compliance(self, conversation: Conversation, seed: SeedSchema) -> float:
         """Check that the conversation's turn count is within seed range."""
@@ -111,20 +134,25 @@ class FactualFidelityMetric(BaseMetric):
         return max(0.0, 1.0 - (n - max_t) / max(max_t, 1))
 
     def _context_presence(self, conversation: Conversation, seed: SeedSchema) -> float:
-        """Check for seed context keywords in the conversation."""
+        """Check for seed context keywords in the conversation.
+
+        Uses ``content_token_set`` to extract meaningful content words,
+        filtering out Spanish function words and short tokens so that
+        only true domain-signal terms contribute to the score.
+        """
         context = seed.parametros_factuales.contexto
         constraints = seed.parametros_factuales.restricciones
 
-        # Extract meaningful words (>3 chars) from context and constraints
         reference_text = context + " " + " ".join(constraints)
-        keywords = {w.lower() for w in re.findall(r"\b\w+\b", reference_text) if len(w) > 3}
+        keywords = content_token_set(reference_text)
 
         if not keywords:
             return 1.0
 
         conv_text = " ".join(t.contenido.lower() for t in conversation.turnos)
+        conv_tokens = content_token_set(conv_text)
 
-        found = sum(1 for kw in keywords if kw in conv_text)
+        found = len(keywords & conv_tokens)
         return found / len(keywords)
 
     def _tool_compliance(self, conversation: Conversation, seed: SeedSchema) -> float:

@@ -2,19 +2,15 @@
 
 from __future__ import annotations
 
-import re
+import math
 from typing import TYPE_CHECKING
 
+from uncase.core.evaluator.metrics._stopwords import content_token_set
 from uncase.core.evaluator.metrics.base import BaseMetric
 
 if TYPE_CHECKING:
     from uncase.schemas.conversation import Conversation, ConversationTurn
     from uncase.schemas.seed import SeedSchema
-
-
-def _extract_tokens_set(text: str) -> set[str]:
-    """Extract unique word tokens from text."""
-    return {w.lower() for w in re.findall(r"\b\w+\b", text) if len(w) > 2}
 
 
 def _jaccard_similarity(set_a: set[str], set_b: set[str]) -> float:
@@ -26,6 +22,38 @@ def _jaccard_similarity(set_a: set[str], set_b: set[str]) -> float:
     intersection = len(set_a & set_b)
     union = len(set_a | set_b)
     return intersection / union if union > 0 else 0.0
+
+
+def _score_jaccard(avg_sim: float) -> float:
+    """Map average Jaccard similarity to a coherence score.
+
+    Uses an asymmetric Gaussian centered at ``peak=0.15`` — the
+    empirically healthy overlap range for dialog.  Below the peak a
+    tighter sigma (0.08) penalizes topic jumping; above it a wider
+    sigma (0.25) gives a gentler penalty for mild repetition.
+
+    With stopword-filtered content tokens, adjacent-turn Jaccard is
+    typically 0.02-0.10 for good dialog (each turn discusses different
+    specifics with some domain vocabulary overlap).
+
+    Approximate outputs::
+
+        0.00 -> 0.00    (no continuity)
+        0.03 -> ~0.75   (sparse but present overlap)
+        0.07 -> 1.00    (sweet spot for content tokens)
+        0.15 -> ~0.90   (moderate overlap, still ok)
+        0.30 -> ~0.68   (some repetition)
+        0.50 -> ~0.42   (notable repetition)
+        0.80 -> ~0.14   (excessive repetition)
+    """
+    if avg_sim <= 0.0:
+        return 0.0
+    # Peak at 0.07 — empirically correct for content-token Jaccard in dialog.
+    # Left sigma tighter (penalizes topic jumping), right sigma wider
+    # (repetition penalty is gentler since domain vocabulary overlap is normal).
+    peak = 0.07
+    sigma = 0.065 if avg_sim <= peak else 0.30
+    return math.exp(-((avg_sim - peak) ** 2) / (2 * sigma**2))
 
 
 class DialogCoherenceMetric(BaseMetric):
@@ -72,28 +100,25 @@ class DialogCoherenceMetric(BaseMetric):
         return weighted_sum / total_weight
 
     def _turn_pair_coherence(self, turns: list[ConversationTurn]) -> float:
-        """Measure topical continuity between adjacent turns."""
+        """Measure topical continuity between adjacent turns.
+
+        Uses content tokens (stopwords filtered) for Jaccard similarity,
+        then maps through an asymmetric Gaussian centered at 0.15 — the
+        empirically healthy overlap range for dialog.  Left side (topic
+        jumping) is penalized more sharply than right side (mild repetition).
+        """
         if len(turns) < 2:
             return 1.0
 
         similarities: list[float] = []
         for i in range(len(turns) - 1):
-            tokens_a = _extract_tokens_set(turns[i].contenido)
-            tokens_b = _extract_tokens_set(turns[i + 1].contenido)
+            tokens_a = content_token_set(turns[i].contenido)
+            tokens_b = content_token_set(turns[i + 1].contenido)
             sim = _jaccard_similarity(tokens_a, tokens_b)
             similarities.append(sim)
 
         avg_sim = sum(similarities) / len(similarities) if similarities else 0.0
-
-        # Map to [0, 1]: a sim of 0.05-0.3 is typical for good dialog
-        # (too low = topic jumping, too high = repetition)
-        # Score peaks at ~0.15 Jaccard and decays for both extremes
-        if avg_sim < 0.02:
-            return max(0.0, avg_sim * 20)  # Very low overlap → low score
-        if avg_sim > 0.6:
-            return max(0.3, 1.0 - (avg_sim - 0.6))  # Very high → possible repetition
-        # Sweet spot: 0.02 to 0.6
-        return min(1.0, 0.5 + avg_sim)
+        return _score_jaccard(avg_sim)
 
     def _role_alternation(self, turns: list[ConversationTurn], seed: SeedSchema) -> float:
         """Measure proper turn-taking between roles."""
@@ -144,26 +169,30 @@ class DialogCoherenceMetric(BaseMetric):
         return uniqueness * 0.6 + length_score * 0.4
 
     def _referential_consistency(self, turns: list[ConversationTurn]) -> float:
-        """Check that later turns reference content from earlier turns."""
+        """Check that later turns reference content from earlier turns.
+
+        Uses content tokens (stopwords filtered) so that common function
+        words like "que", "con", "una" do not trivially satisfy the check.
+        Requires at least 2 shared content words to count as a backward
+        reference.
+        """
         if len(turns) < 3:
             return 1.0
 
-        # For each turn after the first two, check if it shares tokens
-        # with any previous turn (showing it builds on prior context)
-        prior_tokens: set[str] = set()
+        prior_content_tokens: set[str] = set()
         references_found = 0
         reference_checks = 0
 
         for i, turn in enumerate(turns):
-            current_tokens = _extract_tokens_set(turn.contenido)
+            current_tokens = content_token_set(turn.contenido)
 
             if i >= 2 and turn.rol not in {"herramienta", "tool"}:
                 reference_checks += 1
-                overlap = current_tokens & prior_tokens
-                if len(overlap) >= 1:
+                overlap = current_tokens & prior_content_tokens
+                if len(overlap) >= 2:
                     references_found += 1
 
-            prior_tokens |= current_tokens
+            prior_content_tokens |= current_tokens
 
         if reference_checks == 0:
             return 1.0

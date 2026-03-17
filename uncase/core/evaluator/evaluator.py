@@ -129,13 +129,14 @@ class ConversationEvaluator(BaseEvaluator):
             embedding_drift=scores.get("embedding_drift", 0.5),
         )
 
-        composite, passed, failures = compute_composite_score(metrics)
+        composite, weighted_mean, passed, failures = compute_composite_score(metrics)
 
         report = QualityReport(
             conversation_id=conversation.conversation_id,
             seed_id=seed.seed_id,
             metrics=metrics,
             composite_score=composite,
+            weighted_mean=weighted_mean,
             passed=passed,
             failures=failures,
             skipped_metrics=skipped,

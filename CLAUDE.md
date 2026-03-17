@@ -192,19 +192,19 @@ Conversación Real → [Capa 0: Eliminación PII] → SeedSchema v1
 
 | Métrica | Umbral | Nota |
 |---|---|---|
-| ROUGE-L | >= 0.55 | Coherencia estructural con semilla |
-| Fidelidad Factual | >= 0.85 | Precisión de hechos del dominio |
-| Diversidad Léxica (TTR) | >= 0.55 | Type-Token Ratio |
-| Coherencia Dialógica | >= 0.80 | Consistencia de roles inter-turno |
-| Tool Call Validity | >= 0.80 | Validez de llamadas a herramientas |
-| Privacy Score | = 0.00 | Cero PII residual (Presidio) |
+| ROUGE-L | >= 0.20 | Cobertura de contenido seed (F-beta con recall-weighted, tokens filtrados) |
+| Fidelidad Factual | >= 0.80 | Adherencia a restricciones de dominio (detección semántica de flujo) |
+| Diversidad Léxica (TTR) | >= 0.55 | Type-Token Ratio (MATTR ventana 50) |
+| Coherencia Dialógica | >= 0.65 | Consistencia inter-turno (Jaccard content-tokens, Gaussiana asimétrica) |
+| Tool Call Validity | >= 0.80 | Validez de llamadas a herramientas (schema + secuencia) |
+| Privacy Score | = 0.00 | Cero PII residual (regex con Luhn/IBAN/contexto) |
 | Memorización | < 0.01 | Extraction attack success rate |
 | Semantic Fidelity* | >= 0.60 | LLM-as-Judge (opcional, requiere API) |
-| Embedding Drift* | >= 0.40 | Cosine similarity semántica (opcional) |
+| Embedding Drift* | >= 0.30 | Cosine similarity semántica TF-IDF con stopwords (opcional) |
 
 *Las métricas opcionales (Semantic Fidelity, Embedding Drift) solo se incluyen en la fórmula compuesta cuando se calculan realmente. Si la API no está disponible, se omiten del MIN y del check de umbrales.*
 
-**Fórmula compuesta:** `Q = min(ROUGE, Fidelidad, TTR, Coherencia, ToolCallValidity [, SemanticFidelity, EmbeddingDrift])` si privacy=0 Y memorización<0.01, sino Q=0.
+**Fórmula compuesta:** `Q = min(ROUGE, Fidelidad, TTR, Coherencia, ToolCallValidity [, SemanticFidelity, EmbeddingDrift])` si privacy=0 Y memorización<0.01, sino Q=0. El `QualityReport` también incluye `weighted_mean` (media ponderada informacional) para visibilidad completa.
 
 ### Dominios soportados (namespaces)
 

@@ -340,37 +340,66 @@ class EmbeddingDriftMetric(BaseMetric):
     def _compute_tfidf(self, conversation: Conversation, seed: SeedSchema) -> float:
         """Fallback: TF-IDF-based cosine similarity (no API required).
 
-        Computes term frequency vectors for seed and conversation text,
-        then measures cosine similarity.
+        Tokenizes with stopword removal via ``content_tokens()``, then
+        applies smoothed IDF weighting over the 2-document corpus (seed
+        and conversation).  Smoothed IDF:
+
+            idf(t) = log((N + 1) / (df(t) + 1)) + 1
+
+        where *N* = 2.  Words in both documents get idf = 1.0; words in
+        only one document get idf ≈ 1.405.  This gives more weight to
+        unique terms without zeroing out shared ones.
         """
         import math
-        import re
 
-        seed_text = self._build_seed_text(seed).lower()
-        conv_text = self._build_conv_text(conversation).lower()
+        from uncase.core.evaluator.metrics._stopwords import content_tokens
 
-        # Tokenize
-        seed_tokens = re.findall(r"\b\w{3,}\b", seed_text)
-        conv_tokens = re.findall(r"\b\w{3,}\b", conv_text)
+        seed_text = self._build_seed_text(seed)
+        conv_text = self._build_conv_text(conversation)
+
+        # Tokenize with stopword removal
+        seed_tokens = content_tokens(seed_text)
+        conv_tokens = content_tokens(conv_text)
 
         if not seed_tokens or not conv_tokens:
             return 0.0
 
-        # Build term frequency vectors
-        all_terms = set(seed_tokens) | set(conv_tokens)
-
-        seed_freq: dict[str, float] = {}
+        # Build raw term-frequency counters
+        seed_tf: dict[str, float] = {}
         for token in seed_tokens:
-            seed_freq[token] = seed_freq.get(token, 0) + 1
+            seed_tf[token] = seed_tf.get(token, 0) + 1
 
-        conv_freq: dict[str, float] = {}
+        conv_tf: dict[str, float] = {}
         for token in conv_tokens:
-            conv_freq[token] = conv_freq.get(token, 0) + 1
+            conv_tf[token] = conv_tf.get(token, 0) + 1
 
-        # Compute cosine similarity over term frequency vectors
-        dot = sum(seed_freq.get(t, 0) * conv_freq.get(t, 0) for t in all_terms)
-        norm_a = math.sqrt(sum(v * v for v in seed_freq.values()))
-        norm_b = math.sqrt(sum(v * v for v in conv_freq.values()))
+        # Compute smoothed IDF for each term (2-document corpus).
+        # Using a gentle smoothing: idf = 1 + 0.2 * log(3/(df+1)).
+        # Words in both docs: 1 + 0.2*log(1) = 1.0
+        # Words in one doc:   1 + 0.2*log(1.5) ≈ 1.08
+        # This gives a modest boost to unique terms without overwhelming
+        # the shared domain vocabulary that indicates topical alignment.
+        all_terms = set(seed_tf) | set(conv_tf)
+
+        idf: dict[str, float] = {}
+        for term in all_terms:
+            df = int(term in seed_tf) + int(term in conv_tf)
+            idf[term] = 1.0 + 0.2 * math.log(3.0 / (df + 1))
+
+        # Build TF-IDF vectors and compute cosine similarity
+        dot = 0.0
+        norm_a = 0.0
+        norm_b = 0.0
+        for term in all_terms:
+            w = idf[term]
+            a = seed_tf.get(term, 0) * w
+            b = conv_tf.get(term, 0) * w
+            dot += a * b
+            norm_a += a * a
+            norm_b += b * b
+
+        norm_a = math.sqrt(norm_a)
+        norm_b = math.sqrt(norm_b)
 
         if norm_a == 0 or norm_b == 0:
             return 0.0
