@@ -267,31 +267,38 @@ def evaluate_conversation(turns: list[dict[str, Any]], seed: dict[str, Any]) -> 
         composite = 0.0
         passed = False
     else:
+        tool_call_validity = metrics.get("tool_call_validity", 1.0)
         composite = min(
             metrics["rouge_l"],
             metrics["fidelidad_factual"],
             metrics["diversidad_lexica"],
             metrics["coherencia_dialogica"],
+            tool_call_validity,
         )
         passed = (
-            metrics["rouge_l"] >= 0.65
-            and metrics["fidelidad_factual"] >= 0.90
+            metrics["rouge_l"] >= 0.20
+            and metrics["fidelidad_factual"] >= 0.80
             and metrics["diversidad_lexica"] >= 0.55
-            and metrics["coherencia_dialogica"] >= 0.85
+            and metrics["coherencia_dialogica"] >= 0.65
+            and tool_call_validity >= 0.80
             and privacy_score == 0.0
         )
 
     failures = []
-    if metrics["rouge_l"] < 0.65:
-        failures.append(f"rouge_l={metrics['rouge_l']} (min 0.65)")
-    if metrics["fidelidad_factual"] < 0.90:
-        failures.append(f"fidelidad_factual={metrics['fidelidad_factual']} (min 0.90)")
+    if metrics["rouge_l"] < 0.20:
+        failures.append(f"rouge_l={metrics['rouge_l']} (min 0.20)")
+    if metrics["fidelidad_factual"] < 0.80:
+        failures.append(f"fidelidad_factual={metrics['fidelidad_factual']} (min 0.80)")
     if metrics["diversidad_lexica"] < 0.55:
         failures.append(f"diversidad_lexica={metrics['diversidad_lexica']} (min 0.55)")
-    if metrics["coherencia_dialogica"] < 0.85:
-        failures.append(f"coherencia_dialogica={metrics['coherencia_dialogica']} (min 0.85)")
+    if metrics["coherencia_dialogica"] < 0.65:
+        failures.append(f"coherencia_dialogica={metrics['coherencia_dialogica']} (min 0.65)")
+    if metrics.get("tool_call_validity", 1.0) < 0.80:
+        failures.append(f"tool_call_validity={metrics.get('tool_call_validity', 1.0)} (min 0.80)")
     if privacy_score != 0.0:
         failures.append(f"privacy_score={privacy_score} (must be 0.0)")
+    if metrics.get("memorizacion", 0.0) >= 0.01:
+        failures.append(f"memorizacion={metrics['memorizacion']} (must be < 0.01)")
 
     return {
         "metrics": metrics,

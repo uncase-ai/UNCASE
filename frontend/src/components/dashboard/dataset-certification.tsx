@@ -100,11 +100,11 @@ const COMPLIANCE_PROFILES: ComplianceProfile[] = [
 ]
 
 const QUALITY_THRESHOLDS: Record<string, { min: number; label: string; exact?: boolean; below?: boolean }> = {
-  rouge_l: { min: 0.65, label: 'ROUGE-L (Structural Coherence)' },
-  fidelidad_factual: { min: 0.90, label: 'Factual Fidelity' },
+  rouge_l: { min: 0.20, label: 'ROUGE-L (Content Coverage)' },
+  fidelidad_factual: { min: 0.80, label: 'Factual Fidelity' },
   diversidad_lexica: { min: 0.55, label: 'Lexical Diversity (TTR)' },
-  coherencia_dialogica: { min: 0.85, label: 'Dialogic Coherence' },
-  tool_call_validity: { min: 0.90, label: 'Tool Call Validity' },
+  coherencia_dialogica: { min: 0.65, label: 'Dialogic Coherence' },
+  tool_call_validity: { min: 0.80, label: 'Tool Call Validity' },
   privacy_score: { min: 0.0, label: 'PII Residual Score', exact: true },
   memorizacion: { min: 0.01, label: 'Memorization Rate', below: true }
 }

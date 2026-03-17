@@ -65,7 +65,9 @@ const METRIC_CONFIG = [
   { key: 'fidelidad_factual' as const, label: 'Fidelity', threshold: QUALITY_THRESHOLDS.fidelidad_factual },
   { key: 'diversidad_lexica' as const, label: 'TTR', threshold: QUALITY_THRESHOLDS.diversidad_lexica },
   { key: 'coherencia_dialogica' as const, label: 'Coherence', threshold: QUALITY_THRESHOLDS.coherencia_dialogica },
-  { key: 'tool_call_validity' as const, label: 'Tool Validity', threshold: QUALITY_THRESHOLDS.tool_call_validity }
+  { key: 'tool_call_validity' as const, label: 'Tool Valid.', threshold: QUALITY_THRESHOLDS.tool_call_validity },
+  { key: 'semantic_fidelity' as const, label: 'Sem. Fidelity', threshold: QUALITY_THRESHOLDS.semantic_fidelity, optional: true },
+  { key: 'embedding_drift' as const, label: 'Emb. Drift', threshold: QUALITY_THRESHOLDS.embedding_drift, optional: true }
 ] as const
 
 // ─── Score bucket helpers ───
@@ -108,6 +110,7 @@ export function EvaluationsPage() {
               embedding_drift: item.embedding_drift
             } as QualityMetrics,
             composite_score: item.composite_score,
+            weighted_mean: item.weighted_mean,
             passed: item.passed,
             failures: item.failures,
             evaluated_at: item.created_at
@@ -156,6 +159,16 @@ export function EvaluationsPage() {
     ) / 1000
   }, [evaluations, totalEvaluations])
 
+  const avgWeightedMean = useMemo(() => {
+    if (totalEvaluations === 0) return 0
+    const withWm = evaluations.filter(e => e.weighted_mean != null)
+    if (withWm.length === 0) return 0
+
+    return Math.round(
+      (withWm.reduce((sum, e) => sum + (e.weighted_mean ?? 0), 0) / withWm.length) * 1000
+    ) / 1000
+  }, [evaluations, totalEvaluations])
+
   const privacyViolations = useMemo(
     () => evaluations.filter(e => e.metrics.privacy_score > 0).length,
     [evaluations]
@@ -174,7 +187,7 @@ export function EvaluationsPage() {
     return BUCKET_LABELS.map((label, i) => ({
       bucket: label,
       count: buckets[i],
-      passing: i >= 6 // >= 0.6 bucket (composite threshold ~0.65 rounded down for bucket)
+      passing: i >= 2 // >= 0.2 bucket (composite = min(metrics); lowest threshold is rouge_l at 0.20)
     }))
   }, [evaluations])
 
@@ -182,15 +195,24 @@ export function EvaluationsPage() {
   const radarData = useMemo(() => {
     if (totalEvaluations === 0) return []
 
-    return METRIC_CONFIG.map(m => {
-      const avg = evaluations.reduce((sum, e) => sum + (e.metrics[m.key] ?? 0), 0) / totalEvaluations
+    return METRIC_CONFIG
+      .filter(m => {
+        if (!('optional' in m) || !m.optional) return true
+        // Only show optional metrics if at least one evaluation has a non-neutral value
+        return evaluations.some(e => {
+          const v = e.metrics[m.key]
+          return v != null && v !== 0.5
+        })
+      })
+      .map(m => {
+        const avg = evaluations.reduce((sum, e) => sum + (e.metrics[m.key] ?? 0), 0) / totalEvaluations
 
-      return {
-        metric: m.label,
-        value: Math.round(avg * 1000) / 1000,
-        threshold: m.threshold
-      }
-    })
+        return {
+          metric: m.label,
+          value: Math.round(avg * 1000) / 1000,
+          threshold: m.threshold
+        }
+      })
   }, [evaluations, totalEvaluations])
 
   // ─── Failure analysis ───
@@ -413,10 +435,10 @@ export function EvaluationsPage() {
           description="Percentage passing all checks"
         />
         <StatsCard
-          title="Avg Composite Score"
+          title="Avg Composite (min)"
           value={Math.round(avgComposite * 100)}
           icon={Target}
-          description={`Raw: ${avgComposite.toFixed(3)}`}
+          description={`Raw: ${avgComposite.toFixed(3)} | w̄: ${avgWeightedMean.toFixed(3)}`}
         />
         <StatsCard
           title="Privacy Violations"
@@ -476,11 +498,11 @@ export function EvaluationsPage() {
             <div className="mt-2 flex items-center justify-center gap-4 text-[10px] text-muted-foreground">
               <div className="flex items-center gap-1">
                 <span className="inline-block size-2.5 rounded-sm bg-primary" />
-                Passing (bucket &ge; 0.6)
+                Passing (bucket &ge; 0.2)
               </div>
               <div className="flex items-center gap-1">
                 <span className="inline-block size-2.5 rounded-sm bg-muted-foreground/40" />
-                Failing (bucket &lt; 0.6)
+                Failing (bucket &lt; 0.2)
               </div>
             </div>
           </CardContent>

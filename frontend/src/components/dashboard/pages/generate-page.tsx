@@ -22,6 +22,7 @@ import {
 import type { SeedSchema, Conversation, ConversationTurn, QualityReport } from '@/types/api'
 import { cn } from '@/lib/utils'
 import { checkApiHealth } from '@/lib/api/client'
+import { bulkCreateConversations } from '@/lib/api/conversations'
 import { generateConversations } from '@/lib/api/generate'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -284,18 +285,16 @@ function generateMockConversation(seed: SeedSchema, languageOverride?: string): 
 }
 
 function generateMockQualityReport(conv: Conversation, seedId: string): QualityReport {
-  const r = () => 0.85 + Math.random() * 0.13
-
   const metrics = {
-    rouge_l: r(),
-    fidelidad_factual: r(),
-    diversidad_lexica: 0.60 + Math.random() * 0.25,
-    coherencia_dialogica: r(),
+    rouge_l: 0.25 + Math.random() * 0.25,
+    fidelidad_factual: 0.82 + Math.random() * 0.16,
+    diversidad_lexica: 0.58 + Math.random() * 0.25,
+    coherencia_dialogica: 0.68 + Math.random() * 0.27,
     tool_call_validity: 1.0,
     privacy_score: 0.0,
     memorizacion: 0.001 + Math.random() * 0.005,
-    semantic_fidelity: r(),
-    embedding_drift: 0.65 + Math.random() * 0.25,
+    semantic_fidelity: 0.65 + Math.random() * 0.28,
+    embedding_drift: 0.35 + Math.random() * 0.50,
   }
 
   const composite = Math.min(
@@ -304,11 +303,22 @@ function generateMockQualityReport(conv: Conversation, seedId: string): QualityR
     metrics.semantic_fidelity, metrics.embedding_drift
   )
 
+  // Weighted mean (mirrors backend weights)
+  const pairs: [number, number][] = [
+    [metrics.rouge_l, 0.15], [metrics.fidelidad_factual, 0.25],
+    [metrics.diversidad_lexica, 0.10], [metrics.coherencia_dialogica, 0.20],
+    [metrics.tool_call_validity, 0.10], [metrics.semantic_fidelity, 0.10],
+    [metrics.embedding_drift, 0.10],
+  ]
+  const totalW = pairs.reduce((s, [, w]) => s + w, 0)
+  const wMean = pairs.reduce((s, [v, w]) => s + v * w, 0) / totalW
+
   return {
     conversation_id: conv.conversation_id,
     seed_id: seedId,
     metrics,
     composite_score: Math.round(composite * 1000) / 1000,
+    weighted_mean: Math.round(wMean * 1000) / 1000,
     passed: true,
     failures: [],
     evaluated_at: new Date().toISOString(),
@@ -491,6 +501,14 @@ export function GeneratePage() {
       const existing = loadConversations()
 
       saveConversations([...existing, ...generated])
+
+      // Best-effort API persistence (fire-and-forget) — in demo mode,
+      // conversations only exist locally; sync them to the backend if available
+      if (demoMode && apiAvailable) {
+        bulkCreateConversations(
+          generated.map(c => ({ ...c } as unknown as Record<string, unknown>))
+        ).catch(() => {})
+      }
 
       // Quality results
       if (allReports.length > 0) {

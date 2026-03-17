@@ -100,6 +100,8 @@ function randomInRange(min: number, max: number): number {
 
 // Generates metrics that consistently pass thresholds (demo content is premium)
 // ~85% of conversations pass; ~15% fail with clear, realistic failures
+// Thresholds: rouge_l>=0.20, fidelidad>=0.80, TTR>=0.55, coherencia>=0.65,
+//   tool_call>=0.80, privacy=0, memo<0.01, semantic>=0.60, drift>=0.30
 function generateMockMetrics(): { metrics: QualityMetrics; shouldFail: boolean } {
   const shouldFail = Math.random() < 0.15
 
@@ -111,15 +113,15 @@ function generateMockMetrics(): { metrics: QualityMetrics; shouldFail: boolean }
       // Lexical diversity failure — most common in synthetic data
       return {
         metrics: {
-          rouge_l: randomInRange(0.70, 0.92),
-          fidelidad_factual: randomInRange(0.87, 0.96),
+          rouge_l: randomInRange(0.25, 0.45),
+          fidelidad_factual: randomInRange(0.82, 0.96),
           diversidad_lexica: randomInRange(0.38, 0.53),
-          coherencia_dialogica: randomInRange(0.82, 0.95),
+          coherencia_dialogica: randomInRange(0.68, 0.92),
           tool_call_validity: 1.0,
           privacy_score: 0.0,
           memorizacion: randomInRange(0.001, 0.006),
           semantic_fidelity: randomInRange(0.65, 0.88),
-          embedding_drift: randomInRange(0.55, 0.85),
+          embedding_drift: randomInRange(0.35, 0.75),
         },
         shouldFail: true,
       }
@@ -129,15 +131,15 @@ function generateMockMetrics(): { metrics: QualityMetrics; shouldFail: boolean }
       // Factual fidelity failure — hallucinated domain facts
       return {
         metrics: {
-          rouge_l: randomInRange(0.65, 0.88),
-          fidelidad_factual: randomInRange(0.68, 0.83),
+          rouge_l: randomInRange(0.22, 0.40),
+          fidelidad_factual: randomInRange(0.62, 0.78),
           diversidad_lexica: randomInRange(0.58, 0.78),
-          coherencia_dialogica: randomInRange(0.83, 0.94),
+          coherencia_dialogica: randomInRange(0.68, 0.90),
           tool_call_validity: 1.0,
           privacy_score: 0.0,
           memorizacion: randomInRange(0.001, 0.005),
           semantic_fidelity: randomInRange(0.55, 0.72),
-          embedding_drift: randomInRange(0.50, 0.80),
+          embedding_drift: randomInRange(0.32, 0.70),
         },
         shouldFail: true,
       }
@@ -146,40 +148,40 @@ function generateMockMetrics(): { metrics: QualityMetrics; shouldFail: boolean }
     // Memorization gate failure — extraction attack detected
     return {
       metrics: {
-        rouge_l: randomInRange(0.75, 0.93),
-        fidelidad_factual: randomInRange(0.88, 0.96),
+        rouge_l: randomInRange(0.28, 0.48),
+        fidelidad_factual: randomInRange(0.85, 0.96),
         diversidad_lexica: randomInRange(0.60, 0.80),
-        coherencia_dialogica: randomInRange(0.85, 0.95),
+        coherencia_dialogica: randomInRange(0.70, 0.92),
         tool_call_validity: 1.0,
         privacy_score: 0.0,
         memorizacion: randomInRange(0.012, 0.035),
         semantic_fidelity: randomInRange(0.70, 0.90),
-        embedding_drift: randomInRange(0.60, 0.85),
+        embedding_drift: randomInRange(0.40, 0.80),
       },
       shouldFail: true,
     }
   }
 
-  // Passing case — all metrics well above thresholds
+  // Passing case — all metrics above thresholds
   return {
     metrics: {
-      rouge_l: randomInRange(0.70, 0.95),
-      fidelidad_factual: randomInRange(0.87, 0.98),
+      rouge_l: randomInRange(0.25, 0.50),
+      fidelidad_factual: randomInRange(0.82, 0.98),
       diversidad_lexica: randomInRange(0.58, 0.82),
-      coherencia_dialogica: randomInRange(0.83, 0.97),
+      coherencia_dialogica: randomInRange(0.68, 0.95),
       tool_call_validity: 1.0,
       privacy_score: 0.0,
       memorizacion: randomInRange(0.001, 0.007),
       semantic_fidelity: randomInRange(0.65, 0.93),
-      embedding_drift: randomInRange(0.55, 0.88),
+      embedding_drift: randomInRange(0.35, 0.85),
     },
     shouldFail: false,
   }
 }
 
-function computeCompositeScore(metrics: QualityMetrics): number {
+function computeCompositeScore(metrics: QualityMetrics): { composite: number; weightedMean: number } {
   if (metrics.privacy_score !== 0.0 || metrics.memorizacion >= 0.01) {
-    return 0
+    return { composite: 0, weightedMean: 0 }
   }
 
   const coreValues = [
@@ -191,38 +193,55 @@ function computeCompositeScore(metrics: QualityMetrics): number {
   ]
 
   // Optional metrics only factor in when actually computed (not at neutral 0.5)
-  if (metrics.semantic_fidelity != null && metrics.semantic_fidelity !== 0.5) {
-    coreValues.push(metrics.semantic_fidelity)
-  }
+  const semComputed = metrics.semantic_fidelity != null && metrics.semantic_fidelity !== 0.5
+  const embComputed = metrics.embedding_drift != null && metrics.embedding_drift !== 0.5
 
-  if (metrics.embedding_drift != null && metrics.embedding_drift !== 0.5) {
-    coreValues.push(metrics.embedding_drift)
-  }
+  if (semComputed) coreValues.push(metrics.semantic_fidelity!)
+  if (embComputed) coreValues.push(metrics.embedding_drift!)
 
-  return Math.round(Math.min(...coreValues) * 1000) / 1000
+  const composite = Math.round(Math.min(...coreValues) * 1000) / 1000
+
+  // Weighted mean (informational, mirrors backend weights)
+  const pairs: [number, number][] = [
+    [metrics.rouge_l, 0.15],
+    [metrics.fidelidad_factual, 0.25],
+    [metrics.diversidad_lexica, 0.10],
+    [metrics.coherencia_dialogica, 0.20],
+    [metrics.tool_call_validity, 0.10],
+  ]
+  if (semComputed) pairs.push([metrics.semantic_fidelity!, 0.10])
+  if (embComputed) pairs.push([metrics.embedding_drift!, 0.10])
+
+  const totalWeight = pairs.reduce((s, [, w]) => s + w, 0)
+  const weightedMean = totalWeight > 0
+    ? Math.round((pairs.reduce((s, [v, w]) => s + v * w, 0) / totalWeight) * 1000) / 1000
+    : 0
+
+  return { composite, weightedMean }
 }
 
 function evaluateConversationMock(conversation: Conversation): QualityReport {
   const { metrics } = generateMockMetrics()
-  const composite_score = computeCompositeScore(metrics)
+  const { composite, weightedMean } = computeCompositeScore(metrics)
 
   const failures: string[] = []
 
-  if (metrics.rouge_l < QUALITY_THRESHOLDS.rouge_l) failures.push('ROUGE-L below threshold')
-  if (metrics.fidelidad_factual < QUALITY_THRESHOLDS.fidelidad_factual) failures.push('Factual fidelity below threshold')
-  if (metrics.diversidad_lexica < QUALITY_THRESHOLDS.diversidad_lexica) failures.push('Lexical diversity below threshold')
-  if (metrics.coherencia_dialogica < QUALITY_THRESHOLDS.coherencia_dialogica) failures.push('Dialogic coherence below threshold')
-  if (metrics.tool_call_validity < QUALITY_THRESHOLDS.tool_call_validity) failures.push('Tool call validity below threshold')
-  if (metrics.privacy_score !== QUALITY_THRESHOLDS.privacy_score) failures.push('Privacy score must be 0.0')
-  if (metrics.memorizacion >= QUALITY_THRESHOLDS.memorizacion) failures.push('Memorization rate too high')
-  if (metrics.semantic_fidelity != null && metrics.semantic_fidelity < QUALITY_THRESHOLDS.semantic_fidelity) failures.push('Semantic fidelity below threshold')
-  if (metrics.embedding_drift != null && metrics.embedding_drift < QUALITY_THRESHOLDS.embedding_drift) failures.push('Embedding drift below threshold')
+  if (metrics.rouge_l < QUALITY_THRESHOLDS.rouge_l) failures.push(`rouge_l=${metrics.rouge_l.toFixed(3)} (min ${QUALITY_THRESHOLDS.rouge_l})`)
+  if (metrics.fidelidad_factual < QUALITY_THRESHOLDS.fidelidad_factual) failures.push(`fidelidad_factual=${metrics.fidelidad_factual.toFixed(3)} (min ${QUALITY_THRESHOLDS.fidelidad_factual})`)
+  if (metrics.diversidad_lexica < QUALITY_THRESHOLDS.diversidad_lexica) failures.push(`diversidad_lexica=${metrics.diversidad_lexica.toFixed(3)} (min ${QUALITY_THRESHOLDS.diversidad_lexica})`)
+  if (metrics.coherencia_dialogica < QUALITY_THRESHOLDS.coherencia_dialogica) failures.push(`coherencia_dialogica=${metrics.coherencia_dialogica.toFixed(3)} (min ${QUALITY_THRESHOLDS.coherencia_dialogica})`)
+  if (metrics.tool_call_validity < QUALITY_THRESHOLDS.tool_call_validity) failures.push(`tool_call_validity=${metrics.tool_call_validity.toFixed(3)} (min ${QUALITY_THRESHOLDS.tool_call_validity})`)
+  if (metrics.privacy_score !== QUALITY_THRESHOLDS.privacy_score) failures.push(`privacy_score=${metrics.privacy_score} (must be 0.0)`)
+  if (metrics.memorizacion >= QUALITY_THRESHOLDS.memorizacion) failures.push(`memorizacion=${metrics.memorizacion.toFixed(4)} (must be < ${QUALITY_THRESHOLDS.memorizacion})`)
+  if (metrics.semantic_fidelity != null && metrics.semantic_fidelity !== 0.5 && metrics.semantic_fidelity < QUALITY_THRESHOLDS.semantic_fidelity) failures.push(`semantic_fidelity=${metrics.semantic_fidelity.toFixed(3)} (min ${QUALITY_THRESHOLDS.semantic_fidelity})`)
+  if (metrics.embedding_drift != null && metrics.embedding_drift !== 0.5 && metrics.embedding_drift < QUALITY_THRESHOLDS.embedding_drift) failures.push(`embedding_drift=${metrics.embedding_drift.toFixed(3)} (min ${QUALITY_THRESHOLDS.embedding_drift})`)
 
   return {
     conversation_id: conversation.conversation_id,
     seed_id: conversation.seed_id,
     metrics,
-    composite_score,
+    composite_score: composite,
+    weighted_mean: weightedMean,
     passed: failures.length === 0,
     failures,
     evaluated_at: new Date().toISOString()
@@ -241,52 +260,52 @@ const METRIC_CONFIG: {
   {
     key: 'rouge_l',
     label: 'ROUGE-L',
-    description: 'Structural coherence with seed',
+    description: 'Content coverage of seed',
     threshold: QUALITY_THRESHOLDS.rouge_l,
-    tooltip: 'Measures structural coherence between the generated conversation and its seed. Higher values mean the conversation follows the expected flow more closely.'
+    tooltip: 'Recall-weighted F-beta (β=2) on content tokens after stopword filtering. Measures how well the generated conversation covers the seed\'s key concepts. Natural range: 0.15–0.50; threshold: 0.20.'
   },
   {
     key: 'fidelidad_factual',
     label: 'Factual Fidelity',
-    description: 'Domain fact accuracy',
+    description: 'Domain constraint adherence',
     threshold: QUALITY_THRESHOLDS.fidelidad_factual,
-    tooltip: 'Measures accuracy of domain-specific facts. Checks that entities, procedures, and terminology match the seed\'s factual parameters.'
+    tooltip: 'Checks that entities, procedures, terminology, and constraints from the seed\'s factual parameters appear correctly in the generated conversation. Threshold: 0.80.'
   },
   {
     key: 'diversidad_lexica',
     label: 'Lexical Diversity',
     description: 'Type-Token Ratio',
     threshold: QUALITY_THRESHOLDS.diversidad_lexica,
-    tooltip: 'Type-Token Ratio (TTR) — measures vocabulary variety. Higher values indicate more diverse, natural-sounding language.'
+    tooltip: 'Type-Token Ratio (TTR) — measures vocabulary variety. Higher values indicate more diverse, natural-sounding language. Prevents repetitive or templated output. Threshold: 0.55.'
   },
   {
     key: 'coherencia_dialogica',
     label: 'Dialogic Coherence',
-    description: 'Inter-turn role consistency',
+    description: 'Content-token Jaccard coherence',
     threshold: QUALITY_THRESHOLDS.coherencia_dialogica,
-    tooltip: 'Measures inter-turn consistency of roles and context. Ensures each participant maintains their role and references remain consistent.'
+    tooltip: 'Content-token Jaccard similarity between consecutive turns. Measures inter-turn consistency of roles and context while filtering out stopwords. Threshold: 0.65.'
   },
   {
     key: 'tool_call_validity',
     label: 'Tool Validity',
     description: 'Tool call schema compliance',
     threshold: QUALITY_THRESHOLDS.tool_call_validity,
-    tooltip: 'Validates that tool calls in the conversation use correct function names, parameters, and return types as defined in the seed.'
+    tooltip: 'Validates that tool calls in the conversation use correct function names, parameters, and return types as defined in the seed. Defaults to 1.0 when no tools are present. Threshold: 0.80.'
   },
   {
     key: 'semantic_fidelity',
     label: 'Semantic Fidelity',
     description: 'LLM-as-Judge scoring',
     threshold: QUALITY_THRESHOLDS.semantic_fidelity,
-    tooltip: 'LLM-as-Judge evaluation of semantic accuracy and intent preservation. Requires an LLM API — omitted from composite if unavailable.',
+    tooltip: 'LLM-as-Judge evaluation of semantic accuracy and intent preservation. Requires an LLM API — omitted from composite if unavailable (shown as 0.5). Threshold: 0.60.',
     optional: true
   },
   {
     key: 'embedding_drift',
     label: 'Embedding Drift',
-    description: 'Semantic similarity drift',
+    description: 'TF-IDF / embedding cosine similarity',
     threshold: QUALITY_THRESHOLDS.embedding_drift,
-    tooltip: 'Cosine similarity between seed and generated conversation embeddings. Detects semantic drift from the original intent. Requires an LLM API.',
+    tooltip: 'Cosine similarity between seed and generated conversation via TF-IDF (offline) or LLM embeddings (when API available). Detects semantic drift from the original intent. Threshold: 0.30.',
     optional: true
   }
 ]
@@ -523,9 +542,16 @@ export function EvaluatePage() {
       key: 'composite',
       header: 'Score',
       cell: row => (
-        <span className="font-mono text-sm font-medium">
-          {row.composite_score.toFixed(3)}
-        </span>
+        <div>
+          <span className="font-mono text-sm font-medium">
+            {row.composite_score.toFixed(3)}
+          </span>
+          {row.weighted_mean != null && (
+            <span className="ml-1.5 font-mono text-[10px] text-muted-foreground" title="Weighted mean">
+              (w̄ {row.weighted_mean.toFixed(3)})
+            </span>
+          )}
+        </div>
       )
     },
     {
@@ -656,9 +682,13 @@ export function EvaluatePage() {
               <p className="text-[15px] font-semibold text-foreground">How Quality Evaluation Works</p>
               <p>
                 Each conversation is evaluated against its origin seed using up to 9 quality metrics.
-                Five core metrics (ROUGE-L, Fidelity, TTR, Coherence, Tool Validity), two gate metrics
-                (Privacy=0, Memorization{'<'}1%), and two optional LLM-powered metrics (Semantic Fidelity,
-                Embedding Drift). Composite score: Q = min(all computed metrics) when gates pass, else Q=0.
+                Five core metrics (ROUGE-L &ge; 0.20, Fidelity &ge; 0.80, TTR &ge; 0.55, Coherence &ge; 0.65,
+                Tool Validity &ge; 0.80), two gate metrics (Privacy = 0, Memorization {'<'} 1%), and two optional
+                LLM-powered metrics (Semantic Fidelity &ge; 0.60, Embedding Drift &ge; 0.30).
+              </p>
+              <p>
+                <strong>Composite score:</strong> Q = min(all computed metrics) when gates pass, else Q = 0.
+                A <strong>weighted mean</strong> is also computed for informational purposes (not used for pass/fail).
               </p>
             </div>
           </CardContent>

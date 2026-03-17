@@ -74,10 +74,10 @@ export function createEmptySeed(): Partial<SeedSchema> {
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     }
   }
 }

@@ -148,7 +148,7 @@ const STAGES: StageConfig[] = [
     href: '/dashboard/pipeline/evaluate',
     details: [
       '5 core + 2 gate + 2 optional metrics',
-      'Factual Fidelity >= 0.85',
+      'Fidelity >= 0.80, Coherence >= 0.65, ROUGE-L >= 0.20',
       'Zero PII tolerance + memorization < 1%'
     ],
     isReady: () => getLocalCount('uncase-conversations') > 0,

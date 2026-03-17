@@ -34,26 +34,26 @@ const NAV_GROUPS: NavGroup[] = [
     items: [{ label: 'Overview', href: '/dashboard', icon: LayoutDashboard }]
   },
   {
-    label: 'Pipeline',
+    label: 'Data Pipeline',
     items: [
       { label: 'Pipeline', href: '/dashboard/pipeline', icon: GitBranch },
       { label: 'Seeds', href: '/dashboard/pipeline/seeds', icon: Sprout },
       { label: 'Scenarios', href: '/dashboard/pipeline/scenarios', icon: Layers },
-      { label: 'Knowledge', href: '/dashboard/knowledge', icon: Library },
       { label: 'Import', href: '/dashboard/pipeline/import', icon: ArrowDownToLine },
-      { label: 'Evaluate', href: '/dashboard/pipeline/evaluate', icon: FlaskConical },
       { label: 'Generate', href: '/dashboard/pipeline/generate', icon: Rocket },
-      { label: 'Export', href: '/dashboard/pipeline/export', icon: PackageOpen },
-      { label: 'Connectors', href: '/dashboard/connectors', icon: Cable }
+      { label: 'Evaluate', href: '/dashboard/pipeline/evaluate', icon: FlaskConical },
+      { label: 'Export', href: '/dashboard/pipeline/export', icon: PackageOpen }
     ]
   },
   {
-    label: 'Workbench',
+    label: 'Resources',
     items: [
       { label: 'Conversations', href: '/dashboard/conversations', icon: MessageSquare },
+      { label: 'Knowledge', href: '/dashboard/knowledge', icon: Library },
       { label: 'Templates', href: '/dashboard/templates', icon: BookOpen },
       { label: 'Tools', href: '/dashboard/tools', icon: Puzzle },
-      { label: 'Plugins', href: '/dashboard/plugins', icon: Package }
+      { label: 'Plugins', href: '/dashboard/plugins', icon: Package },
+      { label: 'Connectors', href: '/dashboard/connectors', icon: Cable }
     ]
   },
   {

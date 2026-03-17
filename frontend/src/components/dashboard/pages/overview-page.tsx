@@ -18,7 +18,6 @@ import {
   HelpCircle,
   Key,
   Layers,
-  Library,
   MessageSquare,
   PackageOpen,
   Play,
@@ -52,12 +51,11 @@ import { StatusBadge } from '../status-badge'
 const ORG_ID_KEY = 'uncase-org-id'
 
 const PIPELINE_STEPS = [
-  { label: 'Seeds', href: '/dashboard/pipeline/seeds', icon: Sprout, description: 'Define knowledge structures' },
-  { label: 'Knowledge', href: '/dashboard/knowledge', icon: Library, description: 'Upload domain literature' },
-  { label: 'Import', href: '/dashboard/pipeline/import', icon: ArrowDownToLine, description: 'Ingest conversation data' },
+  { label: 'Seeds', href: '/dashboard/pipeline/seeds', icon: Sprout, description: 'Define conversation blueprints' },
   { label: 'Scenarios', href: '/dashboard/pipeline/scenarios', icon: Layers, description: 'Build variation packs' },
-  { label: 'Evaluate', href: '/dashboard/pipeline/evaluate', icon: FlaskConical, description: 'Run quality gates' },
-  { label: 'Generate', href: '/dashboard/pipeline/generate', icon: Rocket, description: 'Synthesize conversations' },
+  { label: 'Import', href: '/dashboard/pipeline/import', icon: ArrowDownToLine, description: 'Ingest real conversations' },
+  { label: 'Generate', href: '/dashboard/pipeline/generate', icon: Rocket, description: 'Synthesize from seeds' },
+  { label: 'Evaluate', href: '/dashboard/pipeline/evaluate', icon: FlaskConical, description: 'Run 9 quality metrics' },
   { label: 'Export', href: '/dashboard/pipeline/export', icon: PackageOpen, description: 'Output LoRA-ready data' }
 ]
 

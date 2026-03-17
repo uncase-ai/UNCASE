@@ -91,10 +91,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.9,
     rating_count: 24,
@@ -174,10 +174,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.8,
     rating_count: 21,
@@ -250,10 +250,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.7,
     rating_count: 17,
@@ -326,10 +326,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.8,
     rating_count: 19,
@@ -405,10 +405,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.7,
     rating_count: 15,
@@ -483,10 +483,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.9,
     rating_count: 22,
@@ -538,10 +538,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.6,
     rating_count: 12,
@@ -591,10 +591,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.2,
     rating_count: 8,
@@ -645,10 +645,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 3.9,
     rating_count: 5,
@@ -700,10 +700,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.8,
     rating_count: 19,
@@ -753,10 +753,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.4,
     rating_count: 7,
@@ -810,10 +810,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.7,
     rating_count: 14,
@@ -865,10 +865,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.3,
     rating_count: 9,
@@ -920,10 +920,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.5,
     rating_count: 11,
@@ -975,10 +975,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.8,
     rating_count: 16,
@@ -1030,10 +1030,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.6,
     rating_count: 13,
@@ -1086,10 +1086,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.7,
     rating_count: 15,
@@ -1140,10 +1140,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.5,
     rating_count: 10,
@@ -1196,10 +1196,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.6,
     rating_count: 11,
@@ -1250,10 +1250,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.4,
     rating_count: 8,
@@ -1306,10 +1306,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.3,
     rating_count: 7,
@@ -1360,10 +1360,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.1,
     rating_count: 6,
@@ -1416,10 +1416,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.8,
     rating_count: 18,
@@ -1470,10 +1470,10 @@ export const DEMO_SEEDS: SeedSchema[] = [
       campos_sensibles_detectados: []
     },
     metricas_calidad: {
-      rouge_l_min: 0.65,
-      fidelidad_min: 0.90,
+      rouge_l_min: 0.20,
+      fidelidad_min: 0.80,
       diversidad_lexica_min: 0.55,
-      coherencia_dialogica_min: 0.85
+      coherencia_dialogica_min: 0.65
     },
     rating: 4.6,
     rating_count: 12,

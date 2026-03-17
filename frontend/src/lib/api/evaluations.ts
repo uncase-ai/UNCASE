@@ -51,8 +51,10 @@ export interface EvaluationReportResponse {
   semantic_fidelity?: number
   embedding_drift?: number
   composite_score: number
+  weighted_mean?: number
   passed: boolean
   failures: string[]
+  skipped_metrics?: string[]
   dominio: string | null
   organization_id: string | null
   created_at: string

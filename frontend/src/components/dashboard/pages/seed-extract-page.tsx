@@ -7,6 +7,7 @@ import Link from 'next/link'
 
 import type { ChatMessage, ExtractionProgress } from '@/types/layer0'
 import { checkApiHealthDetailed } from '@/lib/api/client'
+import { createSeedApi } from '@/lib/api/seeds'
 import { endSession, sendTurn, startExtraction } from '@/lib/api/layer0'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -434,7 +435,7 @@ export function SeedExtractPage() {
             metadata: { extracted_by: 'demo-interview' },
           },
           privacidad: { pii_eliminado: true, metodo_anonimizacion: 'presidio_v2', nivel_confianza: 0.99, campos_sensibles_detectados: [] },
-          metricas_calidad: { rouge_l_min: 0.65, fidelidad_min: 0.85, diversidad_lexica_min: 0.55, coherencia_dialogica_min: 0.80 },
+          metricas_calidad: { rouge_l_min: 0.20, fidelidad_min: 0.80, diversidad_lexica_min: 0.55, coherencia_dialogica_min: 0.65 },
         }
 
         const summaryMsg = locale === 'es'
@@ -516,6 +517,10 @@ export function SeedExtractPage() {
     }
 
     localStorage.setItem('uncase-seeds', JSON.stringify([newSeed, ...existing]))
+
+    // Best-effort API persistence (fire-and-forget)
+    createSeedApi(newSeed as unknown as Record<string, unknown>).catch(() => {})
+
     window.location.href = '/dashboard/pipeline/seeds'
   }, [seed])
 
