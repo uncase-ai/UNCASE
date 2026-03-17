@@ -213,9 +213,10 @@ async def _hydrate_tools_from_db() -> None:
 
 
 async def _seed_featured_content() -> None:
-    """Load featured seeds into an empty database on first deploy.
+    """Load featured seeds and domain seed packages into an empty database.
 
     Idempotent: skips if seeds already exist. Non-fatal on failure.
+    Loads 6 featured seeds + 150 domain package seeds on first deploy.
     """
     with contextlib.suppress(Exception):
         from uncase.db.engine import get_async_session
@@ -225,7 +226,9 @@ async def _seed_featured_content() -> None:
         _logger = get_logger("uncase.seed_content")
 
         async for session in get_async_session():
-            await load_featured_seeds(session)
+            loaded = await load_featured_seeds(session)
+            if loaded:
+                _logger.info("seed_bootstrap_complete", seeds_loaded=loaded)
             break
 
 

@@ -1159,99 +1159,90 @@ function DetailPanel({
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="shrink-0 border-b p-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">
-              Conversation{' '}
-              <span className="font-mono text-base">{conversation.conversation_id.slice(0, 12)}...</span>
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {conversation.turnos.length} messages &middot; {conversation.dominio} &middot;{' '}
-              {conversation.es_sintetica ? 'Synthetic' : 'Real'}
-            </p>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <StatusBadge variant={status === 'valid' ? 'success' : 'warning'} dot={false}>
-              {status === 'valid' ? 'Valid' : 'Invalid'}
-            </StatusBadge>
-          </div>
+      <div className="shrink-0 space-y-2 border-b px-4 py-2.5">
+        {/* Row 1: Title + status + actions */}
+        <div className="flex items-center gap-2">
+          <h2 className="min-w-0 shrink truncate text-sm font-semibold">
+            <span className="font-mono">{conversation.conversation_id.slice(0, 12)}...</span>
+          </h2>
+          <span className="shrink-0 text-xs text-muted-foreground">
+            {conversation.turnos.length} msgs &middot; {conversation.dominio} &middot;{' '}
+            {conversation.es_sintetica ? 'Synthetic' : 'Real'}
+          </span>
+          <StatusBadge variant={status === 'valid' ? 'success' : 'warning'} dot={false} className="ml-auto shrink-0">
+            {status === 'valid' ? 'Valid' : 'Invalid'}
+          </StatusBadge>
         </div>
 
-        {/* Summary bar */}
-        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <User className="size-3" /> {userCount} user
-          </span>
-          <span className="flex items-center gap-1">
-            <Bot className="size-3" /> {assistantCount} assistant
-          </span>
-          {toolNames.length > 0 && (
-            <span className="flex items-center gap-1">
-              <Wrench className="size-3" /> {toolNames.length} tool{toolNames.length > 1 ? 's' : ''}
+        {/* Row 2: Stats + compatible formats + actions */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-0.5">
+              <User className="size-3" /> {userCount}
             </span>
-          )}
-          {availableTools.length > 0 && (
-            <span className="flex items-center gap-1 rounded bg-muted px-1.5 py-0.5">
-              <Code2 className="size-3" /> {availableTools.length} available
+            <span className="flex items-center gap-0.5">
+              <Bot className="size-3" /> {assistantCount}
             </span>
-          )}
-          <span className="font-mono">{conversation.idioma}</span>
-        </div>
-
-        {/* Format compatibility */}
-        {compatibleFormats.length > 0 && (
-          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-            <span className="text-[10px] font-medium text-muted-foreground">Compatible:</span>
-            {compatibleFormats.map(fmt => (
-              <Badge
-                key={fmt.template}
-                variant="outline"
-                className="gap-1 border-emerald-300 bg-emerald-50/50 text-[10px] text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
-                title={fmt.models.join(', ')}
-              >
-                {fmt.label}
-              </Badge>
-            ))}
-          </div>
-        )}
-
-        {/* Action toolbar — always visible in header */}
-        <div className="mt-3 flex flex-wrap items-center gap-2 border-t pt-3">
-          <Button
-            variant={status === 'valid' ? 'default' : 'outline'}
-            size="sm"
-            className={cn('gap-1.5', status === 'valid' && 'bg-emerald-600 text-white hover:bg-emerald-700')}
-            onClick={handleValidate}
-          >
-            <CheckCircle2 className="size-3.5" />
-            {status === 'valid' ? 'Validated' : 'Validate'}
-          </Button>
-          <Button size="sm" className="gap-1.5" onClick={handleSave} disabled={!hasPendingChanges}>
-            <Save className="size-3.5" />
-            Save
-          </Button>
-          <div className="flex-1" />
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleToggleStatus}>
-            {status === 'valid' ? (
-              <>
-                <Ban className="size-3.5" /> Mark Invalid
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="size-3.5" /> Mark Valid
-              </>
+            {toolNames.length > 0 && (
+              <span className="flex items-center gap-0.5">
+                <Wrench className="size-3" /> {toolNames.length}
+              </span>
             )}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 text-destructive hover:bg-destructive/10"
-            onClick={() => setShowDelete(true)}
-          >
-            <Trash2 className="size-3.5" />
-            Delete
-          </Button>
+            {availableTools.length > 0 && (
+              <span className="flex items-center gap-0.5 rounded bg-muted px-1 py-0.5">
+                <Code2 className="size-3" /> {availableTools.length}
+              </span>
+            )}
+            <span className="font-mono">{conversation.idioma}</span>
+          </div>
+          {compatibleFormats.length > 0 && (
+            <>
+              <span className="text-muted-foreground/40">|</span>
+              <div className="flex flex-wrap items-center gap-1">
+                {compatibleFormats.map(fmt => (
+                  <Badge
+                    key={fmt.template}
+                    variant="outline"
+                    className="h-5 gap-0.5 border-emerald-300 bg-emerald-50/50 px-1.5 text-[10px] text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
+                    title={fmt.models.join(', ')}
+                  >
+                    {fmt.label}
+                  </Badge>
+                ))}
+              </div>
+            </>
+          )}
+
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            <Button
+              variant={status === 'valid' ? 'default' : 'outline'}
+              size="sm"
+              className={cn('h-7 gap-1 text-xs', status === 'valid' && 'bg-emerald-600 text-white hover:bg-emerald-700')}
+              onClick={handleValidate}
+            >
+              <CheckCircle2 className="size-3" />
+              {status === 'valid' ? 'Validated' : 'Validate'}
+            </Button>
+            <Button size="sm" className="h-7 gap-1 text-xs" onClick={handleSave} disabled={!hasPendingChanges}>
+              <Save className="size-3" />
+              Save
+            </Button>
+            <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={handleToggleStatus}>
+              {status === 'valid' ? (
+                <><Ban className="size-3" /> Invalid</>
+              ) : (
+                <><CheckCircle2 className="size-3" /> Valid</>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1 text-xs text-destructive hover:bg-destructive/10"
+              onClick={() => setShowDelete(true)}
+            >
+              <Trash2 className="size-3" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -1270,7 +1261,7 @@ function DetailPanel({
 
       {/* Messages */}
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="space-y-2 p-4">
+        <div className="space-y-2 p-3">
           {flatItems.map(item => {
             const isMainMsg = item.role === 'user' || item.role === 'assistant' || item.role === 'system'
 
@@ -1693,11 +1684,11 @@ export function ConversationsPage() {
     <div className="flex min-h-0 flex-1 flex-col">
       <OnboardingDialog />
 
-      <div className="mb-4 shrink-0">
-        <PageHeader
-          title="Conversations"
-          description={`${conversations.length} conversations${invalidCount > 0 ? ` (${invalidCount} invalid)` : ''}`}
-        />
+      <div className="mb-1 flex shrink-0 items-baseline gap-3">
+        <h1 className="text-xl font-bold tracking-tight">Conversations</h1>
+        <span className="text-sm text-muted-foreground">
+          {conversations.length} conversations{invalidCount > 0 ? ` (${invalidCount} invalid)` : ''}
+        </span>
       </div>
 
       <div className="flex min-h-0 flex-1 gap-0 overflow-hidden rounded-lg border">

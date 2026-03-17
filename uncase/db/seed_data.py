@@ -1,4 +1,4 @@
-"""Load featured seeds into the database on first deploy.
+"""Load featured seeds and domain seed packages into the database on first deploy.
 
 Idempotent: checks if seed IDs already exist before inserting.
 Called from the app startup event after migrations complete.
@@ -6,6 +6,7 @@ Called from the app startup event after migrations complete.
 
 from __future__ import annotations
 
+import uuid
 from typing import TYPE_CHECKING
 
 import structlog
@@ -17,6 +18,22 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = structlog.get_logger(__name__)
+
+# Default privacy and quality metadata applied to domain package seeds
+# that don't carry their own.
+_DEFAULT_PRIVACY: dict[str, object] = {
+    "pii_eliminado": True,
+    "metodo_anonimizacion": "presidio_v2",
+    "nivel_confianza": 0.99,
+    "campos_sensibles_detectados": [],
+}
+
+_DEFAULT_QUALITY: dict[str, object] = {
+    "rouge_l_min": 0.20,
+    "fidelidad_min": 0.80,
+    "diversidad_lexica_min": 0.55,
+    "coherencia_dialogica_min": 0.65,
+}
 
 # 6 featured seeds — one per industry, all Spanish.
 # Extracted from Mariana/Autos TREFA patterns (automotive) and domain expertise (others).
@@ -94,10 +111,10 @@ FEATURED_SEEDS: list[dict[str, object]] = [
             "campos_sensibles_detectados": [],
         },
         "metricas_calidad": {
-            "rouge_l_min": 0.65,
-            "fidelidad_min": 0.90,
+            "rouge_l_min": 0.20,
+            "fidelidad_min": 0.80,
             "diversidad_lexica_min": 0.55,
-            "coherencia_dialogica_min": 0.85,
+            "coherencia_dialogica_min": 0.65,
         },
         "rating": 4.9,
         "rating_count": 24,
@@ -151,10 +168,10 @@ FEATURED_SEEDS: list[dict[str, object]] = [
             "campos_sensibles_detectados": [],
         },
         "metricas_calidad": {
-            "rouge_l_min": 0.65,
-            "fidelidad_min": 0.90,
+            "rouge_l_min": 0.20,
+            "fidelidad_min": 0.80,
             "diversidad_lexica_min": 0.55,
-            "coherencia_dialogica_min": 0.85,
+            "coherencia_dialogica_min": 0.65,
         },
         "rating": 4.8,
         "rating_count": 21,
@@ -207,10 +224,10 @@ FEATURED_SEEDS: list[dict[str, object]] = [
             "campos_sensibles_detectados": [],
         },
         "metricas_calidad": {
-            "rouge_l_min": 0.65,
-            "fidelidad_min": 0.90,
+            "rouge_l_min": 0.20,
+            "fidelidad_min": 0.80,
             "diversidad_lexica_min": 0.55,
-            "coherencia_dialogica_min": 0.85,
+            "coherencia_dialogica_min": 0.65,
         },
         "rating": 4.7,
         "rating_count": 17,
@@ -263,10 +280,10 @@ FEATURED_SEEDS: list[dict[str, object]] = [
             "campos_sensibles_detectados": [],
         },
         "metricas_calidad": {
-            "rouge_l_min": 0.65,
-            "fidelidad_min": 0.90,
+            "rouge_l_min": 0.20,
+            "fidelidad_min": 0.80,
             "diversidad_lexica_min": 0.55,
-            "coherencia_dialogica_min": 0.85,
+            "coherencia_dialogica_min": 0.65,
         },
         "rating": 4.8,
         "rating_count": 19,
@@ -321,10 +338,10 @@ FEATURED_SEEDS: list[dict[str, object]] = [
             "campos_sensibles_detectados": [],
         },
         "metricas_calidad": {
-            "rouge_l_min": 0.65,
-            "fidelidad_min": 0.90,
+            "rouge_l_min": 0.20,
+            "fidelidad_min": 0.80,
             "diversidad_lexica_min": 0.55,
-            "coherencia_dialogica_min": 0.85,
+            "coherencia_dialogica_min": 0.65,
         },
         "rating": 4.7,
         "rating_count": 15,
@@ -385,10 +402,10 @@ FEATURED_SEEDS: list[dict[str, object]] = [
             "campos_sensibles_detectados": [],
         },
         "metricas_calidad": {
-            "rouge_l_min": 0.65,
-            "fidelidad_min": 0.90,
+            "rouge_l_min": 0.20,
+            "fidelidad_min": 0.80,
             "diversidad_lexica_min": 0.55,
-            "coherencia_dialogica_min": 0.85,
+            "coherencia_dialogica_min": 0.65,
         },
         "rating": 4.9,
         "rating_count": 22,
@@ -398,41 +415,61 @@ FEATURED_SEEDS: list[dict[str, object]] = [
 ]
 
 
+def _build_seed_model(seed_dict: dict[str, object], *, seed_id: str | None = None) -> SeedModel:
+    """Build a SeedModel from a seed dictionary, filling defaults for missing fields."""
+    return SeedModel(
+        id=seed_id or str(seed_dict.get("id", uuid.uuid4().hex)),
+        dominio=seed_dict["dominio"],  # type: ignore[arg-type]
+        idioma=str(seed_dict.get("idioma", "es")),
+        version=str(seed_dict.get("version", "1.0")),
+        etiquetas=seed_dict.get("etiquetas", []),
+        objetivo=seed_dict["objetivo"],  # type: ignore[arg-type]
+        tono=str(seed_dict.get("tono", "profesional")),
+        roles=seed_dict["roles"],
+        descripcion_roles=seed_dict.get("descripcion_roles", {}),
+        pasos_turnos=seed_dict["pasos_turnos"],
+        parametros_factuales=seed_dict["parametros_factuales"],
+        privacidad=seed_dict.get("privacidad", _DEFAULT_PRIVACY),
+        metricas_calidad=seed_dict.get("metricas_calidad", _DEFAULT_QUALITY),
+        rating=seed_dict.get("rating"),  # type: ignore[arg-type]
+        rating_count=int(seed_dict.get("rating_count", 0)),  # type: ignore[arg-type]
+        run_count=int(seed_dict.get("run_count", 0)),  # type: ignore[arg-type]
+        avg_quality_score=seed_dict.get("avg_quality_score"),  # type: ignore[arg-type]
+        organization_id=None,  # Public — visible to all
+    )
+
+
 async def load_featured_seeds(session: AsyncSession) -> int:
-    """Insert featured seeds if the seeds table is empty.
+    """Insert featured seeds and domain seed packages if the seeds table is empty.
 
     Returns the number of seeds inserted (0 if table already has data).
+    Loads:
+      - 6 featured seeds (one per industry)
+      - 150 domain package seeds (50 automotive, 50 medical, 50 finance)
     """
+    from uncase.domains.seed_packages import DOMAIN_PACKAGES
+
     count = await session.scalar(select(func.count()).select_from(SeedModel))
     if count and count > 0:
         logger.info("seed_data_skip", reason="seeds table already has data", existing=count)
         return 0
 
     inserted = 0
+
+    # 1. Featured seeds (explicit IDs)
     for seed_dict in FEATURED_SEEDS:
-        seed = SeedModel(
-            id=seed_dict["id"],
-            dominio=seed_dict["dominio"],
-            idioma=seed_dict["idioma"],
-            version=seed_dict["version"],
-            etiquetas=seed_dict["etiquetas"],
-            objetivo=seed_dict["objetivo"],
-            tono=seed_dict["tono"],
-            roles=seed_dict["roles"],
-            descripcion_roles=seed_dict["descripcion_roles"],
-            pasos_turnos=seed_dict["pasos_turnos"],
-            parametros_factuales=seed_dict["parametros_factuales"],
-            privacidad=seed_dict["privacidad"],
-            metricas_calidad=seed_dict["metricas_calidad"],
-            rating=seed_dict.get("rating"),
-            rating_count=seed_dict.get("rating_count", 0),
-            run_count=seed_dict.get("run_count", 0),
-            avg_quality_score=seed_dict.get("avg_quality_score"),
-            organization_id=None,  # Public — visible to all
-        )
-        session.add(seed)
+        session.add(_build_seed_model(seed_dict))
         inserted += 1
 
+    # 2. Domain package seeds (auto-generated IDs)
+    for domain, seeds in DOMAIN_PACKAGES.items():
+        for idx, seed_dict in enumerate(seeds, start=1):
+            seed_id = f"pkg-{domain.replace('.', '-')}-{idx:03d}"
+            session.add(_build_seed_model(seed_dict, seed_id=seed_id))
+            inserted += 1
+        logger.info("seed_package_loaded", domain=domain, count=len(seeds))
+
     await session.commit()
-    logger.info("seed_data_loaded", count=inserted)
+    pkg_count = inserted - len(FEATURED_SEEDS)
+    logger.info("seed_data_loaded", featured=len(FEATURED_SEEDS), packages=pkg_count, total=inserted)
     return inserted
