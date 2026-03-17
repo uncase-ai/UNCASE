@@ -29,6 +29,14 @@ services:
       redis:
         condition: service_healthy
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "${API_CPU_LIMIT:-2.0}"
+          memory: "${API_MEMORY_LIMIT:-2G}"
+        reservations:
+          cpus: "0.5"
+          memory: "512M"
     volumes:
       - models_data:/app/models
       - exports_data:/app/exports
@@ -50,6 +58,14 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: "1G"
+        reservations:
+          cpus: "0.25"
+          memory: "256M"
     restart: unless-stopped
 
   # ── Redis (rate limiting, caching) ────────────────────────
@@ -65,6 +81,14 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "512M"
+        reservations:
+          cpus: "0.1"
+          memory: "64M"
     restart: unless-stopped
 
   # ── Dashboard (Next.js) ──────────────────────────────────
@@ -80,6 +104,14 @@ services:
     depends_on:
       api:
         condition: service_started
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: "1G"
+        reservations:
+          cpus: "0.25"
+          memory: "256M"
     restart: unless-stopped
 
   # ── MLflow Tracking (perfil ml) ────────────────────────────
@@ -103,6 +135,14 @@ services:
         --port 5000
         --backend-store-uri postgresql://${POSTGRES_USER:-uncase}:${POSTGRES_PASSWORD:-uncase}@postgres:5432/${POSTGRES_DB:-uncase}
         --default-artifact-root /mlflow/artifacts
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: "1G"
+        reservations:
+          cpus: "0.25"
+          memory: "256M"
     restart: unless-stopped
 
   # ── API con GPU (perfil gpu) ───────────────────────────────
@@ -126,7 +166,12 @@ services:
         condition: service_healthy
     deploy:
       resources:
+        limits:
+          cpus: "4.0"
+          memory: "8G"
         reservations:
+          cpus: "1.0"
+          memory: "2G"
           devices:
             - driver: nvidia
               count: 1
@@ -152,6 +197,14 @@ services:
     depends_on:
       api:
         condition: service_started
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "512M"
+        reservations:
+          cpus: "0.1"
+          memory: "128M"
     restart: unless-stopped
 
   # ── Grafana (perfil observability) ────────────────────────
@@ -171,6 +224,14 @@ services:
       - grafana_data:/var/lib/grafana
     depends_on:
       - prometheus
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "512M"
+        reservations:
+          cpus: "0.1"
+          memory: "128M"
     restart: unless-stopped
 
 volumes:

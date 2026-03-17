@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { SeedsPage } from '@/components/dashboard/pages/seeds-page'
 
 export const metadata: Metadata = {
-  title: 'Seeds',
+  title: 'Seeds'
 }
 
 export default function Page() {

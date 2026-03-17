@@ -186,6 +186,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
     failures: ['diversidad_lexica=0.490 (min 0.55)', 'semantic_fidelity=0.550 (min 0.60)'],
     evaluated_at: daysAgo(4, 17)
   },
+
   // Low factual fidelity
   {
     conversation_id: 'demo-conv-008',

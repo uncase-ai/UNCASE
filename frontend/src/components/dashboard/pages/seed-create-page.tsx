@@ -211,6 +211,7 @@ function getStepErrors(step: number, draft: Partial<SeedSchema>): string[] {
       if ((draft.pasos_turnos?.turnos_min ?? 3) >= (draft.pasos_turnos?.turnos_max ?? 10))
         errors.push('Min turns must be less than max turns')
       break
+
     // Steps 4-5 have no hard requirements
   }
 
@@ -425,7 +426,9 @@ export function SeedCreatePage() {
 
   function canProceed(): boolean {
     const errors = getStepErrors(step, draft)
+
     setStepErrors(errors)
+
     return errors.length === 0
   }
 
@@ -437,6 +440,7 @@ export function SeedCreatePage() {
   // ─── Domain auto-population ───
   function applyDomainDefaults(domain: string) {
     const defaults = DOMAIN_DEFAULTS[domain]
+
     if (!defaults) return
 
     // Only auto-populate empty fields — never overwrite user input
@@ -465,6 +469,7 @@ export function SeedCreatePage() {
     // Match tone to domain language
     const lang = draft.idioma || 'es'
     const toneIdx = (lang === 'es' ? TONES_ES : TONES_EN).indexOf(defaults.tono as never)
+
     if (toneIdx >= 0) {
       patch.tono = (lang === 'es' ? TONES_ES : TONES_EN)[toneIdx]
     }
@@ -516,12 +521,16 @@ export function SeedCreatePage() {
     // Clean up search state for removed index
     setRoleSearchQueries(prev => {
       const next = { ...prev }
+
       delete next[index]
+
       return next
     })
     setRoleSearchOpen(prev => {
       const next = { ...prev }
+
       delete next[index]
+
       return next
     })
   }
@@ -549,18 +558,23 @@ export function SeedCreatePage() {
 
   function addRoleFromPreset(preset: RolePreset) {
     const roles = [...(draft.roles || [])]
+
+
     // Don't add if already present
     if (roles.includes(preset.id)) return
     roles.push(preset.id)
     const descripcion_roles = { ...(draft.descripcion_roles || {}), [preset.id]: preset.description }
+
     updateDraft({ roles, descripcion_roles })
   }
 
   function selectRolePreset(index: number, preset: RolePreset) {
     const roles = [...(draft.roles || [])]
     const oldName = roles[index]
+
     roles[index] = preset.id
     const descripcion_roles = { ...(draft.descripcion_roles || {}) }
+
     if (oldName && oldName !== preset.id) delete descripcion_roles[oldName]
     descripcion_roles[preset.id] = preset.description
     updateDraft({ roles, descripcion_roles })
@@ -648,6 +662,7 @@ export function SeedCreatePage() {
   // ─── Restriction presets ───
   function toggleRestrictionPreset(text: string) {
     const current = draft.parametros_factuales?.restricciones || []
+
     if (current.includes(text)) {
       updateParametros({ restricciones: current.filter(r => r !== text) })
     } else {
@@ -1031,6 +1046,7 @@ export function SeedCreatePage() {
       case 2: {
         const domainRoles = searchRoles('', draft.dominio || undefined)
         const existingRoleIds = new Set(draft.roles || [])
+
         const quickAddRoles = domainRoles
           .filter(r => (r.domains.includes(draft.dominio || '') || r.domains.length === 0) && !existingRoleIds.has(r.id))
           .slice(0, 8)
@@ -1069,12 +1085,14 @@ export function SeedCreatePage() {
             {(draft.roles || []).map((role, i) => {
               const searchQuery = roleSearchQueries[i] ?? ''
               const isSearchOpen = roleSearchOpen[i] ?? false
+
               const searchResults = searchQuery.trim()
                 ? searchRoles(searchQuery, draft.dominio || undefined)
                 : []
 
               // Group search results by category
               const groupedResults: Record<string, RolePreset[]> = {}
+
               for (const r of searchResults) {
                 if (!groupedResults[r.category]) groupedResults[r.category] = []
                 groupedResults[r.category].push(r)
@@ -1089,8 +1107,10 @@ export function SeedCreatePage() {
                         value={isSearchOpen ? searchQuery : role}
                         onChange={e => {
                           const val = e.target.value
+
                           setRoleSearchQueries(prev => ({ ...prev, [i]: val }))
                           setRoleSearchOpen(prev => ({ ...prev, [i]: true }))
+
                           // Also update the role name live
                           updateRole(i, val)
                         }}
@@ -1334,6 +1354,7 @@ export function SeedCreatePage() {
 
         // Group restriction presets by category
         const groupedRestrictions: Record<string, typeof restrictionPresets> = {}
+
         for (const r of restrictionPresets) {
           if (!groupedRestrictions[r.category]) groupedRestrictions[r.category] = []
           groupedRestrictions[r.category].push(r)
@@ -1411,6 +1432,7 @@ export function SeedCreatePage() {
                       <div className="flex flex-wrap gap-1.5">
                         {presets.map(preset => {
                           const isActive = currentRestrictions.has(preset.text)
+
                           return (
                             <button
                               key={preset.id}
@@ -1447,7 +1469,9 @@ export function SeedCreatePage() {
                 .map((item, i) => {
                   // Check if this item came from a preset
                   const isPreset = restrictionPresets.some(p => p.text === item)
+
                   if (isPreset) return null
+
                   return (
                     <div key={i} className="flex items-center gap-2">
                       <Input

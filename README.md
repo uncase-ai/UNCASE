@@ -13,7 +13,7 @@
   <a href="https://opensource.org/licenses/BSD-3-Clause"><img src="https://img.shields.io/badge/License-BSD_3--Clause-blue.svg" /></a>
   <a href="https://python.org"><img src="https://img.shields.io/badge/python-≥3.11-blue.svg" /></a>
   <a href="https://docs.astral.sh/ruff/"><img src="https://img.shields.io/badge/code%20style-ruff-000000.svg" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/tests-1420%2B%20passing-brightgreen.svg" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/tests-1590%2B%20passing-brightgreen.svg" /></a>
   <a href="#"><img src="https://img.shields.io/badge/API%20endpoints-106+-purple.svg" /></a>
   <a href="#"><img src="https://img.shields.io/badge/blockchain-Polygon%20PoS-7b3fe4.svg" /></a>
 </p>
@@ -138,7 +138,7 @@ Each includes specialized seed templates, quality thresholds, compliance rules, 
 | **3 — Generator** | LLM-powered parallel generation with tool-augmented conversations |
 | **4 — LoRA Pipeline** | LoRA/QLoRA fine-tuning with DP-SGD (epsilon ≤ 8.0) |
 
-106+ API endpoints across 25 routers. 1,420+ tests at 73% coverage.
+106+ API endpoints across 25 routers. 1,590+ tests at 73% coverage.
 
 See [docs/architecture.md](docs/architecture.md) for the full system diagram and database schema.
 

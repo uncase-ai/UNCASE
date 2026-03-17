@@ -87,15 +87,15 @@ export function SandboxBootstrap() {
   }, [params, router])
 
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
-      <div className="flex size-16 items-center justify-center rounded-full bg-primary/10">
+    <div className='flex min-h-[60vh] flex-col items-center justify-center gap-4'>
+      <div className='bg-primary/10 flex size-16 items-center justify-center rounded-full'>
         {state === 'loading' ? (
-          <Loader2 className="size-8 animate-spin text-primary" />
+          <Loader2 className='text-primary size-8 animate-spin' />
         ) : (
-          <Cloud className="size-8 text-primary" />
+          <Cloud className='text-primary size-8' />
         )}
       </div>
-      <p className="text-sm font-medium text-muted-foreground">{status}</p>
+      <p className='text-muted-foreground text-sm font-medium'>{status}</p>
     </div>
   )
 }

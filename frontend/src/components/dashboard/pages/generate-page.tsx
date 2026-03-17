@@ -310,6 +310,7 @@ function generateMockQualityReport(conv: Conversation, seedId: string): QualityR
     [metrics.tool_call_validity, 0.10], [metrics.semantic_fidelity, 0.10],
     [metrics.embedding_drift, 0.10],
   ]
+
   const totalW = pairs.reduce((s, [, w]) => s + w, 0)
   const wMean = pairs.reduce((s, [v, w]) => s + v * w, 0) / totalW
 

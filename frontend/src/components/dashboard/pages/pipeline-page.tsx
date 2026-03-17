@@ -47,8 +47,10 @@ function getEvalPassCount(): number {
 
   try {
     const raw = localStorage.getItem('uncase-evaluations')
+
     if (!raw) return 0
     const evals = JSON.parse(raw) as { passed?: boolean }[]
+
     return evals.filter(e => e.passed).length
   } catch {
     return 0
@@ -212,6 +214,7 @@ export function PipelinePage() {
   const exportCount = counts[5]
 
   let nextStepIdx = 0
+
   if (seedCount > 0 && convCount === 0) nextStepIdx = 3 // generate
   else if (convCount > 0 && evalCount === 0) nextStepIdx = 4 // evaluate
   else if (evalCount > 0 && exportCount === 0) nextStepIdx = 5 // export

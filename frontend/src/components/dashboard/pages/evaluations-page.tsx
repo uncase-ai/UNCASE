@@ -162,6 +162,7 @@ export function EvaluationsPage() {
   const avgWeightedMean = useMemo(() => {
     if (totalEvaluations === 0) return 0
     const withWm = evaluations.filter(e => e.weighted_mean != null)
+
     if (withWm.length === 0) return 0
 
     return Math.round(
@@ -198,9 +199,12 @@ export function EvaluationsPage() {
     return METRIC_CONFIG
       .filter(m => {
         if (!('optional' in m) || !m.optional) return true
+
+
         // Only show optional metrics if at least one evaluation has a non-neutral value
         return evaluations.some(e => {
           const v = e.metrics[m.key]
+
           return v != null && v !== 0.5
         })
       })

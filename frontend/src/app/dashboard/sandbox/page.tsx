@@ -5,11 +5,7 @@ import { redirect } from 'next/navigation'
  * DashboardShell layout so the Topbar health check doesn't fire
  * before the sandbox session is established.
  */
-export default async function LegacySandboxPage({
-  searchParams
-}: {
-  searchParams: Promise<Record<string, string>>
-}) {
+export default async function LegacySandboxPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
   const resolved = await searchParams
   const params = new URLSearchParams(resolved).toString()
 

@@ -45,6 +45,7 @@ function extractRequiredParams(schema: Record<string, unknown>): string[] {
   if (Array.isArray(schema.required)) {
     return schema.required as string[]
   }
+
   return []
 }
 
@@ -71,18 +72,23 @@ function extractEnvVarsFromTools(tools: ToolDefinition[]): string[] {
 
 function inferHttpMethod(tool: ToolDefinition): string {
   const meta = tool.metadata
+
   if (typeof meta?.method === 'string') {
     return meta.method.toUpperCase()
   }
+
   const name = tool.name.toLowerCase()
+
   if (name.startsWith('create_') || name.startsWith('send_') || name.startsWith('submit_')) return 'POST'
   if (name.startsWith('update_') || name.startsWith('edit_')) return 'PUT'
   if (name.startsWith('delete_') || name.startsWith('remove_')) return 'DELETE'
+
   return 'GET'
 }
 
 function hasCredentialInUrl(tool: ToolDefinition): boolean {
   const url = (tool.metadata?.url as string) ?? ''
+
   return /(?:api_key|token|secret|password|key)=/i.test(url)
 }
 
@@ -124,11 +130,13 @@ export function generateToolEndpoint(tool: ToolDefinition): string {
   const envPrefix = tool.name.toUpperCase()
 
   const lines: string[] = []
+
   lines.push(`    case '${tool.name}': {`)
 
   // Required parameter validation
   if (required.length > 0) {
     const reqList = required.map(r => `'${r}'`).join(', ')
+
     lines.push(`      const requiredParams = [${reqList}]`)
     lines.push(`      const missing = requiredParams.filter(p => !(p in params))`)
     lines.push(`      if (missing.length > 0) {`)
@@ -138,6 +146,7 @@ export function generateToolEndpoint(tool: ToolDefinition): string {
 
   // Auth headers
   lines.push(`      const headers: Record<string, string> = { 'Content-Type': 'application/json' }`)
+
   if (tool.requires_auth) {
     if (authType === 'api_key') {
       lines.push(`      const apiKey = Deno.env.get('${envPrefix}_API_KEY')`)
@@ -363,9 +372,11 @@ export function generateMCPServer(config: MCPServerConfig): MCPDeploymentPreview
     if (hasCredentialInUrl(tool)) {
       securityNotes.push(`[${tool.name}] Credentials detected in URL — move to environment variables`)
     }
+
     if (tool.requires_auth && !tool.metadata?.auth_type) {
       securityNotes.push(`[${tool.name}] requires_auth is true but no auth_type specified — defaulting to bearer`)
     }
+
     if (tool.execution_mode === 'live' && !tool.requires_auth) {
       securityNotes.push(`[${tool.name}] Live execution mode without authentication — consider enabling auth`)
     }
@@ -388,9 +399,11 @@ export function generateMCPServer(config: MCPServerConfig): MCPDeploymentPreview
 
   // Curl example using the first tool
   const firstTool = config.tools[0]
+
   const exampleParams = firstTool
     ? buildExampleParams(firstTool)
     : '{}'
+
   const curlExample = firstTool
     ? `curl -X POST ${serverUrl}/invoke \\
   -H 'Content-Type: application/json' \\
@@ -433,6 +446,7 @@ function buildExampleParams(tool: ToolDefinition): string {
 
   for (const key of keysToInclude) {
     const prop = properties[key]
+
     if (!prop) {
       example[key] = 'value'
       continue

@@ -35,7 +35,7 @@ import {
   Zap
 } from 'lucide-react'
 
-import type { Conversation, ImportResult, ToolDefinition } from '@/types/api'
+import type { ImportResult, ToolDefinition } from '@/types/api'
 import { cn } from '@/lib/utils'
 import { detectFormat, importCsv, importJsonl, parseJsonlLocally } from '@/lib/api/imports'
 import { scanConversationsForTools, generateToolsFromScan, deduplicateTools } from '@/lib/tool-scanner'
@@ -49,8 +49,6 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -206,6 +204,7 @@ export function ImportPage() {
     if (format === 'unknown') {
       setUploadState('error')
       setUploadError('Unsupported file format. Please use .csv, .jsonl, or .ndjson files.')
+
       return
     }
 
@@ -222,16 +221,19 @@ export function ImportPage() {
       setResult(apiResult.data)
       setUploadState('done')
       setStep('review')
+
       return
     }
 
     if (format === 'jsonl') {
       try {
         const localResult = await parseJsonlLocally(file)
+
         if (localResult.conversations.length > 0 || localResult.errors.length > 0) {
           setResult(localResult)
           setUploadState('done')
           setStep('review')
+
           return
         }
       } catch {
@@ -278,8 +280,10 @@ export function ImportPage() {
     for (let i = 0; i < convs.length; i += batchSize) {
       const batch = convs.slice(i, i + batchSize)
       const batchResults = await scanConversationsForTools(batch)
+
       allResults.push(...batchResults)
       setScanProgress(Math.round(((i + batch.length) / convs.length) * 100))
+
       // Small delay for UX
       await new Promise(r => setTimeout(r, 200))
     }
@@ -290,11 +294,13 @@ export function ImportPage() {
     // Auto-generate tools from scan
     const tools = generateToolsFromScan(allResults)
     const unique = deduplicateTools(tools)
+
     setGeneratedTools(unique)
     setSelectedTools(new Set(unique.map(t => t.name)))
 
     // Default visibility
     const vis: Record<string, string> = {}
+
     for (const t of unique) vis[t.name] = t.visibility
     setToolVisibility(vis)
 
@@ -330,6 +336,7 @@ export function ImportPage() {
     }))
 
     const name = mcpServerName.trim() || `uncase-${result?.conversations[0]?.dominio?.split('.')[0] ?? 'tools'}`
+
     const preview = generateMCPServer({
       serverName: name,
       description: `MCP server for ${toolDefs.length} tools from imported conversations`,
@@ -381,6 +388,7 @@ export function ImportPage() {
       const existing: ToolDefinition[] = JSON.parse(localStorage.getItem('uncase-tools') || '[]')
       const existingNames = new Set(existing.map(t => t.name))
       const newTools = toolDefs.filter(t => !existingNames.has(t.name))
+
       localStorage.setItem('uncase-tools', JSON.stringify([...existing, ...newTools]))
       window.dispatchEvent(new StorageEvent('storage', { key: 'uncase-tools' }))
       setSavedTools(true)
@@ -661,6 +669,7 @@ export function ImportPage() {
           <div className="flex flex-wrap gap-2">
             {domains.map(d => {
               const count = convs.filter(c => c.dominio === d).length
+
               return (
                 <Badge key={d} variant="outline" className="gap-1 text-xs">
                   {d} <span className="font-bold">{count}</span>
@@ -853,6 +862,7 @@ export function ImportPage() {
                       checked={isSelected}
                       onCheckedChange={checked => {
                         const next = new Set(selectedTools)
+
                         if (checked) next.add(tool.name)
                         else next.delete(tool.name)
                         setSelectedTools(next)
@@ -913,6 +923,7 @@ export function ImportPage() {
                           <div className="flex gap-1">
                             {VISIBILITY_OPTIONS.map(v => {
                               const VIcon = v.icon
+
                               return (
                                 <TooltipProvider key={v.value}>
                                   <Tooltip>

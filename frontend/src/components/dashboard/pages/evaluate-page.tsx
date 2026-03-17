@@ -209,10 +209,12 @@ function computeCompositeScore(metrics: QualityMetrics): { composite: number; we
     [metrics.coherencia_dialogica, 0.20],
     [metrics.tool_call_validity, 0.10],
   ]
+
   if (semComputed) pairs.push([metrics.semantic_fidelity!, 0.10])
   if (embComputed) pairs.push([metrics.embedding_drift!, 0.10])
 
   const totalWeight = pairs.reduce((s, [, w]) => s + w, 0)
+
   const weightedMean = totalWeight > 0
     ? Math.round((pairs.reduce((s, [v, w]) => s + v * w, 0) / totalWeight) * 1000) / 1000
     : 0

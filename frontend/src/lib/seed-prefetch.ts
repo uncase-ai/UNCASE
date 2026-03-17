@@ -8,8 +8,10 @@ export interface RolePreset {
   id: string
   label: string
   description: string
+
   /** Domains where this role is most relevant. Empty = universal. */
   domains: string[]
+
   /** Category for grouping in search results */
   category: 'customer' | 'professional' | 'support' | 'specialist' | 'authority' | 'other'
 }
@@ -78,11 +80,13 @@ export const ROLE_CATALOG: RolePreset[] = [
 /** Search roles by query string — matches id, label, description. Domain-relevant first. */
 export function searchRoles(query: string, domain?: string): RolePreset[] {
   const q = query.toLowerCase().trim()
+
   if (!q) {
     // No query: show domain-specific first, then universal
     const domainRoles = domain
       ? ROLE_CATALOG.filter(r => r.domains.includes(domain) || r.domains.length === 0)
       : ROLE_CATALOG
+
     return domainRoles.slice(0, 20)
   }
 
@@ -122,6 +126,7 @@ export interface FlowTemplate {
   description: string
   steps: string[]
   domains: string[]
+
   /** Suggested turn range */
   turnRange: [number, number]
 }
@@ -331,10 +336,12 @@ export function searchFlows(query: string, domain?: string): FlowTemplate[] {
   return relevant
     .map(f => {
       let score = 0
+
       if (f.label.toLowerCase().includes(q)) score += 50
       if (f.description.toLowerCase().includes(q)) score += 30
       if (f.steps.some(s => s.toLowerCase().includes(q))) score += 20
       if (domain && f.domains.includes(domain)) score += 25
+
       return { flow: f, score }
     })
     .filter(s => s.score > 0)
@@ -403,6 +410,7 @@ export const RESTRICTION_CATALOG: RestrictionPreset[] = [
 
 export function getRestrictions(domain?: string): RestrictionPreset[] {
   if (!domain) return RESTRICTION_CATALOG.filter(r => r.domains.length === 0)
+
   return RESTRICTION_CATALOG.filter(r => r.domains.includes(domain) || r.domains.length === 0)
 }
 
@@ -423,6 +431,7 @@ export function getTagSuggestions(domain?: string, existing?: string[]): string[
   const universalTags = TAG_SUGGESTIONS._universal
   const all = [...domainTags, ...universalTags]
   const usedSet = new Set(existing ?? [])
+
   return all.filter(t => !usedSet.has(t))
 }
 
@@ -474,5 +483,6 @@ export const OBJECTIVE_TEMPLATES: ObjectiveTemplate[] = [
 
 export function getObjectiveTemplates(domain?: string): ObjectiveTemplate[] {
   if (!domain) return OBJECTIVE_TEMPLATES
+
   return OBJECTIVE_TEMPLATES.filter(t => t.domain === domain)
 }
