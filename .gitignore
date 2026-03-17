@@ -94,9 +94,20 @@ docs/investor-readiness-analysis.md
 docs/plan_de_desarrollo.md
 docs/checklist_validacion.md
 docs/prompt_reproducibilidad.md
+docs/video-script.md
 
-# Internal scripts
+# Root-level PDFs (superseded by docs/whitepaper/)
+/*.pdf
+
+# Internal / one-off scripts
 scripts/generate_business_proposal.py
+scripts/generate_features_*.py
+scripts/demo-*.md
+scripts/deploy_*.sh
+scripts/setup_global_*.sh
+scripts/start_*.sh
+scripts/train_*.sh
+scripts/vast_*.sh
 
 # Curated seed packages (proprietary training data)
 uncase/domains/seed_packages/
