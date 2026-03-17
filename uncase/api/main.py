@@ -135,6 +135,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     setup_logging(log_level=settings.uncase_log_level, json_output=settings.is_production)
     init_engine(settings)
     await _hydrate_tools_from_db()
+    await _seed_featured_content()
 
     webhook_task = asyncio.create_task(_webhook_scheduler())
     blockchain_task = asyncio.create_task(_blockchain_scheduler())
@@ -209,6 +210,23 @@ async def _hydrate_tools_from_db() -> None:
 
             _logger.info("hydration_complete", plugins=plugin_count, custom_tools=tool_count)
             break  # Only need one session
+
+
+async def _seed_featured_content() -> None:
+    """Load featured seeds into an empty database on first deploy.
+
+    Idempotent: skips if seeds already exist. Non-fatal on failure.
+    """
+    with contextlib.suppress(Exception):
+        from uncase.db.engine import get_async_session
+        from uncase.db.seed_data import load_featured_seeds
+        from uncase.log_config import get_logger
+
+        _logger = get_logger("uncase.seed_content")
+
+        async for session in get_async_session():
+            await load_featured_seeds(session)
+            break
 
 
 def create_app() -> FastAPI:

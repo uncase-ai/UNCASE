@@ -190,6 +190,7 @@ async def chat_proxy(
             max_tokens=request.max_tokens,
             api_key=api_key,
             api_base=provider.api_base,
+            timeout=get_settings().llm_timeout,
             **({"tools": [t.model_dump() for t in request.tools]} if request.tools else {}),
             **({"tool_choice": request.tool_choice} if request.tool_choice else {}),
         )
@@ -323,6 +324,7 @@ async def chat_proxy_stream(
                 api_key=api_key,
                 api_base=provider.api_base,
                 stream=True,
+                timeout=get_settings().llm_timeout,
                 **({"tools": [t.model_dump() for t in request.tools]} if request.tools else {}),
                 **({"tool_choice": request.tool_choice} if request.tool_choice else {}),
             )

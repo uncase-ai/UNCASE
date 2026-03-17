@@ -554,6 +554,7 @@ class LiteLLMGenerator(BaseGenerator):
                 {"role": "user", "content": user_prompt},
             ],
             "max_tokens": self._config.max_tokens,
+            "timeout": 90,  # Generation prompts are large — allow more time
         }
 
         if self._api_key:

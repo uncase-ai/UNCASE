@@ -5,11 +5,11 @@ set -e
 export PATH="/app/.venv/bin:$PATH"
 
 echo "Running database migrations..."
-if /app/.venv/bin/python -m alembic upgrade head; then
-    echo "Migrations completed successfully."
-else
-    echo "WARNING: Migrations failed (exit $?). Starting API anyway..."
+if ! /app/.venv/bin/python -m alembic upgrade head; then
+    echo "ERROR: Migrations failed. Refusing to start with stale schema."
+    exit 1
 fi
+echo "Migrations completed successfully."
 
 echo "Starting UNCASE API..."
 exec /app/.venv/bin/python -m uvicorn uncase.api.main:app \

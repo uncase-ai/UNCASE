@@ -61,6 +61,10 @@ class QualityReport(BaseModel):
     composite_score: float = Field(..., ge=0.0, le=1.0, description="Composite quality score")
     passed: bool = Field(..., description="Whether the conversation meets all thresholds")
     failures: list[str] = Field(default_factory=list, description="List of failed threshold checks")
+    skipped_metrics: list[str] = Field(
+        default_factory=list,
+        description="Metrics that were not computed (API unavailable) — shown as neutral 0.5 in scores",
+    )
     evaluated_at: datetime = Field(default_factory=lambda: datetime.now(UTC), description="Evaluation timestamp")
 
 

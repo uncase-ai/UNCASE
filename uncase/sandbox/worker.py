@@ -340,6 +340,7 @@ async def run_generation(payload: dict[str, Any]) -> dict[str, Any]:
             ],
             "temperature": adjusted_temp,
             "max_tokens": 4096,
+            "timeout": 90,
         }
         if api_key:
             kwargs["api_key"] = api_key

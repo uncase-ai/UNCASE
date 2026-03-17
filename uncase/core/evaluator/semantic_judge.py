@@ -179,6 +179,7 @@ Respond with ONLY a JSON object:
                 "temperature": 0.0,
                 "max_tokens": 300,
                 "response_format": {"type": "json_object"},
+                "timeout": 60,
             }
             if self._api_key:
                 kwargs["api_key"] = self._api_key
@@ -278,6 +279,7 @@ class EmbeddingDriftMetric(BaseMetric):
             kwargs: dict[str, Any] = {
                 "model": self._model,
                 "input": [seed_text[:8000], conv_text[:8000]],  # Respect token limits
+                "timeout": 30,
             }
             if self._api_key:
                 kwargs["api_key"] = self._api_key

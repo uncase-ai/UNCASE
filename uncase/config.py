@@ -43,6 +43,7 @@ class UNCASESettings(BaseSettings):
     anthropic_api_key: str = ""
     gemini_api_key: str = ""
     google_api_key: str = ""
+    llm_timeout: int = Field(default=60, ge=10, le=300)  # seconds
 
     # -- Layer 0: Agentic Extraction Loop --
     layer0_max_turns: int = Field(default=15, ge=3, le=50)

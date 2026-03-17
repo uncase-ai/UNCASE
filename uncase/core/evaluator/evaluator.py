@@ -14,7 +14,13 @@ from uncase.core.evaluator.metrics.privacy import PrivacyMetric
 from uncase.core.evaluator.metrics.rouge import ROUGELMetric
 from uncase.core.evaluator.metrics.tool_call import ToolCallValidatorMetric
 from uncase.core.evaluator.semantic_judge import EmbeddingDriftMetric, SemanticFidelityMetric
-from uncase.schemas.quality import QualityMetrics, QualityReport, compute_composite_score
+from uncase.schemas.quality import (
+    _NEUTRAL_SCORE,
+    OPTIONAL_METRICS,
+    QualityMetrics,
+    QualityReport,
+    compute_composite_score,
+)
 
 if TYPE_CHECKING:
     from uncase.core.evaluator.metrics.base import BaseMetric
@@ -94,6 +100,19 @@ class ConversationEvaluator(BaseEvaluator):
                 score = metric.compute(conversation, seed)
             scores[metric.name] = max(0.0, min(1.0, score))  # Clamp to [0, 1]
 
+        # Detect which optional metrics came back at neutral (weren't computed)
+        skipped: list[str] = [
+            name for name in OPTIONAL_METRICS
+            if name in scores and abs(scores[name] - _NEUTRAL_SCORE) < 1e-9
+        ]
+        if skipped:
+            logger.warning(
+                "metrics_skipped",
+                conversation_id=conversation.conversation_id,
+                skipped=skipped,
+                reason="LLM API unavailable or returned empty response",
+            )
+
         # Build QualityMetrics from computed scores.
         # Memorization is set to 0.0 by default — it requires a trained
         # model to test extraction attacks, which is a Layer 4 concern.
@@ -119,6 +138,7 @@ class ConversationEvaluator(BaseEvaluator):
             composite_score=composite,
             passed=passed,
             failures=failures,
+            skipped_metrics=skipped,
         )
 
         logger.info(

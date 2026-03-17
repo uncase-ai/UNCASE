@@ -355,6 +355,7 @@ class PromptShield:
                 max_tokens=500,
                 api_key=api_key,
                 response_format={"type": "json_object"},
+                timeout=30,
             )
 
             content = response.choices[0].message.content

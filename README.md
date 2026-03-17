@@ -13,7 +13,7 @@
   <a href="https://opensource.org/licenses/BSD-3-Clause"><img src="https://img.shields.io/badge/License-BSD_3--Clause-blue.svg" /></a>
   <a href="https://python.org"><img src="https://img.shields.io/badge/python-≥3.11-blue.svg" /></a>
   <a href="https://docs.astral.sh/ruff/"><img src="https://img.shields.io/badge/code%20style-ruff-000000.svg" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/tests-1160%2B%20passing-brightgreen.svg" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/tests-1400%2B%20passing-brightgreen.svg" /></a>
   <a href="#"><img src="https://img.shields.io/badge/API%20endpoints-106+-purple.svg" /></a>
   <a href="#"><img src="https://img.shields.io/badge/blockchain-Polygon%20PoS-7b3fe4.svg" /></a>
 </p>

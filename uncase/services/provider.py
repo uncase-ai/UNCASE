@@ -217,6 +217,7 @@ class ProviderService:
                 max_tokens=5,
                 api_key=api_key,
                 api_base=provider.api_base,
+                timeout=15,  # Fast ping — 15s is generous
             )
             latency = round((time.monotonic() - start) * 1000, 1)
 
