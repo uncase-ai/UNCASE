@@ -19,27 +19,30 @@ from uncase.db.models.provider import LLMProviderModel
 from uncase.db.models.seed import SeedModel
 from uncase.db.models.template_config import TemplateConfigModel
 from uncase.db.models.usage import UsageEventModel
+from uncase.db.models.user import OrgMembershipModel, UserModel
 from uncase.db.models.webhook import WebhookDeliveryModel, WebhookSubscriptionModel
 
 __all__ = [
     "APIKeyAuditLogModel",
     "APIKeyModel",
     "AuditLogModel",
-    "EvaluationHashModel",
-    "MerkleBatchModel",
-    "MerkleProofModel",
     "ConversationModel",
     "CustomToolModel",
+    "EvaluationHashModel",
     "EvaluationReportModel",
     "InstalledPluginModel",
     "JobModel",
     "KnowledgeChunkModel",
     "KnowledgeDocumentModel",
     "LLMProviderModel",
+    "MerkleBatchModel",
+    "MerkleProofModel",
+    "OrgMembershipModel",
     "OrganizationModel",
     "SeedModel",
     "TemplateConfigModel",
     "UsageEventModel",
+    "UserModel",
     "WebhookDeliveryModel",
     "WebhookSubscriptionModel",
 ]

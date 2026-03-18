@@ -908,3 +908,34 @@ export interface ImportWithToolScan extends ImportResult {
     domains_detected: string[]
   }
 }
+
+// ─── User Management ───
+export interface UserResponse {
+  id: string
+  email: string
+  display_name: string
+  is_active: boolean
+  created_at: string
+}
+
+export interface MembershipInfo {
+  organization_id: string
+  org_name: string
+  role: 'owner' | 'admin' | 'member' | 'viewer'
+}
+
+export interface UserMeResponse {
+  user: UserResponse
+  memberships: MembershipInfo[]
+}
+
+export interface RegisterRequest {
+  email: string
+  password: string
+  display_name: string
+}
+
+export interface PasswordLoginRequest {
+  email: string
+  password: string
+}

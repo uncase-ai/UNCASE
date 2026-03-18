@@ -61,6 +61,20 @@ class OrganizationNotFoundError(UNCASEError):
     detail = "Organization not found"
 
 
+class UserNotFoundError(UNCASEError):
+    """Requested user does not exist."""
+
+    status_code = 404
+    detail = "User not found"
+
+
+class EmailAlreadyExistsError(UNCASEError):
+    """Email address already registered."""
+
+    status_code = 409
+    detail = "Email address already registered"
+
+
 class APIKeyNotFoundError(UNCASEError):
     """Requested API key does not exist."""
 

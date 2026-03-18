@@ -2,12 +2,23 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
-import { ExternalLink, Lock, Menu, Moon, PanelLeftClose, PanelLeftOpen, Sun } from 'lucide-react'
+import { ExternalLink, Lock, LogOut, Menu, Moon, PanelLeftClose, PanelLeftOpen, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
 import { checkApiHealth } from '@/lib/api/client'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/auth-context'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 import { DashboardBreadcrumbs } from './breadcrumbs'
@@ -20,6 +31,7 @@ interface TopbarProps {
 
 export function Topbar({ sidebarCollapsed, onToggleSidebar, onOpenMobile }: TopbarProps) {
   const { theme, setTheme } = useTheme()
+  const { user, isDemo, logout } = useAuth()
   const [apiConnected, setApiConnected] = useState<boolean | null>(null)
 
   const checkHealth = useCallback(async () => {
@@ -35,6 +47,13 @@ export function Topbar({ sidebarCollapsed, onToggleSidebar, onOpenMobile }: Topb
 
     return () => clearInterval(id)
   }, [checkHealth])
+
+  const initials = user?.display_name
+    ?.split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) ?? '?'
 
   return (
     <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-background px-4">
@@ -137,6 +156,39 @@ export function Topbar({ sidebarCollapsed, onToggleSidebar, onOpenMobile }: Topb
         <Sun className="size-4 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
         <Moon className="absolute size-4 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
       </Button>
+
+      {/* User menu */}
+      {user && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative size-8 rounded-full">
+              <Avatar className="size-8">
+                <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-sm font-medium">{user.display_name}</span>
+                <span className="text-xs text-muted-foreground">{user.email}</span>
+                <div className="flex items-center gap-1.5 pt-0.5">
+                  <Badge variant="outline" className="px-1.5 py-0 text-[10px]">{user.role}</Badge>
+                  {isDemo && <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">Demo</Badge>}
+                </div>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem disabled>Profile</DropdownMenuItem>
+            <DropdownMenuItem disabled>Switch Organization</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={logout}>
+              <LogOut className="mr-2 size-4" />
+              Logout
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </header>
   )
 }

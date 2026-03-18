@@ -1,5 +1,5 @@
-import type { LoginRequest, TokenResponse, TokenVerifyResponse } from '@/types/api'
-import { apiPost } from './client'
+import type { LoginRequest, RegisterRequest, TokenResponse, TokenVerifyResponse, UserMeResponse } from '@/types/api'
+import { apiGet, apiPost } from './client'
 
 // ─── Auth API ───
 
@@ -45,4 +45,26 @@ export function clearTokens(): void {
   if (typeof window === 'undefined') return
   localStorage.removeItem(ACCESS_TOKEN_KEY)
   localStorage.removeItem(REFRESH_TOKEN_KEY)
+}
+
+// ─── User Management ───
+
+export function register(data: RegisterRequest, signal?: AbortSignal) {
+  return apiPost<TokenResponse>('/api/v1/auth/register', data, { signal })
+}
+
+export function loginWithPassword(email: string, password: string, signal?: AbortSignal) {
+  return apiPost<TokenResponse>('/api/v1/auth/login/password', { email, password }, { signal })
+}
+
+export function getMe(signal?: AbortSignal) {
+  return apiGet<UserMeResponse>('/api/v1/auth/me', { signal })
+}
+
+export function logout(): void {
+  clearTokens()
+
+  if (typeof window !== 'undefined') {
+    window.location.href = '/login'
+  }
 }

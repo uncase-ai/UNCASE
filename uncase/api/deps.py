@@ -11,9 +11,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uncase.config import UNCASESettings
 from uncase.db.engine import get_async_session
 from uncase.db.models.organization import OrganizationModel
-from uncase.exceptions import AuthenticationError, AuthorizationError
+from uncase.db.models.user import UserModel
+from uncase.exceptions import AuthenticationError, AuthorizationError, UserNotFoundError
 from uncase.log_config import get_logger
+from uncase.services.auth import AuthService
 from uncase.services.organization import OrganizationService
+from uncase.services.user import UserService
 
 _settings: UNCASESettings | None = None
 
@@ -110,3 +113,93 @@ def require_scopes(*required: str) -> Callable[..., object]:
         return org
 
     return _check_scopes
+
+
+# -- Role hierarchy for user-based auth --
+
+_ROLE_HIERARCHY: dict[str, int] = {
+    "viewer": 0,
+    "member": 1,
+    "admin": 2,
+    "owner": 3,
+}
+
+
+async def get_current_user(
+    session: Annotated[AsyncSession, Depends(get_db)],
+    settings: Annotated[UNCASESettings, Depends(get_settings)],
+    authorization: Annotated[str | None, Header()] = None,
+) -> UserModel:
+    """Authenticate the request via Bearer token and return the current user.
+
+    Supports both user-type and api_key-type JWT tokens. For api_key tokens,
+    the org is resolved but a synthetic user lookup is not performed -- the
+    sub claim is used to fetch the user.
+
+    Raises:
+        AuthenticationError: If token is missing, invalid, or user not found.
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise AuthenticationError("Authorization header with Bearer token is required")
+
+    token = authorization[7:]  # Strip "Bearer "
+
+    auth_service = AuthService(session, settings.api_secret_key)
+    payload = auth_service.verify_token(token)
+
+    user_id = payload.get("sub")
+    if not user_id:
+        raise AuthenticationError("Invalid token: missing subject")
+
+    # Fetch the user from DB (works for both user-type and api_key-type tokens)
+    user_service = UserService(session)
+    try:
+        return await user_service.get_by_id(user_id)
+    except UserNotFoundError as exc:
+        raise AuthenticationError("User not found or deactivated") from exc
+
+
+def require_role(*roles: str) -> Callable[..., object]:
+    """Factory that returns a dependency checking user's membership role for the current org.
+
+    Role hierarchy: owner > admin > member > viewer.
+    If the user has a role at or above the minimum required role, access is granted.
+
+    Usage:
+        @router.get("/admin", dependencies=[Depends(require_role("admin"))])
+    """
+    # Determine the minimum required level
+    min_level = max(_ROLE_HIERARCHY.get(r, 0) for r in roles)
+
+    async def _check_role(
+        session: Annotated[AsyncSession, Depends(get_db)],
+        settings: Annotated[UNCASESettings, Depends(get_settings)],
+        authorization: Annotated[str | None, Header()] = None,
+    ) -> UserModel:
+        if not authorization or not authorization.startswith("Bearer "):
+            raise AuthenticationError("Authorization header with Bearer token is required")
+
+        token = authorization[7:]
+        auth_service = AuthService(session, settings.api_secret_key)
+        payload = auth_service.verify_token(token)
+
+        user_id = payload.get("sub")
+        if not user_id:
+            raise AuthenticationError("Invalid token: missing subject")
+
+        user_service = UserService(session)
+        try:
+            user = await user_service.get_by_id(user_id)
+        except UserNotFoundError as exc:
+            raise AuthenticationError("User not found") from exc
+
+        # Check role from token payload
+        user_role = payload.get("role", "member")
+        user_level = _ROLE_HIERARCHY.get(user_role, 0)
+
+        if user_level < min_level:
+            raise AuthorizationError(f"Requires role: {', '.join(roles)}. Current role: {user_role}")
+
+        return user
+
+    return _check_role

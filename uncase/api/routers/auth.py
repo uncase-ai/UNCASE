@@ -9,9 +9,12 @@ from fastapi import APIRouter, Depends, Header
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from uncase.api.deps import get_db, get_settings
+from uncase.api.deps import get_current_user, get_db, get_settings
 from uncase.config import UNCASESettings
+from uncase.db.models.user import UserModel
+from uncase.schemas.user import MembershipInfo, UserLoginRequest, UserMeResponse, UserRegisterRequest, UserResponse
 from uncase.services.auth import AuthService
+from uncase.services.user import UserService
 
 router = APIRouter(prefix="/api/v1/auth", tags=["authentication"])
 
@@ -107,3 +110,77 @@ async def verify_token(
         )
     except Exception:
         return TokenVerifyResponse(valid=False)
+
+
+@router.post("/register", response_model=TokenResponse, status_code=201)
+async def register(
+    request: UserRegisterRequest,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    settings: Annotated[UNCASESettings, Depends(get_settings)],
+) -> TokenResponse:
+    """Register a new user account.
+
+    Creates a user, auto-creates a personal organization, assigns the user as owner,
+    and returns JWT tokens.
+    """
+    import re
+    import uuid as _uuid
+
+    from uncase.db.models.organization import OrganizationModel
+
+    user_service = UserService(session)
+    user = await user_service.register(
+        email=request.email,
+        password=request.password,
+        display_name=request.display_name,
+    )
+
+    # Auto-create a personal organization (inline to keep single transaction)
+    org_name = f"{request.display_name}'s Org"
+    slug = re.sub(r"[^a-z0-9]+", "-", org_name.lower().strip()).strip("-") or "org"
+    org = OrganizationModel(id=_uuid.uuid4().hex, name=org_name, slug=f"{slug}-{_uuid.uuid4().hex[:6]}")
+    session.add(org)
+    await session.flush()
+
+    # Create owner membership
+    await user_service.create_membership(user.id, org.id, role="owner")
+    await session.commit()
+
+    # Mint JWT tokens
+    auth_service = AuthService(session, settings.api_secret_key)
+    result = await auth_service.login_with_password(request.email, request.password)
+    return TokenResponse(**result)
+
+
+@router.post("/login/password", response_model=TokenResponse)
+async def login_password(
+    request: UserLoginRequest,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    settings: Annotated[UNCASESettings, Depends(get_settings)],
+) -> TokenResponse:
+    """Authenticate with email and password and receive JWT tokens.
+
+    Returns an access token (1h) and refresh token (30d).
+    Use the access token in the Authorization header: ``Bearer <token>``.
+    """
+    auth_service = AuthService(session, settings.api_secret_key)
+    result = await auth_service.login_with_password(request.email, request.password)
+    return TokenResponse(**result)
+
+
+@router.get("/me", response_model=UserMeResponse)
+async def get_me(
+    user: Annotated[UserModel, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> UserMeResponse:
+    """Return the current authenticated user with their org memberships.
+
+    Requires a valid Bearer token in the Authorization header.
+    """
+    user_service = UserService(session)
+    memberships_raw = await user_service.get_memberships(user.id)
+
+    return UserMeResponse(
+        user=UserResponse.model_validate(user),
+        memberships=[MembershipInfo(**m) for m in memberships_raw],
+    )

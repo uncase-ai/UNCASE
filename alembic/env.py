@@ -13,7 +13,14 @@ from alembic import context
 from uncase.db.base import Base
 
 # Import all models so they register with Base.metadata
-from uncase.db.models import APIKeyAuditLogModel, APIKeyModel, OrganizationModel, SeedModel  # noqa: F401
+from uncase.db.models import (  # noqa: F401
+    APIKeyAuditLogModel,
+    APIKeyModel,
+    OrganizationModel,
+    OrgMembershipModel,
+    SeedModel,
+    UserModel,
+)
 
 config = context.config
 

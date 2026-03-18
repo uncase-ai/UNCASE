@@ -10,7 +10,7 @@ import structlog
 from sqlalchemy import select
 
 from uncase.db.models.organization import APIKeyModel, OrganizationModel
-from uncase.exceptions import AuthenticationError
+from uncase.exceptions import AuthenticationError, UserNotFoundError
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -84,6 +84,58 @@ class AuthService:
         self._session = session
         self._secret = secret
 
+    async def login_with_password(self, email: str, password: str) -> dict[str, Any]:
+        """Authenticate with email/password and return JWT tokens.
+
+        Args:
+            email: User email address.
+            password: Plain-text password.
+
+        Returns:
+            Dict with ``access_token``, ``refresh_token``, ``token_type``, and ``expires_in``.
+
+        Raises:
+            AuthenticationError: If credentials are invalid.
+        """
+        from uncase.services.user import UserService
+
+        user_service = UserService(self._session)
+        user = await user_service.authenticate(email, password)
+        memberships = await user_service.get_memberships(user.id)
+
+        if not memberships:
+            raise AuthenticationError("User has no organization memberships")
+
+        first_org_id = memberships[0]["organization_id"]
+        first_role = memberships[0]["role"]
+
+        token_payload = {
+            "sub": user.id,
+            "type": "user",
+            "org_id": first_org_id,
+            "role": first_role,
+            "email": user.email,
+            "display_name": user.display_name,
+        }
+
+        access_token = _create_jwt(token_payload, self._secret, ACCESS_TOKEN_LIFETIME)
+        refresh_token = _create_jwt(
+            {"sub": user.id, "type": "refresh", "token_type": "user", "org_id": first_org_id},
+            self._secret,
+            REFRESH_TOKEN_LIFETIME,
+        )
+
+        logger.info("jwt_user_login_success", user_id=user.id, role=first_role)
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "expires_in": int(ACCESS_TOKEN_LIFETIME.total_seconds()),
+            "role": first_role,
+            "org_id": first_org_id,
+        }
+
     async def login_with_api_key(self, api_key: str) -> dict[str, Any]:
         """Authenticate with an API key and return JWT tokens.
 
@@ -156,6 +208,10 @@ class AuthService:
         if not org_id:
             raise AuthenticationError("Invalid refresh token: missing org_id")
 
+        # Handle user-type refresh tokens
+        if payload.get("token_type") == "user":
+            return await self._refresh_user_token(payload)
+
         # Verify org still exists and is active
         stmt = select(OrganizationModel).where(
             OrganizationModel.id == org_id,
@@ -206,6 +262,71 @@ class AuthService:
             "expires_in": int(ACCESS_TOKEN_LIFETIME.total_seconds()),
             "role": role,
             "org_id": org.id,
+        }
+
+    async def _refresh_user_token(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Refresh a user-type token.
+
+        Args:
+            payload: Decoded refresh token payload.
+
+        Returns:
+            New token pair dict.
+
+        Raises:
+            AuthenticationError: If the user is not found or deactivated.
+        """
+        from uncase.services.user import UserService
+
+        user_id = payload["sub"]
+        org_id = payload.get("org_id", "")
+
+        user_service = UserService(self._session)
+        try:
+            user = await user_service.get_by_id(user_id)
+        except UserNotFoundError as exc:
+            raise AuthenticationError("User not found or deactivated") from exc
+
+        if not user.is_active:
+            raise AuthenticationError("User account deactivated")
+
+        memberships = await user_service.get_memberships(user.id)
+        # Try to keep the same org, otherwise fall back to first
+        current_role = "member"
+        for m in memberships:
+            if m["organization_id"] == org_id:
+                current_role = m["role"]
+                break
+        else:
+            if memberships:
+                org_id = memberships[0]["organization_id"]
+                current_role = memberships[0]["role"]
+
+        new_access_payload = {
+            "sub": user.id,
+            "type": "user",
+            "org_id": org_id,
+            "role": current_role,
+            "email": user.email,
+            "display_name": user.display_name,
+        }
+
+        new_access = _create_jwt(new_access_payload, self._secret, ACCESS_TOKEN_LIFETIME)
+        new_refresh = _create_jwt(
+            {"sub": user.id, "type": "refresh", "token_type": "user", "org_id": org_id},
+            self._secret,
+            REFRESH_TOKEN_LIFETIME,
+        )
+
+        logger.info("jwt_user_refreshed", user_id=user.id)
+
+        return {
+            "access_token": new_access,
+            "refresh_token": new_refresh,
+            "token_type": "bearer",
+            "expires_in": int(ACCESS_TOKEN_LIFETIME.total_seconds()),
+            "role": current_role,
+            "org_id": org_id,
         }
 
     def verify_token(self, token: str) -> dict[str, Any]:

@@ -1,12 +1,15 @@
 import type { LucideIcon } from 'lucide-react'
 
 // ─── Navigation ───
+export type UserRole = 'owner' | 'admin' | 'member' | 'viewer'
+
 export interface NavItem {
   label: string
   href: string
   icon: LucideIcon
   badge?: string | number
   children?: NavItem[]
+  requiredRole?: UserRole
 }
 
 export interface NavGroup {

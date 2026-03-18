@@ -2,6 +2,8 @@ import type { ReactNode } from 'react'
 
 import type { Metadata } from 'next'
 
+import { AuthProvider } from '@/contexts/auth-context'
+import { AuthGuard } from '@/components/auth/auth-guard'
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
 
 export const metadata: Metadata = {
@@ -16,5 +18,11 @@ export const metadata: Metadata = {
 }
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  return <DashboardShell>{children}</DashboardShell>
+  return (
+    <AuthProvider>
+      <AuthGuard>
+        <DashboardShell>{children}</DashboardShell>
+      </AuthGuard>
+    </AuthProvider>
+  )
 }

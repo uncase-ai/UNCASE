@@ -119,14 +119,18 @@ frontend/public/images/logo uncase/
 # ── Website / Landing Page (→ uncase-ai/uncase-private) ────
 # Routes
 frontend/src/app/(pages)/
-frontend/src/app/(auth)/
+frontend/src/app/(auth)/forgot-password/
+frontend/src/app/(auth)/reset-password/
 frontend/src/app/hero-section-40/
 frontend/src/app/timeline-component-02/
 
 # Components (marketing, auth, layout, blog, docs, pricing)
 frontend/src/components/blocks/
 frontend/src/components/blog/
-frontend/src/components/auth/
+frontend/src/components/auth/login/login.tsx
+frontend/src/components/auth/register/register.tsx
+frontend/src/components/auth/forgot-password/
+frontend/src/components/auth/reset-password/
 frontend/src/components/layout/
 frontend/src/components/pricing/
 frontend/src/components/docs/

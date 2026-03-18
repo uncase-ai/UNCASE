@@ -95,6 +95,15 @@ async function request<T>(
     headers['X-API-Key'] = apiKey
   }
 
+  // Inject Bearer token if stored (user auth takes priority over API key)
+  if (typeof window !== 'undefined') {
+    const accessToken = localStorage.getItem('uncase-access-token')
+
+    if (accessToken && !headers['Authorization']) {
+      headers['Authorization'] = `Bearer ${accessToken}`
+    }
+  }
+
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const res = await fetch(url, {
