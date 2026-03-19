@@ -178,6 +178,17 @@ class BaseSeedExtraction(BaseModel):
         if obj is not None and isinstance(obj, BaseModel):
             setattr(obj, parts[-1], value)
 
+    def to_seed_dict(self) -> dict[str, Any]:
+        """Convert extracted data to a SeedSchema v1 dict.
+
+        Subclasses must override this to map their industry-specific fields
+        into the canonical seed format.
+
+        Returns:
+            A dict compatible with ``SeedSchema`` construction.
+        """
+        return self.to_extraction_dict()
+
     def to_extraction_dict(self) -> dict[str, Any]:
         """Serialize the schema to a flat dict keyed by dot-path field names.
 

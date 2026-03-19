@@ -49,21 +49,40 @@ class ExtractionResult(BaseModel):
 # ── System prompt for extraction ────────────────────────────────────
 
 EXTRACTOR_SYSTEM_PROMPT = """\
-You are a structured data extractor. You are given a conversation between \
-an interviewer and a user, plus a JSON schema that is partially filled.
+You are a structured data extractor for conversation seed design. You are \
+given a conversation between an interviewer and a user who is designing a \
+synthetic conversation scenario, plus a JSON schema that is partially filled.
 
-Your task is ONLY to extract factual information from the conversation and \
-map it to the fields of the schema.
+Your task is to extract information from the conversation and map it to the \
+schema fields using dot-path notation (e.g. 'cliente_perfil.tipo_cliente').
 
-Rules:
-- Do NOT invent data that is not explicitly in the conversation.
-- If a datum is ambiguous, assign confidence < 0.7.
-- If a datum is clear and explicit, assign confidence >= 0.9.
+CRITICAL RULES:
+- Extract ALL information the user has provided, even if stated indirectly.
+- Map natural language to the correct enum values listed in field descriptions.
+- If the user says synonyms or equivalent phrases, map them to the closest \
+  enum value (e.g. "primerizo" → "primera_vez", "WhatsApp" → "whatsapp", \
+  "casual" → "casual", "venta" → "venta_directa").
+- Assign confidence >= 0.9 when the mapping is clear (even if indirect).
+- Assign confidence 0.7-0.89 when the mapping is reasonable but not exact.
+- Assign confidence < 0.7 only when truly ambiguous.
 - Return ONLY the fields you can fill or update based on the conversation.
-- Use dot-path notation for field names (e.g. 'cliente_perfil.tipo_cliente').
 - For list fields, provide the complete list value.
 - Pay attention to the field descriptions to choose correct enum values.
 - Respond in valid JSON matching the ExtractionResult schema.
+
+COMMON MAPPINGS (examples):
+- "primerizo" / "primera vez" / "first time" → cliente_perfil.nivel_experiencia_compra = "primera_vez"
+- "ya ha comprado" / "experienced" → cliente_perfil.nivel_experiencia_compra = "ha_comprado_antes"
+- "particular" / "individual" → cliente_perfil.tipo_cliente = "particular"
+- "empresa" / "business" / "fleet" → cliente_perfil.tipo_cliente = "empresa" or "flotilla"
+- "whatsapp" / "chat" → contexto_conversacion.canal = "whatsapp"
+- "presencial" / "in person" → contexto_conversacion.canal = "presencial"
+- "teléfono" / "phone" → contexto_conversacion.canal = "telefono"
+- "explorando" / "just looking" → cliente_perfil.urgencia = "explorando"
+- "urgente" / "needs it now" → cliente_perfil.urgencia = "urgente"
+- "familia" / "family" → intencion.uso_principal = "familia"
+- "personal" / "for me" → intencion.uso_principal = "personal"
+- "seminuevo" / "used" implies tipo_escenario may be "venta_directa"
 """
 
 

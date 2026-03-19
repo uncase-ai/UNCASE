@@ -204,7 +204,7 @@ class TestInterviewerFallbacks:
             categories=["Perfil"],
             language="es",
         )
-        assert "asistente" in question.lower() or "cliente" in question.lower()
+        assert "escenario" in question.lower() or "conversación" in question.lower()
 
     async def test_question_fallback(self, failing_interviewer: Interviewer) -> None:
         """Fallback question is returned on provider failure."""
@@ -235,7 +235,7 @@ class TestInterviewerFallbacks:
             categories=["Profile"],
             language="en",
         )
-        assert "assistant" in question.lower() or "customer" in question.lower()
+        assert "scenario" in question.lower() or "conversation" in question.lower()
 
 
 # ===================================================================

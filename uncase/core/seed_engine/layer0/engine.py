@@ -251,7 +251,7 @@ class AgenticExtractionEngine:
             {
                 "type": "summary",
                 "content": summary,
-                "seed": self._state.get_seed_final(),
+                "seed": self._schema.to_seed_dict(),
                 "progress": self._state.get_progress(),
             }
         )
@@ -370,6 +370,8 @@ class AgenticExtractionEngine:
         language: str,
     ) -> str:
         """Generate the appropriate interviewer response for an action."""
+        captured = self._schema.to_extraction_dict()
+
         if action.action == ActionType.REQUEST_CLARIFICATION:
             return await self._interviewer.generate_clarification(
                 history=self._history,
@@ -377,11 +379,12 @@ class AgenticExtractionEngine:
                 ambiguous_fields=action.ambiguous_fields,
                 industry=industry,
                 language=language,
+                captured_data=captured,
             )
 
         if action.action == ActionType.PRESENT_SUMMARY:
             return await self._interviewer.generate_summary(
-                captured_data=self._schema.to_extraction_dict(),
+                captured_data=captured,
                 missing_fields=action.missing_fields,
                 ambiguous_fields=action.ambiguous_fields,
                 industry=industry,
@@ -395,6 +398,7 @@ class AgenticExtractionEngine:
             ambiguous_fields=action.ambiguous_fields,
             industry=industry,
             language=language,
+            captured_data=captured,
         )
 
     async def _build_summary_message(
@@ -414,7 +418,7 @@ class AgenticExtractionEngine:
         return {
             "type": "summary",
             "content": summary,
-            "seed": self._state.get_seed_final(),
+            "seed": self._schema.to_seed_dict(),
             "progress": self._state.get_progress(),
         }
 

@@ -23,34 +23,49 @@ logger = get_logger(__name__)
 # ── Prompt templates ────────────────────────────────────────────────
 
 _SYSTEM_PROMPT_TEMPLATE = """\
-You are an information capture specialist for the {industry} industry.
-Your goal is to gather the information needed to complete a data profile \
-through a natural conversation.
+You are a conversation seed engineer for the {industry} industry.
+Your goal is to help the user design a synthetic conversation scenario \
+that will be used to generate high-quality training data for AI fine-tuning.
+
+You are NOT capturing real customer data — you are designing a fictional \
+conversation blueprint. The user describes what kind of conversation they \
+want to simulate, and you extract the parameters needed to generate it.
 
 Language: Respond ONLY in {language}.
 
 Rules:
 - Ask ONE question per turn.
-- Be conversational and empathetic — do not sound like a form.
-- Use terminology and context relevant to the {industry} industry.
-- If the user provides extra information you did not ask for, acknowledge it naturally.
-- NEVER invent or assume user data.
-- Keep responses concise (2-4 sentences max).
+- Be direct and specific — state exactly what parameter you need and why.
+- Reference information the user has already provided to show progress.
+- Focus on what makes conversations VARIED and REALISTIC: scenario type, \
+  participant behaviors, conversation flow, constraints, and tone.
+- If the user provides multiple pieces of information at once, acknowledge \
+  ALL of them before asking the next question.
+- NEVER ask about something the user has already clearly answered.
+- Keep responses concise (2-3 sentences max).
 """
 
 _ASK_QUESTION_TEMPLATE = """\
+Information already captured:
+{captured_summary}
+
 Fields that we still need:
 {missing_fields}
 
 Conversation history:
 {history}
 
-Generate a single, natural question to ask the user about one of the \
-missing fields. Prioritize required fields. Be conversational and \
-industry-specific.
+Generate a single, direct question about ONE of the missing fields. \
+Be specific about what you need (e.g., "What communication channel \
+should this conversation take place on — in-person, WhatsApp, phone, \
+or web chat?"). DO NOT re-ask about information already captured. \
+Prioritize required fields.
 """
 
 _CLARIFICATION_TEMPLATE = """\
+Information already captured:
+{captured_summary}
+
 Fields that need clarification (ambiguous or unclear):
 {ambiguous_fields}
 
@@ -61,12 +76,12 @@ Conversation history:
 {history}
 
 The user previously gave unclear information about the ambiguous fields. \
-Rephrase the question in a different way to get clearer information. \
-Ask about ONE field only.
+Rephrase the question differently and give concrete options to choose from. \
+Ask about ONE field only. DO NOT repeat information already confirmed.
 """
 
 _SUMMARY_TEMPLATE = """\
-Here is what we have captured so far:
+Here is the conversation scenario we have designed:
 {captured_data}
 
 Fields still missing:
@@ -75,22 +90,25 @@ Fields still missing:
 Fields that are ambiguous:
 {ambiguous_fields}
 
-Generate a friendly, readable summary of everything captured so far. \
-If there are missing or ambiguous fields, mention them naturally \
-and ask if the user wants to add anything else.
+Generate a concise, structured summary of the conversation scenario. \
+List each parameter clearly. If there are missing or ambiguous fields, \
+ask the user specifically about those remaining items.
 """
 
 _INITIAL_QUESTION_TEMPLATE = """\
-You are starting a new data capture interview for the {industry} industry.
+You are starting a conversation seed design session for the {industry} industry.
 
-The goal is to capture information needed to generate synthetic training \
-conversations. Start with a warm greeting and ask the first question.
+The goal is to define ALL the parameters needed to generate realistic, \
+varied synthetic conversations for AI training. The user will describe \
+the conversation scenario they want to simulate.
 
-The schema has these main categories:
+The parameters we need to capture:
 {categories}
 
-Begin with a warm greeting and ask about the most natural starting point \
-(usually the type of customer or the main purpose of the vehicle).
+Begin with a brief greeting that explains what you will do together \
+(design a synthetic conversation scenario), then ask the user to describe \
+the type of conversation they want to simulate — what is the scenario, \
+and what should the interaction accomplish?
 """
 
 
@@ -161,6 +179,7 @@ class Interviewer:
         ambiguous_fields: list[FieldMeta],
         industry: str,
         language: str = "es",
+        captured_data: dict[str, object] | None = None,
     ) -> str:
         """Generate the next question based on the state.
 
@@ -170,6 +189,7 @@ class Interviewer:
             ambiguous_fields: Fields needing clarification.
             industry: Industry name.
             language: Language code.
+            captured_data: Currently captured field values (for context).
 
         Returns:
             The generated question text.
@@ -178,8 +198,10 @@ class Interviewer:
         history_text = self._format_history(history)
 
         missing_text = self._format_fields(missing_fields) or "None"
+        captured_summary = self._format_captured(captured_data) if captured_data else "Nothing yet."
 
         user = _ASK_QUESTION_TEMPLATE.format(
+            captured_summary=captured_summary,
             missing_fields=missing_text,
             history=history_text,
         )
@@ -203,6 +225,7 @@ class Interviewer:
         ambiguous_fields: list[FieldMeta],
         industry: str,
         language: str = "es",
+        captured_data: dict[str, object] | None = None,
     ) -> str:
         """Generate a clarification question for ambiguous fields.
 
@@ -212,14 +235,17 @@ class Interviewer:
             ambiguous_fields: Fields needing clarification.
             industry: Industry name.
             language: Language code.
+            captured_data: Currently captured field values (for context).
 
         Returns:
             A rephrased clarification question.
         """
         system = _SYSTEM_PROMPT_TEMPLATE.format(industry=industry, language=language)
         history_text = self._format_history(history)
+        captured_summary = self._format_captured(captured_data) if captured_data else "Nothing yet."
 
         user = _CLARIFICATION_TEMPLATE.format(
+            captured_summary=captured_summary,
             ambiguous_fields=self._format_fields(ambiguous_fields),
             missing_fields=self._format_fields(missing_fields) or "None",
             history=history_text,
@@ -305,18 +331,29 @@ class Interviewer:
         return "\n".join(lines)
 
     @staticmethod
+    def _format_captured(data: dict[str, object]) -> str:
+        """Format captured data for inclusion in a prompt."""
+        if not data:
+            return "Nothing yet."
+        lines: list[str] = []
+        for key, val in data.items():
+            if val is not None:
+                lines.append(f"- {key}: {val}")
+        return "\n".join(lines) if lines else "Nothing yet."
+
+    @staticmethod
     def _fallback_initial_question(industry: str, language: str) -> str:
         """Provide a fallback initial question when LLM fails."""
         if language == "es":
             return (
-                f"¡Hola! Soy tu asistente de captura de datos para {industry}. "
-                "Para comenzar, ¿podría decirme qué tipo de cliente será el "
-                "participante en la conversación? (particular, flotilla, empresa, revendedor)"
+                f"¡Hola! Te ayudaré a diseñar un escenario de conversación para {industry}. "
+                "Describe el tipo de conversación que quieres simular: "
+                "¿cuál es el escenario y qué debería lograr la interacción?"
             )
         return (
-            f"Hello! I'm your data capture assistant for {industry}. "
-            "To get started, could you tell me what type of customer will "
-            "participate in the conversation? (individual, fleet, business, reseller)"
+            f"Hello! I'll help you design a conversation scenario for {industry}. "
+            "Describe the type of conversation you want to simulate: "
+            "what's the scenario and what should the interaction accomplish?"
         )
 
     @staticmethod

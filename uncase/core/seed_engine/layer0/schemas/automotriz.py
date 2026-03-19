@@ -8,6 +8,8 @@ categories, each modeled as a separate ``BaseModel``.
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 from uncase.core.seed_engine.layer0.schemas.base import BaseSeedExtraction
@@ -259,3 +261,112 @@ class SeedAutomotriz(BaseSeedExtraction):
         """Return localized display name for this industry."""
         names = {"es": "Ventas Automotrices", "en": "Automotive Sales"}
         return names.get(locale, names["en"])
+
+    def to_seed_dict(self) -> dict[str, Any]:
+        """Convert extracted automotive parameters to a SeedSchema v1 dict.
+
+        Maps the automotive extraction fields into the canonical seed format
+        used by the SCSF pipeline.
+        """
+        # Build objective from scenario + intent
+        scenario_type = self.escenario.tipo_escenario or "venta_directa"
+        uso = self.intencion.uso_principal or "general"
+        tipo_cliente = self.cliente_perfil.tipo_cliente or "particular"
+        objetivo = (
+            f"Simular una conversación de {scenario_type} automotriz "
+            f"con un cliente {tipo_cliente} interesado en uso {uso}"
+        )
+
+        # Build roles based on client profile
+        nivel = self.cliente_perfil.nivel_experiencia_compra or "primera_vez"
+        urgencia = self.cliente_perfil.urgencia or "explorando"
+        canal = self.contexto_conversacion.canal or "presencial"
+
+        roles = ["customer", "sales_advisor"]
+        descripcion_roles: dict[str, str] = {
+            "customer": (
+                f"Cliente {tipo_cliente}, experiencia: {nivel}, "
+                f"urgencia: {urgencia}"
+            ),
+            "sales_advisor": "Asesor de ventas certificado con acceso al inventario",
+        }
+
+        # Build flow steps
+        flujo: list[str] = ["Saludo", "Detección de necesidad"]
+        if self.escenario.incluir_objeciones:
+            flujo.append("Manejo de objeciones")
+        if self.escenario.incluir_negociacion:
+            flujo.append("Negociación")
+        if self.escenario.incluir_comparacion_competencia:
+            flujo.append("Comparación")
+        flujo.extend(["Presentación/Cotización", "Cierre/Siguiente paso"])
+
+        # Build constraints
+        restricciones: list[str] = list(self.reglas_negocio.restricciones or [])
+        if not self.escenario.incluir_negociacion:
+            restricciones.append("No incluir negociación de precios")
+        if not self.escenario.incluir_comparacion_competencia:
+            restricciones.append("No comparar con la competencia")
+
+        # Build context
+        contexto_parts: list[str] = [f"Canal: {canal}"]
+        if self.intencion.tipo_vehiculo:
+            contexto_parts.append(f"Tipo de vehículo: {self.intencion.tipo_vehiculo}")
+        if self.intencion.marca_preferida:
+            contexto_parts.append(f"Marca: {self.intencion.marca_preferida}")
+        if self.intencion.modelo_especifico:
+            contexto_parts.append(f"Modelo: {self.intencion.modelo_especifico}")
+        if self.cliente_perfil.presupuesto_rango:
+            contexto_parts.append(f"Presupuesto: {self.cliente_perfil.presupuesto_rango}")
+        if self.reglas_negocio.inventario_disponible_contexto:
+            contexto_parts.append(f"Inventario: {self.reglas_negocio.inventario_disponible_contexto}")
+
+        # Map tone
+        tono = self.escenario.tono_esperado or "profesional"
+
+        # Build tags
+        etiquetas = ["ai-extracted", "automotive"]
+        if self.escenario.complejidad:
+            etiquetas.append(f"complexity:{self.escenario.complejidad}")
+
+        return {
+            "version": "1.0",
+            "dominio": "automotive.sales",
+            "idioma": self.idioma,
+            "etiquetas": etiquetas,
+            "roles": roles,
+            "descripcion_roles": descripcion_roles,
+            "objetivo": objetivo,
+            "tono": tono,
+            "pasos_turnos": {
+                "turnos_min": 4,
+                "turnos_max": 10,
+                "flujo_esperado": flujo,
+            },
+            "parametros_factuales": {
+                "contexto": ". ".join(contexto_parts),
+                "restricciones": restricciones,
+                "herramientas": [],
+                "metadata": {
+                    "extracted_by": "ai-interview",
+                    "scenario_type": scenario_type,
+                    "complexity": self.escenario.complejidad or "medio",
+                    "client_type": tipo_cliente,
+                    "experience_level": nivel,
+                    "urgency": urgencia,
+                    "channel": canal,
+                },
+            },
+            "privacidad": {
+                "pii_eliminado": True,
+                "metodo_anonimizacion": "presidio_v2",
+                "nivel_confianza": 0.99,
+                "campos_sensibles_detectados": [],
+            },
+            "metricas_calidad": {
+                "rouge_l_min": 0.20,
+                "fidelidad_min": 0.80,
+                "diversidad_lexica_min": 0.55,
+                "coherencia_dialogica_min": 0.65,
+            },
+        }
