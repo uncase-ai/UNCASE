@@ -37,7 +37,13 @@ def _make_automotive_seed() -> object:
         pasos_turnos=PasosTurnos(
             turnos_min=6,
             turnos_max=12,
-            flujo_esperado=["saludo", "consulta de necesidades", "presentacion de opciones", "financiamiento", "cierre"],
+            flujo_esperado=[
+                "saludo",
+                "consulta de necesidades",
+                "presentacion de opciones",
+                "financiamiento",
+                "cierre",
+            ],
         ),
         parametros_factuales=ParametrosFactuales(
             contexto="Concesionario ficticio de vehiculos nuevos y seminuevos",
@@ -55,16 +61,88 @@ def _high_quality_conversation(seed_id: str) -> Conversation:
         dominio="automotive.sales",
         idioma="es",
         turnos=[
-            ConversationTurn(turno=1, rol="vendedor", contenido="Buenos dias, bienvenido al concesionario. Soy asesor de ventas, en que puedo ayudarle hoy?"),
-            ConversationTurn(turno=2, rol="cliente", contenido="Hola, estoy buscando informacion sobre vehiculos sedanes del modelo actual. Necesito algo comodo para la familia."),
-            ConversationTurn(turno=3, rol="vendedor", contenido="Con mucho gusto le ayudo. Para entender mejor sus necesidades, podria decirme cuantas personas viajan regularmente y que tipo de recorridos realizan?"),
-            ConversationTurn(turno=4, rol="cliente", contenido="Somos cuatro personas. Principalmente uso urbano para ir al trabajo y los fines de semana salidas familiares a carretera."),
-            ConversationTurn(turno=5, rol="vendedor", contenido="Excelente. Tenemos tres opciones de sedanes que se ajustan perfectamente a su perfil. El modelo Corsa tiene amplio espacio interior y bajo consumo de combustible."),
-            ConversationTurn(turno=6, rol="cliente", contenido="Me interesa conocer los precios y las opciones de financiamiento disponibles para ese modelo."),
-            ConversationTurn(turno=7, rol="vendedor", contenido="El Corsa 2024 tiene un precio de lista de cuatrocientos cincuenta mil pesos mexicanos. Contamos con planes de financiamiento desde 48 hasta 72 mensualidades.", herramientas_usadas=["calculadora_financiera"]),
-            ConversationTurn(turno=8, rol="cliente", contenido="Las mensualidades de 60 meses me parecen adecuadas. Que enganche necesitaria y cual seria el pago mensual aproximado?"),
-            ConversationTurn(turno=9, rol="vendedor", contenido="Con un enganche del veinte por ciento, que serian noventa mil pesos, su mensualidad quedaria en aproximadamente ocho mil quinientos pesos. Incluye seguro el primer anio."),
-            ConversationTurn(turno=10, rol="cliente", contenido="Me parece una buena opcion. Me gustaria agendar una prueba de manejo para confirmar mi decision."),
+            ConversationTurn(
+                turno=1,
+                rol="vendedor",
+                contenido=(
+                    "Buenos dias, bienvenido al concesionario. Soy asesor de ventas, en que puedo ayudarle hoy?"
+                ),
+            ),
+            ConversationTurn(
+                turno=2,
+                rol="cliente",
+                contenido=(
+                    "Hola, estoy buscando informacion sobre vehiculos sedanes del"
+                    " modelo actual. Necesito algo comodo para la familia."
+                ),
+            ),
+            ConversationTurn(
+                turno=3,
+                rol="vendedor",
+                contenido=(
+                    "Con mucho gusto le ayudo. Para entender mejor sus necesidades,"
+                    " podria decirme cuantas personas viajan regularmente y que tipo"
+                    " de recorridos realizan?"
+                ),
+            ),
+            ConversationTurn(
+                turno=4,
+                rol="cliente",
+                contenido=(
+                    "Somos cuatro personas. Principalmente uso urbano para ir al"
+                    " trabajo y los fines de semana salidas familiares a carretera."
+                ),
+            ),
+            ConversationTurn(
+                turno=5,
+                rol="vendedor",
+                contenido=(
+                    "Excelente. Tenemos tres opciones de sedanes que se ajustan"
+                    " perfectamente a su perfil. El modelo Corsa tiene amplio espacio"
+                    " interior y bajo consumo de combustible."
+                ),
+            ),
+            ConversationTurn(
+                turno=6,
+                rol="cliente",
+                contenido=(
+                    "Me interesa conocer los precios y las opciones de financiamiento disponibles para ese modelo."
+                ),
+            ),
+            ConversationTurn(
+                turno=7,
+                rol="vendedor",
+                contenido=(
+                    "El Corsa 2024 tiene un precio de lista de cuatrocientos"
+                    " cincuenta mil pesos mexicanos. Contamos con planes de"
+                    " financiamiento desde 48 hasta 72 mensualidades."
+                ),
+                herramientas_usadas=["calculadora_financiera"],
+            ),
+            ConversationTurn(
+                turno=8,
+                rol="cliente",
+                contenido=(
+                    "Las mensualidades de 60 meses me parecen adecuadas. Que enganche"
+                    " necesitaria y cual seria el pago mensual aproximado?"
+                ),
+            ),
+            ConversationTurn(
+                turno=9,
+                rol="vendedor",
+                contenido=(
+                    "Con un enganche del veinte por ciento, que serian noventa mil"
+                    " pesos, su mensualidad quedaria en aproximadamente ocho mil"
+                    " quinientos pesos. Incluye seguro el primer anio."
+                ),
+            ),
+            ConversationTurn(
+                turno=10,
+                rol="cliente",
+                contenido=(
+                    "Me parece una buena opcion. Me gustaria agendar una prueba de manejo para confirmar mi decision."
+                ),
+            ),
         ],
         es_sintetica=True,
     )
@@ -77,12 +155,36 @@ def _low_diversity_conversation(seed_id: str) -> Conversation:
         dominio="automotive.sales",
         idioma="es",
         turnos=[
-            ConversationTurn(turno=1, rol="vendedor", contenido="Hola, bienvenido al concesionario. Bienvenido al concesionario."),
-            ConversationTurn(turno=2, rol="cliente", contenido="Hola, quiero un carro. Quiero un carro. Quiero un carro."),
-            ConversationTurn(turno=3, rol="vendedor", contenido="Tenemos carros. Tenemos carros buenos. Tenemos carros buenos aqui."),
-            ConversationTurn(turno=4, rol="cliente", contenido="Quiero un carro bueno. Quiero un carro bueno. Quiero un carro bueno."),
-            ConversationTurn(turno=5, rol="vendedor", contenido="El carro es bueno. El carro es bueno. El carro es bueno."),
-            ConversationTurn(turno=6, rol="cliente", contenido="Quiero el carro. Quiero el carro. Quiero el carro bueno."),
+            ConversationTurn(
+                turno=1,
+                rol="vendedor",
+                contenido="Hola, bienvenido al concesionario. Bienvenido al concesionario.",
+            ),
+            ConversationTurn(
+                turno=2,
+                rol="cliente",
+                contenido="Hola, quiero un carro. Quiero un carro. Quiero un carro.",
+            ),
+            ConversationTurn(
+                turno=3,
+                rol="vendedor",
+                contenido="Tenemos carros. Tenemos carros buenos. Tenemos carros buenos aqui.",
+            ),
+            ConversationTurn(
+                turno=4,
+                rol="cliente",
+                contenido="Quiero un carro bueno. Quiero un carro bueno. Quiero un carro bueno.",
+            ),
+            ConversationTurn(
+                turno=5,
+                rol="vendedor",
+                contenido="El carro es bueno. El carro es bueno. El carro es bueno.",
+            ),
+            ConversationTurn(
+                turno=6,
+                rol="cliente",
+                contenido="Quiero el carro. Quiero el carro. Quiero el carro bueno.",
+            ),
         ],
         es_sintetica=True,
     )
@@ -95,12 +197,36 @@ def _incoherent_conversation(seed_id: str) -> Conversation:
         dominio="automotive.sales",
         idioma="es",
         turnos=[
-            ConversationTurn(turno=1, rol="vendedor", contenido="Buenos dias, le interesa comprar un vehiculo sedan nuevo?"),
-            ConversationTurn(turno=2, rol="cliente", contenido="El clima esta muy agradable esta maniana, hace sol y buen tiempo."),
-            ConversationTurn(turno=3, rol="vendedor", contenido="La receta de cocina lleva tres huevos y mantequilla."),
-            ConversationTurn(turno=4, rol="cliente", contenido="Los partidos de futbol del fin de semana estuvieron muy emocionantes."),
-            ConversationTurn(turno=5, rol="vendedor", contenido="La astronomia estudia los cuerpos celestes del universo."),
-            ConversationTurn(turno=6, rol="cliente", contenido="Las flores del jardin necesitan agua diariamente para crecer bien."),
+            ConversationTurn(
+                turno=1,
+                rol="vendedor",
+                contenido="Buenos dias, le interesa comprar un vehiculo sedan nuevo?",
+            ),
+            ConversationTurn(
+                turno=2,
+                rol="cliente",
+                contenido=("El clima esta muy agradable esta maniana, hace sol y buen tiempo."),
+            ),
+            ConversationTurn(
+                turno=3,
+                rol="vendedor",
+                contenido="La receta de cocina lleva tres huevos y mantequilla.",
+            ),
+            ConversationTurn(
+                turno=4,
+                rol="cliente",
+                contenido=("Los partidos de futbol del fin de semana estuvieron muy emocionantes."),
+            ),
+            ConversationTurn(
+                turno=5,
+                rol="vendedor",
+                contenido="La astronomia estudia los cuerpos celestes del universo.",
+            ),
+            ConversationTurn(
+                turno=6,
+                rol="cliente",
+                contenido=("Las flores del jardin necesitan agua diariamente para crecer bien."),
+            ),
         ],
         es_sintetica=True,
     )
@@ -114,9 +240,23 @@ def _pii_contaminated_conversation(seed_id: str) -> Conversation:
         idioma="es",
         turnos=[
             ConversationTurn(turno=1, rol="vendedor", contenido="Buenos dias, bienvenido al concesionario."),
-            ConversationTurn(turno=2, rol="cliente", contenido="Hola, mi nombre es Juan Perez y mi email es juan.perez@correo.com y mi telefono es 555-123-4567"),
-            ConversationTurn(turno=3, rol="vendedor", contenido="Gracias Juan, le envio la cotizacion a juan.perez@correo.com"),
-            ConversationTurn(turno=4, rol="cliente", contenido="Mi numero de seguro social es 123-45-6789 y vivo en Av Principal 123, Ciudad."),
+            ConversationTurn(
+                turno=2,
+                rol="cliente",
+                contenido=(
+                    "Hola, mi nombre es Juan Perez y mi email es juan.perez@correo.com y mi telefono es 555-123-4567"
+                ),
+            ),
+            ConversationTurn(
+                turno=3,
+                rol="vendedor",
+                contenido="Gracias Juan, le envio la cotizacion a juan.perez@correo.com",
+            ),
+            ConversationTurn(
+                turno=4,
+                rol="cliente",
+                contenido=("Mi numero de seguro social es 123-45-6789 y vivo en Av Principal 123, Ciudad."),
+            ),
         ],
         es_sintetica=True,
     )
@@ -521,12 +661,36 @@ class TestCrossDomainEvaluation:
             dominio=domain,
             idioma="es",
             turnos=[
-                ConversationTurn(turno=1, rol="vendedor", contenido="Buenos dias, en que puedo ayudarle con su consulta?"),
-                ConversationTurn(turno=2, rol="cliente", contenido="Necesito informacion detallada sobre el servicio."),
-                ConversationTurn(turno=3, rol="vendedor", contenido="Con gusto le explico las opciones disponibles para usted."),
-                ConversationTurn(turno=4, rol="cliente", contenido="Perfecto, me interesa saber mas sobre los costos y requisitos."),
-                ConversationTurn(turno=5, rol="vendedor", contenido="Los costos varian segun el plan elegido. Permita mostrarle la tabla."),
-                ConversationTurn(turno=6, rol="cliente", contenido="Gracias por la informacion, lo voy a considerar con detenimiento."),
+                ConversationTurn(
+                    turno=1,
+                    rol="vendedor",
+                    contenido="Buenos dias, en que puedo ayudarle con su consulta?",
+                ),
+                ConversationTurn(
+                    turno=2,
+                    rol="cliente",
+                    contenido="Necesito informacion detallada sobre el servicio.",
+                ),
+                ConversationTurn(
+                    turno=3,
+                    rol="vendedor",
+                    contenido="Con gusto le explico las opciones disponibles para usted.",
+                ),
+                ConversationTurn(
+                    turno=4,
+                    rol="cliente",
+                    contenido="Perfecto, me interesa saber mas sobre los costos y requisitos.",
+                ),
+                ConversationTurn(
+                    turno=5,
+                    rol="vendedor",
+                    contenido=("Los costos varian segun el plan elegido. Permita mostrarle la tabla."),
+                ),
+                ConversationTurn(
+                    turno=6,
+                    rol="cliente",
+                    contenido=("Gracias por la informacion, lo voy a considerar con detenimiento."),
+                ),
             ],
             es_sintetica=True,
         )

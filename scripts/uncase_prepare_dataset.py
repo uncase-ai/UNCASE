@@ -33,15 +33,12 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import math
 import os
 import re
-import sys
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Data Structures
@@ -767,8 +764,7 @@ def print_advisor_report(profile: DatasetProfile, rec: TrainingRecommendation, v
     print(f"|  {'Conversations:':<25} {profile.total_conversations:>26,} |")
     print(f"|  {'Avg turns:':<25} {profile.avg_turns_per_conversation:>26.1f} |")
     print(f"|  {'Avg tokens/turn:':<25} {profile.avg_tokens_per_turn:>26.0f} |")
-    print(f"|  {'Tool usage:':<25} {profile.tool_call_percentage:>22.0f}%"
-          f" ({len(profile.unique_tools_used)} tools) |")
+    print(f"|  {'Tool usage:':<25} {profile.tool_call_percentage:>22.0f}% ({len(profile.unique_tools_used)} tools) |")
     print(f"|  {'Quality score:':<25} {profile.quality_score:>26.2f} |")
     print(f"|  {'Language:':<25} {profile.language:>26} |")
     print(f"|  {'Max seq needed (p95):':<25} {profile.p95_sequence_length:>20} tokens |")

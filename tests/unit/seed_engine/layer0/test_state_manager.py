@@ -6,9 +6,7 @@ import pytest
 
 from uncase.core.seed_engine.layer0.config import Layer0Config
 from uncase.core.seed_engine.layer0.schemas.automotriz import SeedAutomotriz
-from uncase.core.seed_engine.layer0.schemas.base import FieldStatus
 from uncase.core.seed_engine.layer0.state_manager import ActionType, StateManager
-
 
 # ── Fixtures ────────────────────────────────────────────────────────
 
@@ -60,44 +58,56 @@ class TestFieldUpdates:
 
     def test_update_single_field(self, state: StateManager) -> None:
         """Updating a single field changes its status and confidence."""
-        updated = state.update({
-            "cliente_perfil.tipo_cliente": {"value": "particular", "confidence": 0.95},
-        })
+        updated = state.update(
+            {
+                "cliente_perfil.tipo_cliente": {"value": "particular", "confidence": 0.95},
+            }
+        )
         assert "cliente_perfil.tipo_cliente" in updated
         assert state.schema.cliente_perfil.tipo_cliente == "particular"
 
     def test_update_multiple_fields(self, state: StateManager) -> None:
         """Multiple fields can be updated in one call."""
-        updated = state.update({
-            "cliente_perfil.tipo_cliente": {"value": "empresa", "confidence": 0.9},
-            "cliente_perfil.urgencia": {"value": "decidiendo", "confidence": 0.85},
-            "intencion.uso_principal": {"value": "negocio", "confidence": 0.92},
-        })
+        updated = state.update(
+            {
+                "cliente_perfil.tipo_cliente": {"value": "empresa", "confidence": 0.9},
+                "cliente_perfil.urgencia": {"value": "decidiendo", "confidence": 0.85},
+                "intencion.uso_principal": {"value": "negocio", "confidence": 0.92},
+            }
+        )
         assert len(updated) == 3
 
     def test_high_confidence_field_not_overwritten(self, state: StateManager) -> None:
         """A field with confidence >= 0.9 is protected from lower-confidence overwrites."""
-        state.update({
-            "cliente_perfil.tipo_cliente": {"value": "particular", "confidence": 0.95},
-        })
-        state.update({
-            "cliente_perfil.tipo_cliente": {"value": "empresa", "confidence": 0.6},
-        })
+        state.update(
+            {
+                "cliente_perfil.tipo_cliente": {"value": "particular", "confidence": 0.95},
+            }
+        )
+        state.update(
+            {
+                "cliente_perfil.tipo_cliente": {"value": "empresa", "confidence": 0.6},
+            }
+        )
         # Original value preserved
         assert state.schema.cliente_perfil.tipo_cliente == "particular"
 
     def test_unknown_field_skipped(self, state: StateManager) -> None:
         """Unknown field names are silently skipped."""
-        updated = state.update({
-            "nonexistent.field": {"value": "test", "confidence": 0.9},
-        })
+        updated = state.update(
+            {
+                "nonexistent.field": {"value": "test", "confidence": 0.9},
+            }
+        )
         assert len(updated) == 0
 
     def test_none_value_skipped(self, state: StateManager) -> None:
         """None values are not applied."""
-        updated = state.update({
-            "cliente_perfil.tipo_cliente": {"value": None, "confidence": 0.9},
-        })
+        updated = state.update(
+            {
+                "cliente_perfil.tipo_cliente": {"value": None, "confidence": 0.9},
+            }
+        )
         assert len(updated) == 0
 
     def test_confidence_status_mapping(self, state: StateManager) -> None:
@@ -175,10 +185,12 @@ class TestCompletionDetection:
 
     def test_partial_required_not_complete(self, state: StateManager) -> None:
         """Only partially filling required fields does not trigger completion."""
-        state.update({
-            "cliente_perfil.tipo_cliente": {"value": "particular", "confidence": 0.95},
-            "cliente_perfil.urgencia": {"value": "urgente", "confidence": 0.9},
-        })
+        state.update(
+            {
+                "cliente_perfil.tipo_cliente": {"value": "particular", "confidence": 0.95},
+                "cliente_perfil.urgencia": {"value": "urgente", "confidence": 0.9},
+            }
+        )
         assert state.is_complete is False
 
 
@@ -198,9 +210,11 @@ class TestNextAction:
 
     def test_ambiguous_triggers_clarification(self, state: StateManager) -> None:
         """Ambiguous fields trigger a clarification action."""
-        state.update({
-            "cliente_perfil.tipo_cliente": {"value": "particular", "confidence": 0.5},
-        })
+        state.update(
+            {
+                "cliente_perfil.tipo_cliente": {"value": "particular", "confidence": 0.5},
+            }
+        )
         action = state.decide_next_action()
         assert action.action == ActionType.REQUEST_CLARIFICATION
         assert len(action.ambiguous_fields) > 0
@@ -253,8 +267,10 @@ class TestProgressTracking:
 
     def test_progress_updates_after_fill(self, state: StateManager) -> None:
         """Progress reflects filled fields."""
-        state.update({
-            "cliente_perfil.tipo_cliente": {"value": "particular", "confidence": 0.95},
-        })
+        state.update(
+            {
+                "cliente_perfil.tipo_cliente": {"value": "particular", "confidence": 0.95},
+            }
+        )
         progress = state.get_progress()
         assert progress["filled_fields"] >= 1

@@ -97,7 +97,7 @@ class ConversationService:
                 )
                 self.session.add(model)
                 created += 1
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 errors.append(f"{item.conversation_id}: {exc}")
 
         if created > 0:

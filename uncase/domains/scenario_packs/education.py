@@ -144,8 +144,7 @@ EDUCATION_SCENARIOS: list[ScenarioTemplate] = [
         description="Current teaching approach doesn't match student's learning style.",
         domain=_DOMAIN,
         intent=(
-            "Tutor realizes the current explanation approach isn't working and pivots "
-            "to a different learning modality."
+            "Tutor realizes the current explanation approach isn't working and pivots to a different learning modality."
         ),
         skill_level="intermediate",
         expected_tool_sequence=["buscar_recurso"],

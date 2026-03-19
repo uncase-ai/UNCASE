@@ -50,8 +50,8 @@ class GeminiProvider(BaseLLMProvider):
                 import google.generativeai as genai
 
                 if self._api_key:
-                    genai.configure(api_key=self._api_key)
-                self._client = genai.GenerativeModel(self._model)
+                    genai.configure(api_key=self._api_key)  # type: ignore[attr-defined]
+                self._client = genai.GenerativeModel(self._model)  # type: ignore[attr-defined]
             except ImportError as exc:
                 msg = (
                     "The 'google-generativeai' package is required for the "
@@ -90,7 +90,7 @@ class GeminiProvider(BaseLLMProvider):
                 },
             )
 
-            text = response.text
+            text: str = str(response.text)
             logger.debug("gemini_response_generated", model=self._model, length=len(text))
             return text
 

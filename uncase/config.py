@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+if TYPE_CHECKING:
+    from uncase.core.seed_engine.layer0.config import Layer0Config
 
 
 class UNCASESettings(BaseSettings):
@@ -114,12 +117,7 @@ class UNCASESettings(BaseSettings):
     @property
     def llm_available(self) -> bool:
         """Check if at least one LLM provider API key is configured."""
-        return bool(
-            self.litellm_api_key
-            or self.anthropic_api_key
-            or self.gemini_api_key
-            or self.google_api_key
-        )
+        return bool(self.litellm_api_key or self.anthropic_api_key or self.gemini_api_key or self.google_api_key)
 
     @property
     def cors_origins_list(self) -> list[str]:

@@ -25,7 +25,7 @@ from uncase.core.evaluator.evaluator import ConversationEvaluator
 from uncase.core.generator.litellm_generator import GenerationConfig, LiteLLMGenerator
 from uncase.core.lora_pipeline.pipeline import LoraPipeline
 from uncase.core.seed_engine.engine import SeedEngine
-from uncase.exceptions import GenerationError, TrainingError
+from uncase.exceptions import TrainingError
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -277,10 +277,7 @@ class PipelineOrchestrator:
 
         try:
             # Pair conversations with their origin seeds (round-robin)
-            conv_seed_pairs = [
-                (conv, seeds[i % len(seeds)])
-                for i, conv in enumerate(all_conversations)
-            ]
+            conv_seed_pairs = [(conv, seeds[i % len(seeds)]) for i, conv in enumerate(all_conversations)]
 
             completed = 0
             total_convs = len(conv_seed_pairs)

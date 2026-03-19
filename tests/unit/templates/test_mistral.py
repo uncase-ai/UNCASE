@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from uncase.schemas.conversation import Conversation, ConversationTurn
 from uncase.templates.base import ToolCallMode
 from uncase.templates.mistral import MistralChatTemplate
-from uncase.tools.schemas import ToolDefinition
+
+if TYPE_CHECKING:
+    from uncase.tools.schemas import ToolDefinition
 
 
 def test_render_basic(basic_conversation: Conversation) -> None:

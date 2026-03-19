@@ -11,9 +11,8 @@ from uncase.exceptions import GenerationError
 from uncase.schemas.conversation import Conversation, ConversationTurn
 from uncase.schemas.generation import GenerateResponse, GenerationSummary
 from uncase.schemas.quality import QualityMetrics, QualityReport
-from uncase.schemas.seed import MetricasCalidad, PasosTurnos, ParametrosFactuales, Privacidad, SeedSchema
+from uncase.schemas.seed import MetricasCalidad, ParametrosFactuales, PasosTurnos, Privacidad, SeedSchema
 from uncase.services.generator import GeneratorService
-
 
 # ---------------------------------------------------------------------------
 # Helpers — fictional test data factories
@@ -303,9 +302,7 @@ class TestGenerate:
                 composite_score=0.3,
                 failures=["diversidad_lexica=0.40 (min 0.55)"],
             )
-            mock_evaluator.evaluate = AsyncMock(
-                side_effect=[report_pass, report_fail, report_pass]
-            )
+            mock_evaluator.evaluate = AsyncMock(side_effect=[report_pass, report_fail, report_pass])
 
             response = await service.generate(seed, count=3, evaluate_after=True)
 
@@ -330,9 +327,7 @@ class TestGenerate:
         assert response.generation_summary.avg_composite_score is None
         assert response.generation_summary.total_generated == 1
 
-    async def test_generate_empty_conversations_skip_evaluation(
-        self, service: GeneratorService
-    ) -> None:
+    async def test_generate_empty_conversations_skip_evaluation(self, service: GeneratorService) -> None:
         seed = _make_seed()
 
         with (
@@ -369,9 +364,7 @@ class TestGenerate:
             mock_gen = mock_gen_cls.return_value
             mock_gen.generate = AsyncMock(return_value=[mock_conv])
 
-            response = await service.generate(
-                seed, count=1, model="gemini/gemini-2.5-pro", evaluate_after=False
-            )
+            response = await service.generate(seed, count=1, model="gemini/gemini-2.5-pro", evaluate_after=False)
 
         assert response.generation_summary.model_used == "gemini/gemini-2.5-pro"
 
@@ -383,9 +376,7 @@ class TestGenerate:
             mock_gen = mock_gen_cls.return_value
             mock_gen.generate = AsyncMock(return_value=[mock_conv])
 
-            response = await service.generate(
-                seed, count=1, temperature=1.2, evaluate_after=False
-            )
+            response = await service.generate(seed, count=1, temperature=1.2, evaluate_after=False)
 
         assert response.generation_summary.temperature == 1.2
 
@@ -397,9 +388,7 @@ class TestGenerate:
             mock_gen = mock_gen_cls.return_value
             mock_gen.generate = AsyncMock(return_value=[mock_conv])
 
-            response = await service.generate(
-                seed, count=1, language_override="en", evaluate_after=False
-            )
+            await service.generate(seed, count=1, language_override="en", evaluate_after=False)
 
         # Verify the config was built with language_override
         call_kwargs = mock_gen_cls.call_args
@@ -428,9 +417,7 @@ class TestGenerate:
         ):
             mock_gen = mock_gen_cls.return_value
             mock_gen.generate = AsyncMock(return_value=convs)
-            mock_evaluator.evaluate = AsyncMock(
-                return_value=_make_quality_report(passed=True, composite_score=0.88)
-            )
+            mock_evaluator.evaluate = AsyncMock(return_value=_make_quality_report(passed=True, composite_score=0.88))
 
             response = await service.generate(seed, count=2, evaluate_after=True)
 
@@ -467,9 +454,7 @@ class TestGenerateProviderResolution:
             mock_gen = mock_gen_cls.return_value
             mock_gen.generate = AsyncMock(return_value=[mock_conv])
 
-            response = await service.generate(
-                seed, count=1, provider_id="prov-test-001", evaluate_after=False
-            )
+            response = await service.generate(seed, count=1, provider_id="prov-test-001", evaluate_after=False)
 
             # Should have called _resolve_from_provider
             mock_resolve.assert_awaited_once_with("prov-test-001")
@@ -534,9 +519,7 @@ class TestGenerateErrors:
 
         with patch("uncase.services.generator.LiteLLMGenerator") as mock_gen_cls:
             mock_gen = mock_gen_cls.return_value
-            mock_gen.generate = AsyncMock(
-                side_effect=GenerationError("LLM returned empty response")
-            )
+            mock_gen.generate = AsyncMock(side_effect=GenerationError("LLM returned empty response"))
 
             with pytest.raises(GenerationError, match="LLM returned empty response"):
                 await service.generate(seed, count=1)
@@ -547,11 +530,9 @@ class TestGenerateErrors:
 
         with patch("uncase.services.generator.LiteLLMGenerator") as mock_gen_cls:
             mock_gen = mock_gen_cls.return_value
-            mock_gen.generate = AsyncMock(
-                side_effect=TimeoutError("Connection timed out")
-            )
+            mock_gen.generate = AsyncMock(side_effect=TimeoutError("Connection timed out"))
 
-            with pytest.raises(GenerationError, match="Generation failed.*Connection timed out"):
+            with pytest.raises(GenerationError, match=r"Generation failed.*Connection timed out"):
                 await service.generate(seed, count=1)
 
     async def test_llm_timeout_raises_generation_error(self) -> None:
@@ -560,9 +541,7 @@ class TestGenerateErrors:
 
         with patch("uncase.services.generator.LiteLLMGenerator") as mock_gen_cls:
             mock_gen = mock_gen_cls.return_value
-            mock_gen.generate = AsyncMock(
-                side_effect=TimeoutError("Request timed out after 90s")
-            )
+            mock_gen.generate = AsyncMock(side_effect=TimeoutError("Request timed out after 90s"))
 
             with pytest.raises(GenerationError):
                 await service.generate(seed, count=1)
@@ -573,11 +552,9 @@ class TestGenerateErrors:
 
         with patch("uncase.services.generator.LiteLLMGenerator") as mock_gen_cls:
             mock_gen = mock_gen_cls.return_value
-            mock_gen.generate = AsyncMock(
-                side_effect=RuntimeError("LLM service unavailable")
-            )
+            mock_gen.generate = AsyncMock(side_effect=RuntimeError("LLM service unavailable"))
 
-            with pytest.raises(GenerationError, match="Generation failed.*LLM service unavailable"):
+            with pytest.raises(GenerationError, match=r"Generation failed.*LLM service unavailable"):
                 await service.generate(seed, count=1)
 
     async def test_value_error_wrapped(self) -> None:
@@ -586,11 +563,9 @@ class TestGenerateErrors:
 
         with patch("uncase.services.generator.LiteLLMGenerator") as mock_gen_cls:
             mock_gen = mock_gen_cls.return_value
-            mock_gen.generate = AsyncMock(
-                side_effect=ValueError("Invalid model name")
-            )
+            mock_gen.generate = AsyncMock(side_effect=ValueError("Invalid model name"))
 
-            with pytest.raises(GenerationError, match="Generation failed.*Invalid model name"):
+            with pytest.raises(GenerationError, match=r"Generation failed.*Invalid model name"):
                 await service.generate(seed, count=1)
 
 
@@ -616,13 +591,9 @@ class TestGenerateWithFeedback:
         ):
             mock_gen = mock_gen_cls.return_value
             mock_gen.generate_with_feedback = AsyncMock(return_value=[mock_conv])
-            mock_evaluator.evaluate = AsyncMock(
-                return_value=_make_quality_report(passed=True, composite_score=0.88)
-            )
+            mock_evaluator.evaluate = AsyncMock(return_value=_make_quality_report(passed=True, composite_score=0.88))
 
-            response = await service.generate_with_feedback(
-                seed, previous_report, evaluate_after=True
-            )
+            response = await service.generate_with_feedback(seed, previous_report, evaluate_after=True)
 
         assert isinstance(response, GenerateResponse)
         assert len(response.conversations) == 1
@@ -640,9 +611,7 @@ class TestGenerateWithFeedback:
             mock_gen = mock_gen_cls.return_value
             mock_gen.generate_with_feedback = AsyncMock(return_value=[mock_conv])
 
-            response = await service.generate_with_feedback(
-                seed, previous_report, evaluate_after=False
-            )
+            response = await service.generate_with_feedback(seed, previous_report, evaluate_after=False)
 
         assert response.reports is None
         assert response.generation_summary.total_passed is None
@@ -698,9 +667,7 @@ class TestGenerateWithFeedback:
             mock_gen = mock_gen_cls.return_value
             mock_gen.generate_with_feedback = AsyncMock(return_value=[])
 
-            response = await service.generate_with_feedback(
-                seed, previous_report, evaluate_after=True
-            )
+            response = await service.generate_with_feedback(seed, previous_report, evaluate_after=True)
 
         mock_evaluator.evaluate.assert_not_called()
         assert response.reports is None
@@ -716,9 +683,7 @@ class TestGenerateWithFeedback:
             mock_gen = mock_gen_cls.return_value
             mock_gen.generate_with_feedback = AsyncMock(return_value=[mock_conv])
 
-            response = await service.generate_with_feedback(
-                seed, previous_report, evaluate_after=False
-            )
+            response = await service.generate_with_feedback(seed, previous_report, evaluate_after=False)
 
         assert response.generation_summary.duration_seconds >= 0.0
 
@@ -733,9 +698,7 @@ class TestGenerateWithFeedback:
             mock_gen = mock_gen_cls.return_value
             mock_gen.generate_with_feedback = AsyncMock(return_value=[mock_conv])
 
-            await service.generate_with_feedback(
-                seed, previous_report, evaluate_after=False
-            )
+            await service.generate_with_feedback(seed, previous_report, evaluate_after=False)
 
         call_kwargs = mock_gen_cls.call_args
         assert call_kwargs.kwargs.get("api_key") == "sk-feedback-env-key"
@@ -758,9 +721,7 @@ class TestGenerateEvaluationIntegration:
         ):
             mock_gen = mock_gen_cls.return_value
             mock_gen.generate = AsyncMock(return_value=convs)
-            mock_evaluator.evaluate = AsyncMock(
-                return_value=_make_quality_report(passed=True, composite_score=0.92)
-            )
+            mock_evaluator.evaluate = AsyncMock(return_value=_make_quality_report(passed=True, composite_score=0.92))
 
             response = await service.generate(seed, count=3, evaluate_after=True)
 
@@ -805,9 +766,7 @@ class TestGenerateEvaluationIntegration:
         ):
             mock_gen = mock_gen_cls.return_value
             mock_gen.generate = AsyncMock(return_value=convs)
-            mock_evaluator.evaluate = AsyncMock(
-                side_effect=[report_pass, report_fail, report_pass, report_fail]
-            )
+            mock_evaluator.evaluate = AsyncMock(side_effect=[report_pass, report_fail, report_pass, report_fail])
 
             response = await service.generate(seed, count=4, evaluate_after=True)
 
@@ -826,9 +785,7 @@ class TestGenerateEvaluationIntegration:
         ):
             mock_gen = mock_gen_cls.return_value
             mock_gen.generate = AsyncMock(return_value=convs)
-            mock_evaluator.evaluate = AsyncMock(
-                return_value=_make_quality_report(passed=True, composite_score=0.85)
-            )
+            mock_evaluator.evaluate = AsyncMock(return_value=_make_quality_report(passed=True, composite_score=0.85))
 
             await service.generate(seed, count=5, evaluate_after=True)
 
@@ -883,9 +840,7 @@ class TestGenerateResponseSchema:
         ):
             mock_gen = mock_gen_cls.return_value
             mock_gen.generate = AsyncMock(return_value=[mock_conv])
-            mock_evaluator.evaluate = AsyncMock(
-                return_value=_make_quality_report(passed=True, composite_score=0.85)
-            )
+            mock_evaluator.evaluate = AsyncMock(return_value=_make_quality_report(passed=True, composite_score=0.85))
 
             response = await service.generate(seed, count=1, evaluate_after=True)
 

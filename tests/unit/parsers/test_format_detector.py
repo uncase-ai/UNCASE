@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from uncase.core.parser.format_detector import detect_format
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_detect_csv_by_extension(tmp_path: Path) -> None:

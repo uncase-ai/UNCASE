@@ -20,10 +20,7 @@ class ClientePerfil(BaseModel):
 
     tipo_cliente: str | None = Field(
         default=None,
-        description=(
-            "Tipo de cliente. Valores posibles: 'particular', 'flotilla', "
-            "'empresa', 'revendedor'. Required."
-        ),
+        description=("Tipo de cliente. Valores posibles: 'particular', 'flotilla', 'empresa', 'revendedor'. Required."),
     )
     nivel_experiencia_compra: str | None = Field(
         default=None,
@@ -34,10 +31,7 @@ class ClientePerfil(BaseModel):
     )
     urgencia: str | None = Field(
         default=None,
-        description=(
-            "Nivel de urgencia de la compra. "
-            "Valores: 'explorando', 'decidiendo', 'urgente'. Required."
-        ),
+        description=("Nivel de urgencia de la compra. Valores: 'explorando', 'decidiendo', 'urgente'. Required."),
     )
     presupuesto_rango: str | None = Field(
         default=None,
@@ -53,10 +47,7 @@ class ClientePerfil(BaseModel):
     )
     forma_pago_preferida: str | None = Field(
         default=None,
-        description=(
-            "Forma de pago preferida. "
-            "Valores: 'contado', 'financiamiento', 'mixto'. Optional."
-        ),
+        description=("Forma de pago preferida. Valores: 'contado', 'financiamiento', 'mixto'. Optional."),
     )
 
 
@@ -88,23 +79,18 @@ class Intencion(BaseModel):
     uso_principal: str | None = Field(
         default=None,
         description=(
-            "Uso principal del vehículo. "
-            "Valores: 'personal', 'trabajo', 'familia', 'negocio', 'mixto'. Required."
+            "Uso principal del vehículo. Valores: 'personal', 'trabajo', 'familia', 'negocio', 'mixto'. Required."
         ),
     )
     caracteristicas_importantes: list[str] | None = Field(
         default=None,
         description=(
-            "Características importantes para el cliente. "
-            "Ejemplos: 'rendimiento', 'seguridad', 'tecnología'. Optional."
+            "Características importantes para el cliente. Ejemplos: 'rendimiento', 'seguridad', 'tecnología'. Optional."
         ),
     )
     factores_decision: list[str] | None = Field(
         default=None,
-        description=(
-            "Factores decisivos de compra. "
-            "Ejemplos: 'precio', 'garantía', 'reputación'. Optional."
-        ),
+        description=("Factores decisivos de compra. Ejemplos: 'precio', 'garantía', 'reputación'. Optional."),
     )
 
 
@@ -131,16 +117,12 @@ class ContextoConversacion(BaseModel):
     )
     objeciones_conocidas: list[str] | None = Field(
         default=None,
-        description=(
-            "Objeciones conocidas del cliente. "
-            "Ejemplos: 'precio_alto', 'no_confia_en_usados'. Optional."
-        ),
+        description=("Objeciones conocidas del cliente. Ejemplos: 'precio_alto', 'no_confia_en_usados'. Optional."),
     )
     nivel_conocimiento_tecnico: str | None = Field(
         default=None,
         description=(
-            "Nivel de conocimiento técnico del cliente sobre vehículos. "
-            "Valores: 'bajo', 'medio', 'alto'. Optional."
+            "Nivel de conocimiento técnico del cliente sobre vehículos. Valores: 'bajo', 'medio', 'alto'. Optional."
         ),
     )
 
@@ -160,16 +142,12 @@ class Escenario(BaseModel):
     )
     complejidad: str | None = Field(
         default=None,
-        description=(
-            "Nivel de complejidad del escenario. "
-            "Valores: 'simple', 'medio', 'complejo'. Required."
-        ),
+        description=("Nivel de complejidad del escenario. Valores: 'simple', 'medio', 'complejo'. Required."),
     )
     tono_esperado: str | None = Field(
         default=None,
         description=(
-            "Tono esperado para la conversación. "
-            "Valores: 'formal', 'casual', 'tecnico', 'empático'. Required."
+            "Tono esperado para la conversación. Valores: 'formal', 'casual', 'tecnico', 'empático'. Required."
         ),
     )
     incluir_objeciones: bool = Field(
@@ -202,16 +180,12 @@ class ReglasNegocio(BaseModel):
     )
     inventario_disponible_contexto: str | None = Field(
         default=None,
-        description=(
-            "Contexto del inventario disponible. "
-            "Ejemplo: 'solo SUVs y pickups disponibles'. Optional."
-        ),
+        description=("Contexto del inventario disponible. Ejemplo: 'solo SUVs y pickups disponibles'. Optional."),
     )
     restricciones: list[str] | None = Field(
         default=None,
         description=(
-            "Restricciones de la conversación. "
-            "Ejemplos: 'no_mencionar_competencia', 'no_prometer_fechas'. Optional."
+            "Restricciones de la conversación. Ejemplos: 'no_mencionar_competencia', 'no_prometer_fechas'. Optional."
         ),
     )
 

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import AsyncMock
 
 import pytest
 
@@ -11,7 +10,6 @@ from uncase.core.seed_engine.layer0.config import Layer0Config
 from uncase.core.seed_engine.layer0.interviewer.base_provider import BaseLLMProvider
 from uncase.core.seed_engine.layer0.interviewer.interviewer import Interviewer
 from uncase.core.seed_engine.layer0.schemas.base import FieldMeta, FieldStatus
-
 
 # ── Mock Provider ───────────────────────────────────────────────────
 
@@ -36,11 +34,13 @@ class MockLLMProvider(BaseLLMProvider):
         max_tokens: int = 1024,
         **kwargs: Any,
     ) -> str:
-        self.generate_calls.append({
-            "system_prompt": system_prompt,
-            "user_prompt": user_prompt,
-            "temperature": temperature,
-        })
+        self.generate_calls.append(
+            {
+                "system_prompt": system_prompt,
+                "user_prompt": user_prompt,
+                "temperature": temperature,
+            }
+        )
         return self._response
 
 
@@ -162,12 +162,14 @@ class TestInterviewerQuestions:
 
     async def test_generate_clarification(self, interviewer: Interviewer) -> None:
         """Clarification uses the ambiguous fields in the prompt."""
-        ambiguous = [FieldMeta(
-            field_name="cliente_perfil.tipo_cliente",
-            status=FieldStatus.AMBIGUOUS,
-            confidence=0.5,
-            description="Tipo de cliente",
-        )]
+        ambiguous = [
+            FieldMeta(
+                field_name="cliente_perfil.tipo_cliente",
+                status=FieldStatus.AMBIGUOUS,
+                confidence=0.5,
+                description="Tipo de cliente",
+            )
+        ]
         result = await interviewer.generate_clarification(
             history=[],
             missing_fields=[],
@@ -251,10 +253,12 @@ class TestInterviewerHelpers:
 
     def test_format_history_with_messages(self) -> None:
         """History is formatted correctly."""
-        result = Interviewer._format_history([
-            {"role": "interviewer", "content": "¿Hola?"},
-            {"role": "user", "content": "Hola."},
-        ])
+        result = Interviewer._format_history(
+            [
+                {"role": "interviewer", "content": "¿Hola?"},
+                {"role": "user", "content": "Hola."},
+            ]
+        )
         assert "interviewer: ¿Hola?" in result
         assert "user: Hola." in result
 

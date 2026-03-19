@@ -68,9 +68,7 @@ class ToolCallValidatorMetric(BaseMetric):
 
         # Early return: if seed defines NO tools, just check for unsolicited usage
         if not all_valid_names:
-            has_tool_usage = any(
-                turn.herramientas_usadas or turn.tool_calls for turn in conversation.turnos
-            )
+            has_tool_usage = any(turn.herramientas_usadas or turn.tool_calls for turn in conversation.turnos)
             return 0.8 if has_tool_usage else 1.0
 
         # Collect all checks

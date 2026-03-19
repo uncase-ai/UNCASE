@@ -149,10 +149,7 @@ Respond with ONLY a JSON object:
             return 0.5
 
         # Build conversation text for the judge
-        conv_text = "\n".join(
-            f"[{t.rol}] (Turn {t.turno}): {t.contenido}"
-            for t in conversation.turnos
-        )
+        conv_text = "\n".join(f"[{t.rol}] (Turn {t.turno}): {t.contenido}" for t in conversation.turnos)
 
         # Build seed context summary
         seed_context = (
@@ -200,12 +197,7 @@ Respond with ONLY a JSON object:
             self._last_reasoning = str(grades.get("overall_reasoning", ""))
 
             # Weighted average, normalized from 1-5 to 0-1
-            weighted = (
-                fidelity * 0.35
-                + coherence * 0.30
-                + role_consistency * 0.20
-                + naturalness * 0.15
-            )
+            weighted = fidelity * 0.35 + coherence * 0.30 + role_consistency * 0.20 + naturalness * 0.15
             score = (weighted - 1.0) / 4.0  # Map [1,5] → [0,1]
 
             logger.info(

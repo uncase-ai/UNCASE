@@ -66,27 +66,31 @@ class HuggingFaceConnector(BaseConnector):
         api = self._get_api()
 
         try:
-            results = list(api.list_datasets(
-                search=query,
-                sort="downloads",
-                direction=-1,
-                limit=limit,
-            ))
+            results = list(
+                api.list_datasets(
+                    search=query,
+                    sort="downloads",
+                    direction=-1,
+                    limit=limit,
+                )
+            )
         except Exception as exc:
             logger.error("hf_search_failed", query=query, error=str(exc))
             return []
 
         datasets = []
         for ds in results:
-            datasets.append(HFDatasetInfo(
-                repo_id=ds.id,
-                description=getattr(ds, "description", None) or getattr(ds, "card_data", {}).get("description"),
-                downloads=getattr(ds, "downloads", 0) or 0,
-                likes=getattr(ds, "likes", 0) or 0,
-                tags=list(getattr(ds, "tags", []) or []),
-                last_modified=str(getattr(ds, "last_modified", "")),
-                size_bytes=getattr(ds, "size_in_bytes", None),
-            ))
+            datasets.append(
+                HFDatasetInfo(
+                    repo_id=ds.id,
+                    description=getattr(ds, "description", None) or getattr(ds, "card_data", {}).get("description"),
+                    downloads=getattr(ds, "downloads", 0) or 0,
+                    likes=getattr(ds, "likes", 0) or 0,
+                    tags=list(getattr(ds, "tags", []) or []),
+                    last_modified=str(getattr(ds, "last_modified", "")),
+                    size_bytes=getattr(ds, "size_in_bytes", None),
+                )
+            )
 
         logger.info("hf_search_complete", query=query, results=len(datasets))
         return datasets
@@ -146,21 +150,25 @@ class HuggingFaceConnector(BaseConnector):
                     role = msg.get("role", "")
                     content = msg.get("content", "")
                     if role and content:
-                        turnos.append(ConversationTurn(
-                            turno=turn_num,
-                            rol=role,
-                            contenido=str(content),
-                        ))
+                        turnos.append(
+                            ConversationTurn(
+                                turno=turn_num,
+                                rol=role,
+                                contenido=str(content),
+                            )
+                        )
 
                 if len(turnos) >= 2:
-                    conversations.append(Conversation(
-                        conversation_id=uuid.uuid4().hex,
-                        seed_id=f"hf:{repo_id}:{idx}",
-                        dominio="imported.huggingface",
-                        idioma="en",
-                        turnos=turnos,
-                        metadata={"source": f"huggingface:{repo_id}"},
-                    ))
+                    conversations.append(
+                        Conversation(
+                            conversation_id=uuid.uuid4().hex,
+                            seed_id=f"hf:{repo_id}:{idx}",
+                            dominio="imported.huggingface",
+                            idioma="en",
+                            turnos=turnos,
+                            metadata={"source": f"huggingface:{repo_id}"},
+                        )
+                    )
             except Exception as exc:
                 if len(errors) < 10:
                     errors.append(f"Row {idx}: {exc}")
@@ -252,10 +260,12 @@ class HuggingFaceConnector(BaseConnector):
             user_info = api.whoami(token=token)
             username = user_info.get("name", "")
 
-            results = list(api.list_datasets(
-                author=username,
-                limit=limit,
-            ))
+            results = list(
+                api.list_datasets(
+                    author=username,
+                    limit=limit,
+                )
+            )
         except Exception as exc:
             logger.error("hf_list_repos_failed", error=str(exc))
             return []

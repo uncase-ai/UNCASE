@@ -76,8 +76,7 @@ FINANCE_SCENARIOS: list[ScenarioTemplate] = [
         description="Advisor explains a specific investment product to a client.",
         domain=_DOMAIN,
         intent=(
-            "Client asks about a specific investment product and the advisor explains "
-            "features, risks, and suitability."
+            "Client asks about a specific investment product and the advisor explains features, risks, and suitability."
         ),
         skill_level="intermediate",
         expected_tool_sequence=["consultar_mercado"],

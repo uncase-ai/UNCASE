@@ -92,14 +92,16 @@ class TestAutomotiveScenarioPack:
 class TestAllPacksStructure:
     """Structural tests that apply to ALL scenario packs."""
 
-    @pytest.fixture(params=[
-        "automotive.sales",
-        "medical.consultation",
-        "finance.advisory",
-        "legal.advisory",
-        "industrial.support",
-        "education.tutoring",
-    ])
+    @pytest.fixture(
+        params=[
+            "automotive.sales",
+            "medical.consultation",
+            "finance.advisory",
+            "legal.advisory",
+            "industrial.support",
+            "education.tutoring",
+        ]
+    )
     def pack(self, request: pytest.FixtureRequest) -> ScenarioPack:
         result = get_scenario_pack(request.param)
         assert result is not None

@@ -57,18 +57,24 @@ class TestROUGELEdgeCases:
         )
         metric = ROUGELMetric()
 
-        on_topic = _conv(seed.seed_id, [
-            ("vendedor", "Bienvenido al concesionario, tenemos sedanes nuevos del 2024."),
-            ("cliente", "Me interesa conocer las opciones de financiamiento para vehiculos."),
-            ("vendedor", "Tenemos planes desde 48 meses con precios en pesos mexicanos."),
-            ("cliente", "Perfecto, me gustaria ver los sedanes disponibles."),
-        ])
-        off_topic = _conv(seed.seed_id, [
-            ("vendedor", "La astronomia estudia las estrellas y planetas del universo."),
-            ("cliente", "Las recetas de cocina italiana son deliciosas con pasta fresca."),
-            ("vendedor", "El campeonato de futbol comenzo con partidos emocionantes."),
-            ("cliente", "Las flores del jardin necesitan riego constante para crecer."),
-        ])
+        on_topic = _conv(
+            seed.seed_id,
+            [
+                ("vendedor", "Bienvenido al concesionario, tenemos sedanes nuevos del 2024."),
+                ("cliente", "Me interesa conocer las opciones de financiamiento para vehiculos."),
+                ("vendedor", "Tenemos planes desde 48 meses con precios en pesos mexicanos."),
+                ("cliente", "Perfecto, me gustaria ver los sedanes disponibles."),
+            ],
+        )
+        off_topic = _conv(
+            seed.seed_id,
+            [
+                ("vendedor", "La astronomia estudia las estrellas y planetas del universo."),
+                ("cliente", "Las recetas de cocina italiana son deliciosas con pasta fresca."),
+                ("vendedor", "El campeonato de futbol comenzo con partidos emocionantes."),
+                ("cliente", "Las flores del jardin necesitan riego constante para crecer."),
+            ],
+        )
 
         on_score = metric.compute(on_topic, seed)
         off_score = metric.compute(off_topic, seed)
@@ -89,18 +95,24 @@ class TestROUGELEdgeCases:
         )
         metric = ROUGELMetric()
 
-        natural = _conv(seed.seed_id, [
-            ("vendedor", "Bienvenido al concesionario, le ayudo con informacion de vehiculos nuevos."),
-            ("cliente", "Busco opciones de financiamiento para un vehiculo familiar."),
-            ("vendedor", "Tenemos planes accesibles para vehiculos nuevos."),
-            ("cliente", "Me interesa conocer los requisitos del financiamiento."),
-        ])
-        stuffed = _conv(seed.seed_id, [
-            ("vendedor", "vehiculos vehiculos vehiculos vehiculos concesionario"),
-            ("cliente", "vehiculos vehiculos vehiculos financiamiento financiamiento"),
-            ("vendedor", "vehiculos vehiculos nuevos nuevos nuevos"),
-            ("cliente", "vehiculos vehiculos vehiculos vehiculos consulta"),
-        ])
+        natural = _conv(
+            seed.seed_id,
+            [
+                ("vendedor", "Bienvenido al concesionario, le ayudo con informacion de vehiculos nuevos."),
+                ("cliente", "Busco opciones de financiamiento para un vehiculo familiar."),
+                ("vendedor", "Tenemos planes accesibles para vehiculos nuevos."),
+                ("cliente", "Me interesa conocer los requisitos del financiamiento."),
+            ],
+        )
+        stuffed = _conv(
+            seed.seed_id,
+            [
+                ("vendedor", "vehiculos vehiculos vehiculos vehiculos concesionario"),
+                ("cliente", "vehiculos vehiculos vehiculos financiamiento financiamiento"),
+                ("vendedor", "vehiculos vehiculos nuevos nuevos nuevos"),
+                ("cliente", "vehiculos vehiculos vehiculos vehiculos consulta"),
+            ],
+        )
 
         natural_score = metric.compute(natural, seed)
         stuffed_score = metric.compute(stuffed, seed)
@@ -123,12 +135,15 @@ class TestFlowAdherenceEdgeCases:
         seed = _make_seed_with_flow(["saludo", "consulta", "resolucion"])
         metric = FactualFidelityMetric()
 
-        conv = _conv(seed.seed_id, [
-            ("vendedor", "Buenos dias, bienvenido al concesionario."),
-            ("cliente", "Hola, busco informacion sobre vehiculos disponibles."),
-            ("vendedor", "Con gusto le ayudo. Tenemos varias opciones para usted."),
-            ("cliente", "Muchas gracias, lo voy a considerar."),
-        ])
+        conv = _conv(
+            seed.seed_id,
+            [
+                ("vendedor", "Buenos dias, bienvenido al concesionario."),
+                ("cliente", "Hola, busco informacion sobre vehiculos disponibles."),
+                ("vendedor", "Con gusto le ayudo. Tenemos varias opciones para usted."),
+                ("cliente", "Muchas gracias, lo voy a considerar."),
+            ],
+        )
 
         score = metric._flow_adherence(conv, seed)
         # At minimum, the greeting step should be detected (1/3 = 0.33)
@@ -140,13 +155,16 @@ class TestFlowAdherenceEdgeCases:
         seed = _make_seed_with_flow(["saludo", "identificacion_necesidades", "presentacion_opciones", "cierre"])
         metric = FactualFidelityMetric()
 
-        conv = _conv(seed.seed_id, [
-            ("vendedor", "Buenos dias, en que puedo ayudarle?"),
-            ("cliente", "Necesito un vehiculo familiar. Somos cuatro personas."),
-            ("vendedor", "Entiendo sus necesidades. Le muestro las opciones disponibles para familias."),
-            ("cliente", "Me interesa esa opcion, me gustaria agendar una cita."),
-            ("vendedor", "Perfecto, agendamos su cita. Fue un gusto atenderle."),
-        ])
+        conv = _conv(
+            seed.seed_id,
+            [
+                ("vendedor", "Buenos dias, en que puedo ayudarle?"),
+                ("cliente", "Necesito un vehiculo familiar. Somos cuatro personas."),
+                ("vendedor", "Entiendo sus necesidades. Le muestro las opciones disponibles para familias."),
+                ("cliente", "Me interesa esa opcion, me gustaria agendar una cita."),
+                ("vendedor", "Perfecto, agendamos su cita. Fue un gusto atenderle."),
+            ],
+        )
 
         score = metric._flow_adherence(conv, seed)
         assert score >= 0.4, f"Compound flow labels should be detected semantically: {score}"
@@ -157,19 +175,25 @@ class TestFlowAdherenceEdgeCases:
         metric = FactualFidelityMetric()
 
         # In order
-        ordered = _conv(seed.seed_id, [
-            ("vendedor", "Buenos dias, bienvenido."),
-            ("cliente", "Tengo una consulta sobre vehiculos."),
-            ("vendedor", "Aqui tiene la resolucion de su consulta."),
-            ("cliente", "Gracias por resolver mi duda."),
-        ])
+        ordered = _conv(
+            seed.seed_id,
+            [
+                ("vendedor", "Buenos dias, bienvenido."),
+                ("cliente", "Tengo una consulta sobre vehiculos."),
+                ("vendedor", "Aqui tiene la resolucion de su consulta."),
+                ("cliente", "Gracias por resolver mi duda."),
+            ],
+        )
         # Reversed order
-        reversed_conv = _conv(seed.seed_id, [
-            ("vendedor", "Aqui tiene la resolucion."),
-            ("cliente", "Tengo una consulta importante."),
-            ("vendedor", "Buenos dias, bienvenido al local."),
-            ("cliente", "Gracias."),
-        ])
+        reversed_conv = _conv(
+            seed.seed_id,
+            [
+                ("vendedor", "Aqui tiene la resolucion."),
+                ("cliente", "Tengo una consulta importante."),
+                ("vendedor", "Buenos dias, bienvenido al local."),
+                ("cliente", "Gracias."),
+            ],
+        )
 
         ordered_score = metric._flow_adherence(ordered, seed)
         reversed_score = metric._flow_adherence(reversed_conv, seed)
@@ -216,14 +240,17 @@ class TestCoherenceEdgeCases:
         metric = DialogCoherenceMetric()
 
         # Each turn uses completely different content words (not just stopwords)
-        incoherent = _conv(seed.seed_id, [
-            ("vendedor", "La astronomia estudia galaxias distantes."),
-            ("cliente", "Las bacterias microscopicas producen antibioticos."),
-            ("vendedor", "La fotosintesis transforma dioxido carbono."),
-            ("cliente", "Los volcanes expulsan magma incandescente."),
-            ("vendedor", "La criptografia protege comunicaciones digitales."),
-            ("cliente", "Los dinosaurios habitaron periodos geologicos."),
-        ])
+        incoherent = _conv(
+            seed.seed_id,
+            [
+                ("vendedor", "La astronomia estudia galaxias distantes."),
+                ("cliente", "Las bacterias microscopicas producen antibioticos."),
+                ("vendedor", "La fotosintesis transforma dioxido carbono."),
+                ("cliente", "Los volcanes expulsan magma incandescente."),
+                ("vendedor", "La criptografia protege comunicaciones digitales."),
+                ("cliente", "Los dinosaurios habitaron periodos geologicos."),
+            ],
+        )
 
         score = metric._referential_consistency(incoherent.turnos)
         assert score < 1.0, f"Incoherent conversation should not get perfect referential consistency: {score}"
@@ -233,22 +260,28 @@ class TestCoherenceEdgeCases:
         seed = make_seed()
         metric = DialogCoherenceMetric()
 
-        coherent = _conv(seed.seed_id, [
-            ("vendedor", "Bienvenido al concesionario, busca vehiculos nuevos?"),
-            ("cliente", "Si, necesito vehiculos sedan familiar con buen rendimiento."),
-            ("vendedor", "Tenemos excelentes vehiculos sedan con rendimiento superior."),
-            ("cliente", "Que opciones vehiculos tienen con garantia extendida?"),
-            ("vendedor", "Todos nuestros vehiculos sedan incluyen garantia extendida."),
-            ("cliente", "Me interesa ver el vehiculo sedan mas reciente disponible."),
-        ])
-        incoherent = _conv(seed.seed_id, [
-            ("vendedor", "La geologia estudia formaciones rocosas antiguas."),
-            ("cliente", "Las orquideas tropicales necesitan climas humedos."),
-            ("vendedor", "Los circuitos electronicos transmiten impulsos."),
-            ("cliente", "La musica barroca incorpora instrumentos clasicos."),
-            ("vendedor", "Los glaciares articos almacenan toneladas hielo."),
-            ("cliente", "Las proteinas construyen tejidos musculares."),
-        ])
+        coherent = _conv(
+            seed.seed_id,
+            [
+                ("vendedor", "Bienvenido al concesionario, busca vehiculos nuevos?"),
+                ("cliente", "Si, necesito vehiculos sedan familiar con buen rendimiento."),
+                ("vendedor", "Tenemos excelentes vehiculos sedan con rendimiento superior."),
+                ("cliente", "Que opciones vehiculos tienen con garantia extendida?"),
+                ("vendedor", "Todos nuestros vehiculos sedan incluyen garantia extendida."),
+                ("cliente", "Me interesa ver el vehiculo sedan mas reciente disponible."),
+            ],
+        )
+        incoherent = _conv(
+            seed.seed_id,
+            [
+                ("vendedor", "La geologia estudia formaciones rocosas antiguas."),
+                ("cliente", "Las orquideas tropicales necesitan climas humedos."),
+                ("vendedor", "Los circuitos electronicos transmiten impulsos."),
+                ("cliente", "La musica barroca incorpora instrumentos clasicos."),
+                ("vendedor", "Los glaciares articos almacenan toneladas hielo."),
+                ("cliente", "Las proteinas construyen tejidos musculares."),
+            ],
+        )
 
         coh_score = metric.compute(coherent, seed)
         inc_score = metric.compute(incoherent, seed)
@@ -293,11 +326,14 @@ class TestPrivacyFalsePositives:
         """A normal automotive conversation should have privacy_score = 0.0."""
         seed = make_seed()
         metric = PrivacyMetric()
-        conv = _conv(seed.seed_id, [
-            ("vendedor", "El modelo Corsa 2024 tiene version 3.2.1.0 del sistema de infoentretenimiento."),
-            ("cliente", "Me interesa. El numero de serie VIN del vehiculo es importante para la garantia."),
-            ("vendedor", "Correcto, el VIN se registra al momento de la compra. El precio es $450,000 pesos."),
-        ])
+        conv = _conv(
+            seed.seed_id,
+            [
+                ("vendedor", "El modelo Corsa 2024 tiene version 3.2.1.0 del sistema de infoentretenimiento."),
+                ("cliente", "Me interesa. El numero de serie VIN del vehiculo es importante para la garantia."),
+                ("vendedor", "Correcto, el VIN se registra al momento de la compra. El precio es $450,000 pesos."),
+            ],
+        )
         score = metric.compute(conv, seed)
         assert score == 0.0, f"Clean conversation flagged as PII: {score}"
 
@@ -325,22 +361,28 @@ class TestCompositeDiscrimination:
         )
         evaluator = ConversationEvaluator()
 
-        good = _conv(seed.seed_id, [
-            ("vendedor", "Buenos dias, bienvenido al concesionario de vehiculos nuevos."),
-            ("cliente", "Hola, busco opciones sedan vehiculos con financiamiento."),
-            ("vendedor", "Tenemos sedanes nuevos con planes financiamiento accesibles."),
-            ("cliente", "Me interesan los vehiculos sedan nuevos disponibles."),
-            ("vendedor", "Le muestro las opciones vehiculos sedan con mejor financiamiento."),
-            ("cliente", "Gracias por las opciones, voy a considerar el financiamiento."),
-        ])
-        bad = _conv(seed.seed_id, [
-            ("vendedor", "Hola."),
-            ("vendedor", "Hola."),
-            ("vendedor", "Hola."),
-            ("vendedor", "Hola."),
-            ("vendedor", "Hola."),
-            ("vendedor", "Hola."),
-        ])
+        good = _conv(
+            seed.seed_id,
+            [
+                ("vendedor", "Buenos dias, bienvenido al concesionario de vehiculos nuevos."),
+                ("cliente", "Hola, busco opciones sedan vehiculos con financiamiento."),
+                ("vendedor", "Tenemos sedanes nuevos con planes financiamiento accesibles."),
+                ("cliente", "Me interesan los vehiculos sedan nuevos disponibles."),
+                ("vendedor", "Le muestro las opciones vehiculos sedan con mejor financiamiento."),
+                ("cliente", "Gracias por las opciones, voy a considerar el financiamiento."),
+            ],
+        )
+        bad = _conv(
+            seed.seed_id,
+            [
+                ("vendedor", "Hola."),
+                ("vendedor", "Hola."),
+                ("vendedor", "Hola."),
+                ("vendedor", "Hola."),
+                ("vendedor", "Hola."),
+                ("vendedor", "Hola."),
+            ],
+        )
 
         good_report = await evaluator.evaluate(good, seed)
         bad_report = await evaluator.evaluate(bad, seed)

@@ -30,9 +30,7 @@ class EvaluationHashModel(TimestampMixin, Base):
     )
     leaf_index: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
-    __table_args__ = (
-        Index("ix_eval_hash_unbatched", "batch_id", postgresql_where=batch_id.is_(None)),
-    )
+    __table_args__ = (Index("ix_eval_hash_unbatched", "batch_id", postgresql_where=batch_id.is_(None)),)
 
 
 class MerkleBatchModel(TimestampMixin, Base):

@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, cast
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -189,21 +189,21 @@ async def _hydrate_tools_from_db() -> None:
                     _logger.debug("plugin_hydration_skipped", plugin_id=row.plugin_id)
 
             # Hydrate custom tools
-            result = await session.execute(select(CustomToolModel).where(CustomToolModel.is_active.is_(True)))
+            tool_result = await session.execute(select(CustomToolModel).where(CustomToolModel.is_active.is_(True)))
             tool_count = 0
-            for row in result.scalars():
-                if row.name not in tool_registry:
+            for tool_row in tool_result.scalars():
+                if tool_row.name not in tool_registry:
                     tool_def = ToolDefinition(
-                        name=row.name,
-                        description=row.description,
-                        input_schema=row.input_schema,
-                        output_schema=row.output_schema,
-                        domains=row.domains,
-                        category=row.category,
-                        requires_auth=row.requires_auth,
-                        execution_mode=row.execution_mode,
-                        version=row.version,
-                        metadata=row.metadata_ or {},
+                        name=tool_row.name,
+                        description=tool_row.description,
+                        input_schema=tool_row.input_schema,
+                        output_schema=tool_row.output_schema,
+                        domains=tool_row.domains,
+                        category=tool_row.category,
+                        requires_auth=tool_row.requires_auth,
+                        execution_mode=cast("Literal['simulated', 'live', 'mock']", tool_row.execution_mode),
+                        version=tool_row.version,
+                        metadata=tool_row.metadata_ or {},
                     )
                     tool_registry.register(tool_def)
                     tool_count += 1

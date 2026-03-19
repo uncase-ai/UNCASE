@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import TYPE_CHECKING
 
 import pytest
 
-import uncase.schemas.conversation_api as _conv_api_mod
 from uncase.exceptions import ConversationNotFoundError, ValidationError
 from uncase.schemas.conversation import ConversationTurn
 from uncase.schemas.conversation_api import (
@@ -253,9 +251,7 @@ class TestConversationServiceList:
     async def test_list_filter_by_domain(self, async_session: AsyncSession) -> None:
         service = ConversationService(async_session)
         await service.create_conversation(_make_create_request(conversation_id="c1", dominio="automotive.sales"))
-        await service.create_conversation(
-            _make_create_request(conversation_id="c2", dominio="medical.consultation")
-        )
+        await service.create_conversation(_make_create_request(conversation_id="c2", dominio="medical.consultation"))
         result = await service.list_conversations(domain="automotive.sales")
 
         assert result.total == 1
@@ -290,12 +286,8 @@ class TestConversationServiceList:
 
     async def test_list_filter_by_organization(self, async_session: AsyncSession) -> None:
         service = ConversationService(async_session)
-        await service.create_conversation(
-            _make_create_request(conversation_id="c1"), organization_id="org-a"
-        )
-        await service.create_conversation(
-            _make_create_request(conversation_id="c2"), organization_id="org-b"
-        )
+        await service.create_conversation(_make_create_request(conversation_id="c1"), organization_id="org-a")
+        await service.create_conversation(_make_create_request(conversation_id="c2"), organization_id="org-b")
         result = await service.list_conversations(organization_id="org-a")
 
         assert result.total == 1
@@ -365,8 +357,8 @@ class TestConversationServiceList:
     async def test_list_order_by_created_at_desc(self, async_session: AsyncSession) -> None:
         """Most recently created conversations should appear first."""
         service = ConversationService(async_session)
-        first = await service.create_conversation(_make_create_request(conversation_id="c-first"))
-        second = await service.create_conversation(_make_create_request(conversation_id="c-second"))
+        await service.create_conversation(_make_create_request(conversation_id="c-first"))
+        await service.create_conversation(_make_create_request(conversation_id="c-second"))
 
         result = await service.list_conversations()
         assert len(result.items) == 2

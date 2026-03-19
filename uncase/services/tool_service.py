@@ -220,17 +220,13 @@ class ToolService:
 
     async def _get_by_id_or_name(self, identifier: str) -> CustomToolModel:
         """Look up a custom tool by ID first, falling back to name."""
-        result = await self.session.execute(
-            select(CustomToolModel).where(CustomToolModel.id == identifier)
-        )
+        result = await self.session.execute(select(CustomToolModel).where(CustomToolModel.id == identifier))
         model = result.scalar_one_or_none()
         if model is not None:
             return model
 
         # Fallback: try by name
-        result = await self.session.execute(
-            select(CustomToolModel).where(CustomToolModel.name == identifier)
-        )
+        result = await self.session.execute(select(CustomToolModel).where(CustomToolModel.name == identifier))
         model = result.scalar_one_or_none()
         if model is None:
             raise CustomToolNotFoundError(f"Custom tool '{identifier}' not found")

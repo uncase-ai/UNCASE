@@ -15,7 +15,6 @@ from uncase.exceptions import (
 )
 from uncase.schemas.organization import APIKeyCreate, OrganizationCreate, OrganizationUpdate
 from uncase.services.organization import OrganizationService, _slugify
-from uncase.utils.security import generate_api_key, hash_api_key
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -190,9 +189,7 @@ class TestUpdateOrganization:
 
     async def test_update_preserves_other_fields(self, async_session: AsyncSession) -> None:
         service = OrganizationService(async_session)
-        created = await service.create_organization(
-            _make_org_create(description="Original description")
-        )
+        created = await service.create_organization(_make_org_create(description="Original description"))
         updated = await service.update_organization(
             created.id,
             OrganizationUpdate(name="New Name Only"),
@@ -236,9 +233,7 @@ class TestCreateAPIKey:
     async def test_create_key_admin_scope(self, async_session: AsyncSession) -> None:
         service = OrganizationService(async_session)
         org = await service.create_organization(_make_org_create())
-        key_resp = await service.create_api_key(
-            org.id, _make_key_create(scopes="admin,read,write")
-        )
+        key_resp = await service.create_api_key(org.id, _make_key_create(scopes="admin,read,write"))
 
         assert "admin" in key_resp.scopes
         assert "read" in key_resp.scopes
@@ -427,9 +422,7 @@ class TestRotateAPIKey:
     async def test_rotate_preserves_scopes(self, async_session: AsyncSession) -> None:
         service = OrganizationService(async_session)
         org = await service.create_organization(_make_org_create())
-        old_key = await service.create_api_key(
-            org.id, _make_key_create(scopes="admin,read,write")
-        )
+        old_key = await service.create_api_key(org.id, _make_key_create(scopes="admin,read,write"))
 
         new_key = await service.rotate_api_key(org.id, old_key.key_id)
 

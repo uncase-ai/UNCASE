@@ -14,7 +14,6 @@ from uncase.core.evaluator.evaluator import ConversationEvaluator
 from uncase.core.evaluator.metrics.privacy import PrivacyMetric, detect_pii_heuristic
 from uncase.schemas.conversation import Conversation, ConversationTurn
 
-
 # ─── Fixtures ───
 
 
@@ -41,24 +40,19 @@ class TestSeededPIIDetection:
             ("Contacte a juan.perez@correo.com para informacion", "email", 1),
             ("Envie a test@empresa.mx y copia a admin@empresa.mx", "email", 2),
             ("Mi correo personal es maria_lopez123@gmail.com", "email", 1),
-
             # US phone numbers
             ("Llame al 555-123-4567 para agendar", "phone", 1),
             ("Telefonos: 555-111-2222 y 555-333-4444", "phone", 2),
             ("Contacto: 555.123.4567 directo", "phone", 1),
-
             # SSN-like patterns
             ("SSN del cliente: 123-45-6789", "ssn", 1),
             ("Numero social: 987-65-4321", "ssn", 1),
-
             # Credit card numbers
             ("Tarjeta: 4111-1111-1111-1111", "credit_card", 1),
             ("Pague con 5500 0000 0000 0004", "credit_card", 1),
-
             # IP addresses
             ("Conectado desde 192.168.1.100", "ip", 1),
             ("Servidores 10.0.0.1 y 10.0.0.2", "ip", 2),
-
             # Mexican phone numbers
             ("Celular: +52 55 1234 5678", "phone", 1),
         ],
@@ -82,8 +76,7 @@ class TestSeededPIIDetection:
         matches = detect_pii_heuristic(text)
 
         assert len(matches) >= expected_min_matches, (
-            f"Expected at least {expected_min_matches} PII matches for {pii_type}, "
-            f"got {len(matches)}: {matches}"
+            f"Expected at least {expected_min_matches} PII matches for {pii_type}, got {len(matches)}: {matches}"
         )
 
 
@@ -151,7 +144,11 @@ class TestSeededPrivacyMetricScoring:
             idioma="es",
             turnos=[
                 ConversationTurn(turno=1, rol="vendedor", contenido="Buenos dias."),
-                ConversationTurn(turno=2, rol="cliente", contenido="Mi correo es ficticio@correo.com para la cotizacion."),
+                ConversationTurn(
+                    turno=2,
+                    rol="cliente",
+                    contenido="Mi correo es ficticio@correo.com para la cotizacion.",
+                ),
             ],
             es_sintetica=True,
         )
@@ -312,12 +309,36 @@ class TestSeededPIIEvaluatorGate:
             dominio="automotive.sales",
             idioma="es",
             turnos=[
-                ConversationTurn(turno=1, rol="vendedor", contenido="Buenos dias, bienvenido al concesionario ficticio."),
-                ConversationTurn(turno=2, rol="cliente", contenido="Hola, busco informacion sobre vehiculos sedanes."),
-                ConversationTurn(turno=3, rol="vendedor", contenido="Con gusto le ayudo. Tenemos varias opciones disponibles."),
-                ConversationTurn(turno=4, rol="cliente", contenido="Me interesa conocer precios y opciones de financiamiento."),
-                ConversationTurn(turno=5, rol="vendedor", contenido="El sedan Corsa tiene un precio de cuatrocientos mil pesos."),
-                ConversationTurn(turno=6, rol="cliente", contenido="Gracias por la informacion, voy a considerarlo."),
+                ConversationTurn(
+                    turno=1,
+                    rol="vendedor",
+                    contenido="Buenos dias, bienvenido al concesionario ficticio.",
+                ),
+                ConversationTurn(
+                    turno=2,
+                    rol="cliente",
+                    contenido="Hola, busco informacion sobre vehiculos sedanes.",
+                ),
+                ConversationTurn(
+                    turno=3,
+                    rol="vendedor",
+                    contenido="Con gusto le ayudo. Tenemos varias opciones disponibles.",
+                ),
+                ConversationTurn(
+                    turno=4,
+                    rol="cliente",
+                    contenido="Me interesa conocer precios y opciones de financiamiento.",
+                ),
+                ConversationTurn(
+                    turno=5,
+                    rol="vendedor",
+                    contenido="El sedan Corsa tiene un precio de cuatrocientos mil pesos.",
+                ),
+                ConversationTurn(
+                    turno=6,
+                    rol="cliente",
+                    contenido="Gracias por la informacion, voy a considerarlo.",
+                ),
             ],
             es_sintetica=True,
         )

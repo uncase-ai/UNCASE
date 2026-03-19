@@ -8,18 +8,16 @@ Interviewer and back.
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 
 from uncase.core.seed_engine.layer0.config import Layer0Config
 from uncase.core.seed_engine.layer0.engine import AgenticExtractionEngine
-from uncase.core.seed_engine.layer0.extractor import ExtractionResult, ExtractedField, SeedExtractor
+from uncase.core.seed_engine.layer0.extractor import SeedExtractor
 from uncase.core.seed_engine.layer0.interviewer.base_provider import BaseLLMProvider
 from uncase.core.seed_engine.layer0.interviewer.interviewer import Interviewer
 from uncase.core.seed_engine.layer0.schemas.automotriz import SeedAutomotriz
-from uncase.core.seed_engine.layer0.state_manager import ActionType
-
 
 # ── Mock Provider ───────────────────────────────────────────────────
 
@@ -193,7 +191,7 @@ class TestTurnByTurnIntegration:
 
         await engine.get_initial_question()
 
-        for i in range(4):
+        for _i in range(4):
             result = await engine.process_turn("No sé")
             if result["type"] == "summary":
                 break
@@ -258,7 +256,7 @@ class TestFullLoopCompletion:
         all_fields = {name: {"value": "test_value", "confidence": 0.95} for name in REQUIRED_FIELDS_AUTOMOTRIZ}
         mock_ext.extract = AsyncMock(return_value=all_fields)  # type: ignore[method-assign]
 
-        result = await engine.process_turn("Les doy toda la información necesaria.")
+        await engine.process_turn("Les doy toda la información necesaria.")
 
         # After processing, the state should be complete
         assert engine.state.is_complete is True

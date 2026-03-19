@@ -20,7 +20,7 @@ _TTL_SECONDS = 3600  # 1 hour
 
 
 class _SessionEntry:
-    __slots__ = ("engine", "created_at")
+    __slots__ = ("created_at", "engine")
 
     def __init__(self, engine: AgenticExtractionEngine) -> None:
         self.engine = engine

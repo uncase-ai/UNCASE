@@ -7,7 +7,7 @@ Called from the app startup event after migrations complete.
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import structlog
 from sqlalchemy import func, select
@@ -419,11 +419,11 @@ def _build_seed_model(seed_dict: dict[str, object], *, seed_id: str | None = Non
     """Build a SeedModel from a seed dictionary, filling defaults for missing fields."""
     return SeedModel(
         id=seed_id or str(seed_dict.get("id", uuid.uuid4().hex)),
-        dominio=seed_dict["dominio"],  # type: ignore[arg-type]
+        dominio=cast("str", seed_dict["dominio"]),
         idioma=str(seed_dict.get("idioma", "es")),
         version=str(seed_dict.get("version", "1.0")),
         etiquetas=seed_dict.get("etiquetas", []),
-        objetivo=seed_dict["objetivo"],  # type: ignore[arg-type]
+        objetivo=cast("str", seed_dict["objetivo"]),
         tono=str(seed_dict.get("tono", "profesional")),
         roles=seed_dict["roles"],
         descripcion_roles=seed_dict.get("descripcion_roles", {}),
@@ -431,10 +431,10 @@ def _build_seed_model(seed_dict: dict[str, object], *, seed_id: str | None = Non
         parametros_factuales=seed_dict["parametros_factuales"],
         privacidad=seed_dict.get("privacidad", _DEFAULT_PRIVACY),
         metricas_calidad=seed_dict.get("metricas_calidad", _DEFAULT_QUALITY),
-        rating=seed_dict.get("rating"),  # type: ignore[arg-type]
-        rating_count=int(seed_dict.get("rating_count", 0)),  # type: ignore[arg-type]
-        run_count=int(seed_dict.get("run_count", 0)),  # type: ignore[arg-type]
-        avg_quality_score=seed_dict.get("avg_quality_score"),  # type: ignore[arg-type]
+        rating=cast("float | None", seed_dict.get("rating")),
+        rating_count=int(cast("int", seed_dict.get("rating_count", 0))),
+        run_count=int(cast("int", seed_dict.get("run_count", 0))),
+        avg_quality_score=cast("float | None", seed_dict.get("avg_quality_score")),
         organization_id=None,  # Public — visible to all
     )
 

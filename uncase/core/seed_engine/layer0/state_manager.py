@@ -70,9 +70,7 @@ class StateManager:
         self._config = config or Layer0Config()
         self._schema = schema
         self._required_fields: frozenset[str] = self._resolve_required_fields()
-        self._field_registry: dict[str, FieldMeta] = {
-            fm.field_name: fm for fm in schema.get_field_registry()
-        }
+        self._field_registry: dict[str, FieldMeta] = {fm.field_name: fm for fm in schema.get_field_registry()}
         # Override is_required based on the schema's explicit declaration
         for name in self._required_fields:
             if name in self._field_registry:
@@ -243,17 +241,14 @@ class StateManager:
         """
         total = len(self._field_registry)
         filled = sum(
-            1
-            for m in self._field_registry.values()
-            if m.status in {FieldStatus.EXTRACTED, FieldStatus.CONFIRMED}
+            1 for m in self._field_registry.values() if m.status in {FieldStatus.EXTRACTED, FieldStatus.CONFIRMED}
         )
         required_total = len(self._required_fields)
         required_filled = sum(
             1
             for name in self._required_fields
             if name in self._field_registry
-            and self._field_registry[name].status
-            in {FieldStatus.EXTRACTED, FieldStatus.CONFIRMED}
+            and self._field_registry[name].status in {FieldStatus.EXTRACTED, FieldStatus.CONFIRMED}
             and self._field_registry[name].confidence >= self._config.min_confidence_required
         )
 
@@ -284,11 +279,9 @@ class StateManager:
     def _resolve_required_fields(self) -> frozenset[str]:
         """Get required field names from the schema class."""
         if hasattr(self._schema, "required_field_names"):
-            return self._schema.required_field_names()
+            return frozenset(self._schema.required_field_names())
         # Fallback: use the field registry's is_required
-        return frozenset(
-            fm.field_name for fm in self._schema.get_field_registry() if fm.is_required
-        )
+        return frozenset(fm.field_name for fm in self._schema.get_field_registry() if fm.is_required)
 
     def _all_required_complete(self) -> bool:
         """Check if all required fields meet the confidence threshold."""
@@ -315,8 +308,4 @@ class StateManager:
 
     def _get_ambiguous(self) -> list[FieldMeta]:
         """Return fields that are marked as ambiguous (confidence < 0.7)."""
-        return [
-            meta
-            for meta in self._field_registry.values()
-            if meta.status == FieldStatus.AMBIGUOUS
-        ]
+        return [meta for meta in self._field_registry.values() if meta.status == FieldStatus.AMBIGUOUS]

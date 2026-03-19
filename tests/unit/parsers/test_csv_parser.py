@@ -98,7 +98,7 @@ async def test_parse_empty_csv(parser: CSVConversationParser) -> None:
 
 async def test_parse_no_header(parser: CSVConversationParser) -> None:
     """A completely empty CSV raises ImportParsingError."""
-    with pytest.raises(ImportParsingError, match="empty|no header"):
+    with pytest.raises(ImportParsingError, match=r"empty|no header"):
         await parser.parse("")
 
 
@@ -106,7 +106,8 @@ async def test_parse_csv_with_tool_calls(parser: CSVConversationParser) -> None:
     """CSV with tool_calls JSON column is parsed correctly."""
     csv_data = (
         "conversation_id,turn_number,role,content,tool_calls\n"
-        'conv_t,1,vendedor,Voy a buscar,"[{""tool_name"": ""buscar_inventario"", ""arguments"": {""marca"": ""Toyota""}}]"\n'
+        "conv_t,1,vendedor,Voy a buscar,"
+        '"[{""tool_name"": ""buscar_inventario"", ""arguments"": {""marca"": ""Toyota""}}]"\n'
         "conv_t,2,cliente,Gracias,\n"
     )
 

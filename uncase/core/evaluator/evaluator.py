@@ -102,8 +102,7 @@ class ConversationEvaluator(BaseEvaluator):
 
         # Detect which optional metrics came back at neutral (weren't computed)
         skipped: list[str] = [
-            name for name in OPTIONAL_METRICS
-            if name in scores and abs(scores[name] - _NEUTRAL_SCORE) < 1e-9
+            name for name in OPTIONAL_METRICS if name in scores and abs(scores[name] - _NEUTRAL_SCORE) < 1e-9
         ]
         if skipped:
             logger.warning(

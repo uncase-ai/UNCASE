@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
-from uncase.schemas.conversation import ConversationTurn
+from uncase.schemas.conversation import ConversationTurn  # noqa: TC001 — needed at runtime by Pydantic
 
 if TYPE_CHECKING:
     from datetime import datetime

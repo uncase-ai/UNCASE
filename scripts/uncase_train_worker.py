@@ -91,8 +91,13 @@ def load_model_unsloth(args: argparse.Namespace):
         lora_alpha=args.lora_alpha,
         lora_dropout=0.0,
         target_modules=[
-            "q_proj", "k_proj", "v_proj", "o_proj",
-            "gate_proj", "up_proj", "down_proj",
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "o_proj",
+            "gate_proj",
+            "up_proj",
+            "down_proj",
         ],
         bias="none",
         use_gradient_checkpointing="unsloth",
@@ -153,8 +158,13 @@ def load_model_standard(args: argparse.Namespace, device: str):
         lora_alpha=args.lora_alpha,
         lora_dropout=0.0,
         target_modules=[
-            "q_proj", "k_proj", "v_proj", "o_proj",
-            "gate_proj", "up_proj", "down_proj",
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "o_proj",
+            "gate_proj",
+            "up_proj",
+            "down_proj",
         ],
         bias="none",
         task_type="CAUSAL_LM",
@@ -172,7 +182,7 @@ def merge_lora(base_model: str, adapter_dir: str, merged_dir: str) -> None:
     from peft import PeftModel
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
-    print(f"\n  Merging LoRA adapter into base model...")
+    print("\n  Merging LoRA adapter into base model...")
     print(f"    Base:    {base_model}")
     print(f"    Adapter: {adapter_dir}")
     print(f"    Output:  {merged_dir}")

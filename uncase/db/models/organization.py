@@ -24,7 +24,8 @@ class OrganizationModel(TimestampMixin, Base):
     api_keys: Mapped[list[APIKeyModel]] = relationship(back_populates="organization", cascade="all, delete-orphan")
     seeds: Mapped[list[SeedModel]] = relationship(back_populates="organization")  # type: ignore[name-defined] # noqa: F821
     memberships: Mapped[list[OrgMembershipModel]] = relationship(  # type: ignore[name-defined]  # noqa: F821
-        back_populates="organization", cascade="all, delete-orphan",
+        back_populates="organization",
+        cascade="all, delete-orphan",
     )
 
     def __repr__(self) -> str:

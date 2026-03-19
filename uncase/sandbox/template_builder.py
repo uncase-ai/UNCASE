@@ -41,12 +41,7 @@ def _build_template() -> None:
 
     load_dotenv()
 
-    template = (
-        Template()
-        .from_python_image("3.12")
-        .pip_install(TEMPLATE_PACKAGES)
-        .set_envs({"UNCASE_SANDBOX": "true"})
-    )
+    template = Template().from_python_image("3.12").pip_install(TEMPLATE_PACKAGES).set_envs({"UNCASE_SANDBOX": "true"})
 
     is_prod = "--prod" in sys.argv
     tag = TEMPLATE_TAG_PROD if is_prod else TEMPLATE_TAG_DEV

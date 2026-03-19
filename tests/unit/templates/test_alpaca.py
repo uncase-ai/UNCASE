@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
-from uncase.schemas.conversation import Conversation
+from typing import TYPE_CHECKING
+
 from uncase.templates.alpaca import AlpacaTemplate
+
+if TYPE_CHECKING:
+    from uncase.schemas.conversation import Conversation
 
 
 def test_render_basic(basic_conversation: Conversation) -> None:

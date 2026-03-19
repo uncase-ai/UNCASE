@@ -182,8 +182,7 @@ AUTOMOTIVE_SCENARIOS: list[ScenarioTemplate] = [
         description="Customer is frustrated or impatient, agent de-escalates while staying helpful.",
         domain=_DOMAIN,
         intent=(
-            "Customer expresses frustration and the agent must de-escalate the situation "
-            "while still providing value."
+            "Customer expresses frustration and the agent must de-escalate the situation while still providing value."
         ),
         skill_level="advanced",
         expected_tool_sequence=[],

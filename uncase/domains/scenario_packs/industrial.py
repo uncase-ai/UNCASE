@@ -37,8 +37,7 @@ INDUSTRIAL_SCENARIOS: list[ScenarioTemplate] = [
         description="Scheduling and planning preventive maintenance for equipment.",
         domain=_DOMAIN,
         intent=(
-            "Operator or manager schedules preventive maintenance based on equipment "
-            "usage and maintenance schedule."
+            "Operator or manager schedules preventive maintenance based on equipment usage and maintenance schedule."
         ),
         skill_level="basic",
         expected_tool_sequence=["programar_mantenimiento", "buscar_inventario_partes"],
@@ -75,8 +74,7 @@ INDUSTRIAL_SCENARIOS: list[ScenarioTemplate] = [
         description="Discussion about optimizing an industrial process or production line.",
         domain=_DOMAIN,
         intent=(
-            "Operator or engineer discusses process bottlenecks and the technician "
-            "suggests optimization strategies."
+            "Operator or engineer discusses process bottlenecks and the technician suggests optimization strategies."
         ),
         skill_level="advanced",
         expected_tool_sequence=["diagnosticar_equipo", "buscar_documentacion"],

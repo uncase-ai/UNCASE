@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import json
+from typing import TYPE_CHECKING
 
-from uncase.schemas.conversation import Conversation
 from uncase.templates.base import ToolCallMode
 from uncase.templates.openai_api import OpenAIAPITemplate
-from uncase.tools.schemas import ToolDefinition
+
+if TYPE_CHECKING:
+    from uncase.schemas.conversation import Conversation
+    from uncase.tools.schemas import ToolDefinition
 
 
 def test_render_basic(basic_conversation: Conversation) -> None:

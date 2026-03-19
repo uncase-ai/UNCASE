@@ -95,10 +95,7 @@ class SeedExtractor:
 
                 self._client = anthropic.AsyncAnthropic()
             except ImportError as exc:
-                msg = (
-                    "The 'anthropic' package is required for the Extractor. "
-                    "Install it with: pip install anthropic"
-                )
+                msg = "The 'anthropic' package is required for the Extractor. Install it with: pip install anthropic"
                 raise ImportError(msg) from exc
         return self._client
 
@@ -121,9 +118,7 @@ class SeedExtractor:
         Raises:
             ExtractionError: If the LLM call fails after all retries.
         """
-        user_prompt = self._build_prompt(
-            conversation_history, current_schema_state, field_descriptions
-        )
+        user_prompt = self._build_prompt(conversation_history, current_schema_state, field_descriptions)
 
         try:
             extraction = await self._call_llm(user_prompt)
@@ -171,7 +166,7 @@ class SeedExtractor:
                 messages=[{"role": "user", "content": user_prompt}],
                 response_model=ExtractionResult,
             )
-            return result  # type: ignore[return-value]
+            return result  # type: ignore[no-any-return]
         except ImportError:
             logger.debug("instructor_not_available_falling_back_to_json_parsing")
 

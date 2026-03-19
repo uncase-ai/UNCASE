@@ -212,10 +212,7 @@ class AgenticExtractionEngine:
             )
 
             # Extract data from the full conversation
-            field_descriptions = {
-                fm.field_name: fm.description
-                for fm in self._schema.get_field_registry()
-            }
+            field_descriptions = {fm.field_name: fm.description for fm in self._schema.get_field_registry()}
             extraction_result = await self._extractor.extract(
                 conversation_history=self._history,
                 current_schema_state=self._schema.to_extraction_dict(),
@@ -250,12 +247,14 @@ class AgenticExtractionEngine:
             language=language,
         )
 
-        messages.append({
-            "type": "summary",
-            "content": summary,
-            "seed": self._state.get_seed_final(),
-            "progress": self._state.get_progress(),
-        })
+        messages.append(
+            {
+                "type": "summary",
+                "content": summary,
+                "seed": self._state.get_seed_final(),
+                "progress": self._state.get_progress(),
+            }
+        )
 
         logger.info(
             "extraction_loop_complete",
@@ -291,10 +290,7 @@ class AgenticExtractionEngine:
         self._state.increment_turn()
 
         # Extract — gracefully handle failures
-        field_descriptions = {
-            fm.field_name: fm.description
-            for fm in self._schema.get_field_registry()
-        }
+        field_descriptions = {fm.field_name: fm.description for fm in self._schema.get_field_registry()}
         try:
             extraction_result = await self._extractor.extract(
                 conversation_history=self._history,

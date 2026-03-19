@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 
 from uncase.core.seed_engine.layer0.config import Layer0Config
-from uncase.core.seed_engine.layer0.extractor import ExtractionResult, ExtractedField, SeedExtractor
-
+from uncase.core.seed_engine.layer0.extractor import ExtractedField, ExtractionResult, SeedExtractor
 
 # ── Fixtures ────────────────────────────────────────────────────────
 

@@ -87,7 +87,7 @@ class ClaudeProvider(BaseLLMProvider):
                 temperature=temperature,
             )
 
-            text = response.content[0].text
+            text: str = str(response.content[0].text)
             logger.debug("claude_response_generated", model=self._model, length=len(text))
             return text
 

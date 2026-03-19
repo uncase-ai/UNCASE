@@ -141,7 +141,7 @@ async def list_evaluation_reports(
             tool_call_validity=r.tool_call_validity,
             composite_score=r.composite_score,
             passed=r.passed,
-            failures=r.failures,
+            failures=list(r.failures) if isinstance(r.failures, list) else list(r.failures.keys()),
             dominio=r.dominio,
             organization_id=r.organization_id,
             created_at=r.created_at,

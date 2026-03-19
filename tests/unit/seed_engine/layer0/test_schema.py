@@ -19,7 +19,6 @@ from uncase.core.seed_engine.layer0.schemas.base import (
     FieldStatus,
 )
 
-
 # ===================================================================
 # FieldMeta / FieldStatus
 # ===================================================================

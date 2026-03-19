@@ -322,7 +322,7 @@ class DemoSandboxOrchestrator:
             )
 
             # Wait for the API to be ready (poll health endpoint).
-            # Allow up to 150s (50 polls × 3s) to accommodate pip install
+            # Allow up to 150s (50 polls x 3s) to accommodate pip install
             # on the "base" template which can take 60-90s.
             import asyncio
 
@@ -803,9 +803,21 @@ async def list_connectors():
 @app.get("/api/v1/audit/logs")
 async def list_audit_logs(page: int = 1, page_size: int = 50):
     logs = [
-        {{"id": "log-1", "event_type": "seed.created", "actor": "demo-user", "resource_type": "seed", "resource_id": "demo-seed-1", "details": {{"domain": "{domain}"}}, "created_at": NOW}},
-        {{"id": "log-2", "event_type": "generation.completed", "actor": "system", "resource_type": "job", "resource_id": "demo-job-1", "details": {{"count": 3}}, "created_at": NOW}},
-        {{"id": "log-3", "event_type": "evaluation.passed", "actor": "system", "resource_type": "report", "resource_id": "demo-report-1", "details": {{"score": 0.92}}, "created_at": NOW}},
+        {{
+            "id": "log-1", "event_type": "seed.created", "actor": "demo-user",
+            "resource_type": "seed", "resource_id": "demo-seed-1",
+            "details": {{"domain": "{domain}"}}, "created_at": NOW,
+        }},
+        {{
+            "id": "log-2", "event_type": "generation.completed", "actor": "system",
+            "resource_type": "job", "resource_id": "demo-job-1",
+            "details": {{"count": 3}}, "created_at": NOW,
+        }},
+        {{
+            "id": "log-3", "event_type": "evaluation.passed", "actor": "system",
+            "resource_type": "report", "resource_id": "demo-report-1",
+            "details": {{"score": 0.92}}, "created_at": NOW,
+        }},
     ]
     return {{"items": logs, "total": len(logs), "page": page, "page_size": page_size}}
 
@@ -827,9 +839,21 @@ async def blockchain_stats():
 @app.get("/api/v1/blockchain/batches")
 async def blockchain_batches():
     return [
-        {{"batch_id": "batch-001", "merkle_root": "0xabc123...", "report_count": 5, "status": "anchored", "tx_hash": "0xdef456...", "chain": "polygon", "created_at": NOW}},
-        {{"batch_id": "batch-002", "merkle_root": "0x789abc...", "report_count": 5, "status": "anchored", "tx_hash": "0x012def...", "chain": "polygon", "created_at": NOW}},
-        {{"batch_id": "batch-003", "merkle_root": "0xcde345...", "report_count": 2, "status": "pending", "tx_hash": None, "chain": "polygon", "created_at": NOW}},
+        {{
+            "batch_id": "batch-001", "merkle_root": "0xabc123...",
+            "report_count": 5, "status": "anchored",
+            "tx_hash": "0xdef456...", "chain": "polygon", "created_at": NOW,
+        }},
+        {{
+            "batch_id": "batch-002", "merkle_root": "0x789abc...",
+            "report_count": 5, "status": "anchored",
+            "tx_hash": "0x012def...", "chain": "polygon", "created_at": NOW,
+        }},
+        {{
+            "batch_id": "batch-003", "merkle_root": "0xcde345...",
+            "report_count": 2, "status": "pending",
+            "tx_hash": None, "chain": "polygon", "created_at": NOW,
+        }},
     ]
 
 @app.get("/api/v1/blockchain/verify/{{report_id}}")
@@ -985,7 +1009,11 @@ async def extraction_turn(request: Request):
     is_complete = turn >= len(questions)
 
     if is_complete:
-        content = "Extraction complete! I've gathered all parameters." if locale == "en" else "Extraccion completada! He recopilado todos los parametros."
+        content = (
+            "Extraction complete! I've gathered all parameters."
+            if locale == "en"
+            else "Extraccion completada! He recopilado todos los parametros."
+        )
         msg_type = "summary"
         seed_data = DEMO_SEEDS[0] if DEMO_SEEDS else None
         del EXTRACTION_SESSIONS[session_id]
