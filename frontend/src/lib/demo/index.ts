@@ -100,3 +100,5 @@ export function isDemoMode(): boolean {
 
   return localStorage.getItem(DEMO_MODE_KEY) === 'true'
 }
+
+export { generateDemoConversation, generateDemoQualityReport, MOCK_TURNS, DEFAULT_MOCK_TURNS } from './generators'

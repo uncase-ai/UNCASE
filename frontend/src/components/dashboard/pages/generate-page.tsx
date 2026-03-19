@@ -19,11 +19,12 @@ import {
   Zap
 } from 'lucide-react'
 
-import type { SeedSchema, Conversation, ConversationTurn, QualityReport } from '@/types/api'
+import type { SeedSchema, Conversation, QualityReport } from '@/types/api'
 import { cn } from '@/lib/utils'
 import { checkApiHealth } from '@/lib/api/client'
 import { bulkCreateConversations } from '@/lib/api/conversations'
 import { generateConversations } from '@/lib/api/generate'
+import { generateDemoConversation, generateDemoQualityReport } from '@/lib/demo/generators'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -102,229 +103,6 @@ function saveHistory(history: GenerationRun[]) {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history))
 }
 
-// ─── Mock generation ───
-
-// Domain-specific turn content templates — the mock generator picks randomly
-// to produce realistic-looking conversations for demo mode.
-const MOCK_TURNS: Record<string, { user: string[]; assistant: string[] }> = {
-  'automotive.sales': {
-    user: [
-      'Buenos días, estoy buscando un vehículo familiar. ¿Qué opciones tienen?',
-      'Me interesa algo con buen rendimiento de combustible y espacio para 5 personas.',
-      '¿Cuál es el precio con todo incluido?',
-      '¿Tienen opciones de financiamiento? Mi presupuesto es limitado.',
-      'Me gustaría agendar una prueba de manejo para el fin de semana.',
-      '¿Qué garantía incluye el vehículo?',
-      '¿Manejan programa de trade-in? Tengo un auto 2020 que me gustaría dejar.',
-      'Perfecto, me interesa. ¿Cuáles son los siguientes pasos?',
-      '¿Tienen el modelo en color blanco o gris?',
-      '¿El seguro está incluido en la mensualidad?',
-    ],
-    assistant: [
-      'Bienvenido, con gusto le ayudo. Tenemos excelentes opciones en SUVs y sedanes familiares. ¿Tiene algún rango de presupuesto en mente?',
-      'Para sus necesidades, le recomiendo el Modelo XR5 2025. Tiene tercera fila de asientos, rendimiento de 14 km/l en ciudad y está disponible desde $689,900.',
-      'El precio final con IVA, placas y verificación es de $864,084 MXN. Incluye paquete de seguridad y garantía de 5 años o 100,000 km.',
-      'Contamos con financiamiento desde 12 hasta 72 meses. Con un enganche del 20%, su mensualidad quedaría en aproximadamente $15,800 a 48 meses con tasa preferencial.',
-      'Perfecto, tenemos disponibilidad el sábado a las 10:00 AM. La prueba dura aproximadamente 30 minutos. Solo necesita traer su licencia vigente.',
-      'El vehículo incluye garantía de fábrica de 5 años o 100,000 km, lo que ocurra primero. Cubre motor, transmisión y componentes electrónicos.',
-      'Claro, nuestro programa de trade-in le permite usar su vehículo actual como enganche. Basado en las condiciones de mercado, podemos hacer una valuación en 24 horas.',
-      'El siguiente paso sería la pre-aprobación de crédito. Necesitaría traer identificación oficial, comprobante de domicilio y últimos 3 recibos de nómina.',
-      'Sí, tenemos 2 unidades en blanco y 1 en gris plata disponibles para entrega inmediata.',
-      'El seguro se cotiza por separado, pero contamos con convenios con aseguradoras que ofrecen tarifas preferenciales para nuestros clientes.',
-    ],
-  },
-  'medical.consultation': {
-    user: [
-      'Doctor, he tenido dolor de cabeza frecuente las últimas dos semanas.',
-      '¿Podría ser algo serio? Me preocupa un poco.',
-      'No he tomado ningún medicamento, solo descanso.',
-      '¿Necesito hacerme algún estudio?',
-      '¿Cuándo debo regresar a consulta?',
-      'Tengo antecedentes de migraña en mi familia.',
-      '¿Hay algo que deba evitar mientras tanto?',
-      'Gracias doctor, seguiré sus indicaciones.',
-    ],
-    assistant: [
-      'Entiendo su preocupación. Vamos a revisar sus síntomas en detalle. ¿El dolor es constante o viene por episodios? ¿En qué zona de la cabeza lo siente?',
-      'Basado en lo que me describe, parece una cefalea tensional, que es la más común. Sin embargo, necesitamos descartar otras causas. ¿Ha tenido cambios en su visión o náuseas?',
-      'Le recomiendo iniciar con paracetamol 500mg cada 8 horas durante 5 días. También es importante mantener una buena hidratación y descanso adecuado.',
-      'Vamos a solicitar unos estudios de laboratorio básicos: biometría hemática, química sanguínea y perfil tiroideo. Si los síntomas persisten, consideraremos una tomografía.',
-      'Le agendo cita de seguimiento en 2 semanas. Si el dolor empeora, aparecen síntomas nuevos o no cede con el tratamiento, regrese antes.',
-      'Los antecedentes familiares son relevantes. Vamos a monitorear si el patrón de dolor es compatible con migraña y ajustar el tratamiento según sea necesario.',
-      'Evite el exceso de pantallas, procure dormir entre 7 y 8 horas, y reduzca el consumo de cafeína. El estrés también puede ser un factor desencadenante.',
-      'Quedo a sus órdenes. Recuerde seguir el tratamiento completo y no suspenderlo aunque se sienta mejor.',
-    ],
-  },
-  'finance.advisory': {
-    user: [
-      'Quisiera invertir mis ahorros pero no sé por dónde empezar.',
-      '¿Cuál es el rendimiento esperado de ese instrumento?',
-      'Mi tolerancia al riesgo es moderada. No quiero perder mi capital.',
-      '¿Cuánto necesito como mínimo para empezar?',
-      '¿Qué comisiones cobran por el manejo de la cuenta?',
-      '¿Puedo retirar mi dinero en cualquier momento?',
-    ],
-    assistant: [
-      'Con gusto le asesoro. Primero necesitamos definir su perfil de inversión: horizonte temporal, tolerancia al riesgo y objetivos financieros. ¿Para cuándo necesitaría disponer de estos recursos?',
-      'Para un perfil moderado con horizonte de 3 a 5 años, un portafolio diversificado en renta fija y variable podría generar entre 8% y 12% anual. El rendimiento pasado no garantiza rendimientos futuros.',
-      'Excelente. Para su perfil recomiendo 60% renta fija (CETES, bonos gubernamentales) y 40% renta variable (ETFs diversificados). Esto equilibra seguridad con crecimiento.',
-      'Puede iniciar desde $10,000 MXN. Sin embargo, para una diversificación adecuada recomiendo al menos $50,000. Podemos establecer aportaciones mensuales automáticas.',
-      'Manejamos una comisión anual del 1.2% sobre el saldo administrado. No hay comisiones por apertura, depósito ni retiro. El cobro es mensual prorrateado.',
-      'Sí, su capital está disponible en cualquier momento. Los instrumentos de renta fija tienen liquidez en 48 horas hábiles, y los de renta variable en 72 horas.',
-    ],
-  },
-  'legal.advisory': {
-    user: [
-      'Necesito asesoría para constituir una empresa. ¿Qué tipo de sociedad me conviene?',
-      'Seríamos 3 socios con inversión inicial de 500,000 pesos. El giro es tecnología.',
-      '¿Cuánto tiempo toma el proceso completo?',
-      '¿Cuáles son los requisitos fiscales iniciales?',
-      '¿Necesito un apoderado legal?',
-      '¿Qué obligaciones laborales tengo si voy a contratar empleados?',
-      '¿Cómo protejo la propiedad intelectual del software que desarrollamos?',
-      '¿Cuánto costarían sus servicios para todo este proceso?',
-    ],
-    assistant: [
-      'Depende de varios factores: número de socios, capital inicial, y el giro del negocio. Para la mayoría de las PYMES tecnológicas, recomiendo una S.A.S. (Sociedad por Acciones Simplificada) por su flexibilidad y menores requisitos de gobierno corporativo.',
-      'Con 3 socios y $500K de capital, la S.A.S. es ideal. No requiere capital mínimo, permite un solo administrador, y los socios limitan su responsabilidad a sus aportaciones. Para tecnología, también recomiendo incluir cláusulas de propiedad intelectual en el acta constitutiva.',
-      'La constitución ante notario toma entre 5 y 10 días hábiles. El registro ante el SAT y la inscripción en el Registro Público se completan en 2-3 semanas adicionales. En total, puede estar operando formalmente en 4-6 semanas.',
-      'Necesitará: alta en el SAT con RFC de persona moral, registro de e.firma, selección de régimen fiscal (recomiendo el de actividades empresariales), inscripción al IMSS como patrón, y apertura de cuenta bancaria empresarial.',
-      'No es obligatorio pero sí recomendable. Un apoderado legal puede representar a la empresa en trámites, firmas y procedimientos sin necesidad de que todos los socios estén presentes. Generalmente se designa al administrador único.',
-      'Al contratar, debe: registrarse como patrón ante IMSS e INFONAVIT, elaborar contratos laborales individuales, establecer reglamento interno de trabajo, crear un plan de previsión social, y cumplir con las obligaciones de nómina y retención de ISR.',
-      'Para software, recomiendo tres capas de protección: 1) Registro de obras ante INDAUTOR como obra literaria, 2) Cláusulas de cesión de derechos en contratos laborales, y 3) Acuerdos de confidencialidad (NDA) con todos los colaboradores.',
-      'El paquete completo de constitución, incluyendo acta constitutiva, trámites fiscales, registro de marca y revisión de contratos iniciales, tiene un costo de $45,000 + IVA. Incluye 3 meses de asesoría legal posterior a la constitución.',
-    ],
-  },
-  'industrial.support': {
-    user: [
-      'La línea de producción 3 se detuvo. Muestra un código de error E-4521.',
-      'El error apareció durante el ciclo de extrusión. La alarma sonó y el panel muestra luz roja.',
-      'Sí, la máquina está en paro de emergencia. Ya seguí el procedimiento de bloqueo.',
-      '¿Cuánto tiempo tomaría la reparación?',
-      '¿Tienen la pieza en stock o hay que pedirla?',
-      '¿Esto afecta la garantía del equipo?',
-      'Ya se instaló el sensor nuevo. ¿Cómo procedo con la calibración?',
-      'La lectura es estable. ¿Puedo reiniciar la producción?',
-    ],
-    assistant: [
-      'El código E-4521 indica un fallo en el sensor de temperatura del módulo de extrusión. Necesitamos verificar si es el sensor o el cableado. Primero confirme: ¿la máquina está en paro de emergencia y el área está asegurada?',
-      'Entendido. El fallo durante el ciclo de extrusión es consistente con E-4521. La protección térmica se activó correctamente. Estoy revisando los datos de diagnóstico remotos. ¿Puede verificar la lectura de temperatura en DIAGNÓSTICO > TÉRMICO del panel de control?',
-      'Perfecto, el procedimiento de bloqueo es correcto. Ahora necesito que verifique: 1) La conexión del sensor TMP-4500 en el módulo de extrusión, y 2) El estado del cableado entre el sensor y la tarjeta de control. Busque signos de daño, desgaste o desconexión.',
-      'Si es solo el sensor, la reparación toma aproximadamente 2 horas incluyendo calibración. Si hay daño en el cableado, podría extenderse a 4-6 horas. Le envío un técnico certificado para asistir con el reemplazo.',
-      'Tenemos 3 unidades del sensor TMP-4500 en almacén de refacciones. Si necesitamos el módulo completo de control, el tiempo de entrega es de 48 horas desde fábrica. Para este caso, el sensor individual debería ser suficiente.',
-      'No, la reparación está cubierta por el contrato de mantenimiento preventivo vigente. Solo aplican costos adicionales si se detecta mal uso o modificaciones no autorizadas al equipo. Estoy registrando el incidente como ticket MT-3291 en CMMS.',
-      'Para calibrar: 1) Ingrese al menú SETUP > SENSOR CALIBRACIÓN en el panel, 2) Seleccione TMP-4500, 3) Ejecute la secuencia de auto-calibración, y 4) Verifique que la lectura estabilice entre 20-25°C a temperatura ambiente. El proceso toma aproximadamente 15 minutos.',
-      'Si la lectura es estable y está dentro del rango, puede limpiar la alarma E-4521 presionando RESET en el panel. Ejecute un ciclo de calentamiento a baja velocidad durante 5 minutos antes de reanudar producción normal. Monitoree la temperatura los primeros 30 minutos de operación.',
-    ],
-  },
-  'education.tutoring': {
-    user: [
-      'No entiendo bien el concepto de derivadas. ¿Me lo puede explicar?',
-      'Creo que entiendo la idea general, pero no sé cómo calcularlas.',
-      '¿Puede darme un ejemplo práctico paso a paso?',
-      'Entonces si f(x) = 3x², la derivada sería f\'(x) = 6x, ¿verdad?',
-      '¿Cómo resuelvo derivadas de funciones compuestas?',
-      'Me cuesta trabajo identificar cuál es la función interna y cuál la externa.',
-      '¿Tiene ejercicios para practicar?',
-      'Gracias, creo que ya me queda más claro. ¿Algo más que deba estudiar para el examen?',
-    ],
-    assistant: [
-      'La derivada mide la tasa de cambio instantánea de una función. Imagina que conduces un auto: la posición es la función, la velocidad es la derivada (cuánto cambia la posición por unidad de tiempo). ¿Has escuchado antes la idea de "razón de cambio"?',
-      'Empecemos con la regla más básica: la regla de la potencia. Si f(x) = xⁿ, entonces f\'(x) = n·xⁿ⁻¹. Es decir, bajas el exponente como coeficiente y reduces el exponente en 1. ¿Quieres intentar con un ejemplo sencillo?',
-      'Vamos con f(x) = x². Aplicando la regla: el exponente es 2, baja como coeficiente → 2x. El exponente se reduce en 1 → 2-1=1. Resultado: f\'(x) = 2x. Esto significa que en x=3, la función crece a una tasa de 6 unidades por cada unidad que avanza x. Es la pendiente de la recta tangente en ese punto.',
-      '¡Exactamente! Muy bien. El 3 es un coeficiente constante que se mantiene, y el exponente 2 baja multiplicando: 3 × 2 = 6, y el exponente se reduce a 1. Entonces f\'(x) = 6x. En x=2, la pendiente es 12. Vas por muy buen camino.',
-      'Para funciones compuestas usamos la regla de la cadena. Si y = f(g(x)), entonces y\' = f\'(g(x)) · g\'(x). Piénsalo así: derivas de afuera hacia adentro y multiplicas cada paso. Es como pelar una cebolla — capa por capa.',
-      'Un truco que funciona muy bien: pregúntate "¿qué es lo último que haría si tuviera que evaluar esta función?" Eso es la función externa. Por ejemplo, en (3x+1)⁵, lo último que harías es elevar a la quinta potencia — esa es f. La función interna es g(x) = 3x+1. Entonces: f\'= 5(3x+1)⁴ · 3 = 15(3x+1)⁴.',
-      'Le preparo una serie de 10 ejercicios graduales: los primeros 3 son derivadas directas (regla de potencia), luego 4 con regla de la cadena, y los últimos 3 combinan múltiples reglas. La respuesta del ejercicio 1 es f\'(x) = 12x³. ¿Quiere que los resolvamos juntos o los intenta por su cuenta primero?',
-      'Para el examen, asegúrate de dominar también: 1) La regla del producto: (fg)\' = f\'g + fg\', 2) La regla del cociente: (f/g)\' = (f\'g - fg\')/g², y 3) Las derivadas de funciones trigonométricas básicas (sen, cos, tan). Con eso y la regla de la cadena, puedes resolver cualquier ejercicio que te pongan.',
-    ],
-  },
-}
-
-const DEFAULT_MOCK_TURNS = {
-  user: ['Hola, necesito ayuda con una consulta.', '¿Podría darme más detalles?', 'Gracias, eso es muy útil.', '¿Hay algo más que deba considerar?'],
-  assistant: ['Con gusto le ayudo. ¿En qué puedo asistirle?', 'Claro, permítame explicarle en detalle.', 'Esa es una excelente pregunta. Aquí tiene la información.', 'Le recomiendo tener en cuenta estos puntos adicionales.'],
-}
-
-function generateMockConversation(seed: SeedSchema, languageOverride?: string): Conversation {
-  const minTurns = seed.pasos_turnos?.turnos_min ?? 3
-  const maxTurns = seed.pasos_turnos?.turnos_max ?? 10
-  const numTurns = minTurns + Math.floor(Math.random() * (maxTurns - minTurns + 1))
-
-  const roles = (seed.roles?.length ?? 0) >= 2 ? seed.roles : ['usuario', 'asistente']
-  const idioma = languageOverride || seed.idioma
-  const pool = MOCK_TURNS[seed.dominio] ?? DEFAULT_MOCK_TURNS
-
-  const turnos: ConversationTurn[] = Array.from({ length: numTurns }, (_, i) => {
-    const isUser = i % 2 === 0
-    const bank = isUser ? pool.user : pool.assistant
-    const content = bank[Math.floor(Math.random() * bank.length)]
-
-    return {
-      turno: i + 1,
-      rol: roles[i % roles.length],
-      contenido: content,
-      herramientas_usadas: [],
-      metadata: {}
-    }
-  })
-
-  return {
-    conversation_id: crypto.randomUUID(),
-    seed_id: seed.seed_id,
-    dominio: seed.dominio,
-    idioma,
-    turnos,
-    es_sintetica: true,
-    created_at: new Date().toISOString(),
-    metadata: {
-      generated_by: 'uncase-demo-generator',
-      source_seed: seed.seed_id
-    }
-  }
-}
-
-function generateMockQualityReport(conv: Conversation, seedId: string): QualityReport {
-  const metrics = {
-    rouge_l: 0.25 + Math.random() * 0.25,
-    fidelidad_factual: 0.82 + Math.random() * 0.16,
-    diversidad_lexica: 0.58 + Math.random() * 0.25,
-    coherencia_dialogica: 0.68 + Math.random() * 0.27,
-    tool_call_validity: 1.0,
-    privacy_score: 0.0,
-    memorizacion: 0.001 + Math.random() * 0.005,
-    semantic_fidelity: 0.65 + Math.random() * 0.28,
-    embedding_drift: 0.35 + Math.random() * 0.50,
-  }
-
-  const composite = Math.min(
-    metrics.rouge_l, metrics.fidelidad_factual, metrics.diversidad_lexica,
-    metrics.coherencia_dialogica, metrics.tool_call_validity,
-    metrics.semantic_fidelity, metrics.embedding_drift
-  )
-
-  // Weighted mean (mirrors backend weights)
-  const pairs: [number, number][] = [
-    [metrics.rouge_l, 0.15], [metrics.fidelidad_factual, 0.25],
-    [metrics.diversidad_lexica, 0.10], [metrics.coherencia_dialogica, 0.20],
-    [metrics.tool_call_validity, 0.10], [metrics.semantic_fidelity, 0.10],
-    [metrics.embedding_drift, 0.10],
-  ]
-
-  const totalW = pairs.reduce((s, [, w]) => s + w, 0)
-  const wMean = pairs.reduce((s, [v, w]) => s + v * w, 0) / totalW
-
-  return {
-    conversation_id: conv.conversation_id,
-    seed_id: seedId,
-    metrics,
-    composite_score: Math.round(composite * 1000) / 1000,
-    weighted_mean: Math.round(wMean * 1000) / 1000,
-    passed: true,
-    failures: [],
-    evaluated_at: new Date().toISOString(),
-  }
-}
 
 // ─── Domain Colors — neutral palette ───
 const DOMAIN_COLORS: Record<string, string> = {
@@ -445,12 +223,12 @@ export function GeneratePage() {
             if (controller.signal.aborted) break
             await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 100))
 
-            const conversation = generateMockConversation(seed, languageOverride || undefined)
+            const conversation = generateDemoConversation(seed)
 
             generated.push(conversation)
 
             if (evaluateAfter) {
-              allReports.push(generateMockQualityReport(conversation, seed.seed_id))
+              allReports.push(generateDemoQualityReport(conversation, seed))
             }
 
             completed++
