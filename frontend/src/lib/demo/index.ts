@@ -1,6 +1,6 @@
 const DEMO_MODE_KEY = 'uncase-demo-mode'
 const DEMO_VERSION_KEY = 'uncase-demo-version'
-const CURRENT_DEMO_VERSION = '3'
+const CURRENT_DEMO_VERSION = '4'
 
 const STORAGE_KEYS = [
   'uncase-seeds',

@@ -34,10 +34,106 @@ const SAMPLE_CONVERSATION: Conversation = {
   dominio: 'automotive.sales',
   idioma: 'es',
   turnos: [
-    { turno: 1, rol: 'cliente', contenido: 'Busco un SUV familiar con buen consumo.', herramientas_usadas: [], metadata: {} },
-    { turno: 2, rol: 'agente', contenido: 'Tenemos el Modelo X con 15km/l. Tiene 7 asientos y c\u00e1mara 360\u00b0.', herramientas_usadas: ['consultar_inventario'], metadata: {} },
-    { turno: 3, rol: 'cliente', contenido: '\u00bfTienen disponibilidad en color blanco?', herramientas_usadas: [], metadata: {} },
-    { turno: 4, rol: 'agente', contenido: 'S\u00ed, tenemos 3 unidades en blanco perla disponibles para entrega inmediata.', herramientas_usadas: ['verificar_disponibilidad'], metadata: {} }
+    {
+      turno: 1,
+      rol: 'cliente',
+      contenido: 'Busco un SUV familiar con buen consumo, \u00bfqu\u00e9 opciones tienen?',
+      herramientas_usadas: [],
+      metadata: {}
+    },
+    {
+      turno: 2,
+      rol: 'agente',
+      contenido: 'Voy a consultar nuestro inventario de SUVs disponibles.',
+      herramientas_usadas: ['buscar_inventario'],
+      tool_calls: [
+        {
+          tool_call_id: 'tc-001',
+          tool_name: 'buscar_inventario',
+          arguments: { tipo: 'SUV', precio_max: 600000 }
+        }
+      ],
+      metadata: {}
+    },
+    {
+      turno: 3,
+      rol: 'herramienta',
+      contenido: '',
+      herramientas_usadas: [],
+      tool_results: [
+        {
+          tool_call_id: 'tc-001',
+          tool_name: 'buscar_inventario',
+          result: {
+            vehiculos: [
+              { vehiculo_id: 'VH-4821', marca: 'Toyota', modelo: 'RAV4', anio: 2025, precio: 520000 },
+              { vehiculo_id: 'VH-5102', marca: 'Honda', modelo: 'CR-V', anio: 2025, precio: 545000 }
+            ],
+            total_resultados: 2
+          },
+          status: 'success' as const
+        }
+      ],
+      metadata: {}
+    },
+    {
+      turno: 4,
+      rol: 'agente',
+      contenido: 'Tenemos 2 opciones: la Toyota RAV4 2025 a $520,000 con 15km/l y la Honda CR-V 2025 a $545,000. Ambas tienen 7 asientos y c\u00e1mara 360\u00b0. \u00bfLe interesa alguna?',
+      herramientas_usadas: [],
+      metadata: {}
+    },
+    {
+      turno: 5,
+      rol: 'cliente',
+      contenido: '\u00bfMe pueden dar una cotizaci\u00f3n de la RAV4?',
+      herramientas_usadas: [],
+      metadata: {}
+    },
+    {
+      turno: 6,
+      rol: 'agente',
+      contenido: 'Con gusto, genero su cotizaci\u00f3n ahora mismo.',
+      herramientas_usadas: ['cotizar_vehiculo'],
+      tool_calls: [
+        {
+          tool_call_id: 'tc-002',
+          tool_name: 'cotizar_vehiculo',
+          arguments: { vehiculo_id: 'VH-4821', incluir_accesorios: true }
+        }
+      ],
+      metadata: {}
+    },
+    {
+      turno: 7,
+      rol: 'herramienta',
+      contenido: '',
+      herramientas_usadas: [],
+      tool_results: [
+        {
+          tool_call_id: 'tc-002',
+          tool_name: 'cotizar_vehiculo',
+          result: {
+            vehiculo_id: 'VH-4821',
+            precio_base: 520000,
+            descuentos: 15000,
+            accesorios: 28000,
+            precio_final: 533000,
+            moneda: 'MXN',
+            vigencia: '2026-03-24'
+          },
+          status: 'success' as const
+        }
+      ],
+      metadata: {}
+    },
+    {
+      turno: 8,
+      rol: 'agente',
+      contenido: 'La Toyota RAV4 2025 con paquete de accesorios queda en $533,000 MXN. Incluye un descuento de $15,000. La cotizaci\u00f3n es v\u00e1lida hasta el 24 de marzo.',
+      herramientas_usadas: [],
+      metadata: {}
+    }
   ],
   es_sintetica: false,
   created_at: new Date().toISOString(),

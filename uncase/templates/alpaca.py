@@ -26,11 +26,11 @@ if TYPE_CHECKING:
     from uncase.tools.schemas import ToolDefinition
 
 # Roles that map to assistant / response
-_ASSISTANT_ROLES = {"vendedor", "asistente"}
+_ASSISTANT_ROLES = {"vendedor", "asistente", "agente", "doctor", "asesor", "assistant"}
 # Roles that map to user / instruction
-_USER_ROLES = {"cliente", "usuario"}
+_USER_ROLES = {"cliente", "usuario", "paciente", "estudiante", "user"}
 # Roles that map to system (prefix for instruction)
-_SYSTEM_ROLES = {"sistema"}
+_SYSTEM_ROLES = {"sistema", "system"}
 
 
 class AlpacaTemplate(BaseChatTemplate):

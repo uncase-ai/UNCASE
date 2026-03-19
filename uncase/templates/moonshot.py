@@ -28,10 +28,20 @@ if TYPE_CHECKING:
 _ROLE_MAP: dict[str, str] = {
     "vendedor": "assistant",
     "asistente": "assistant",
+    "agente": "assistant",
+    "doctor": "assistant",
+    "asesor": "assistant",
     "cliente": "user",
     "usuario": "user",
+    "paciente": "user",
+    "estudiante": "user",
     "sistema": "system",
     "herramienta": "tool",
+    # Pass-through
+    "assistant": "assistant",
+    "user": "user",
+    "system": "system",
+    "tool": "tool",
 }
 
 _IM_SYSTEM = "<|im_system|>"

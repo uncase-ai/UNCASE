@@ -13,7 +13,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
   // ── Seed 001: Consulta de vehículo nuevo ──
   {
     conversation_id: 'demo-conv-001',
-    seed_id: 'demo-seed-001',
+    seed_id: 'featured-auto-001',
     dominio: 'automotive.sales',
     idioma: 'es',
     es_sintetica: true,
@@ -66,7 +66,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
   },
   {
     conversation_id: 'demo-conv-002',
-    seed_id: 'demo-seed-001',
+    seed_id: 'featured-auto-001',
     dominio: 'automotive.sales',
     idioma: 'es',
     es_sintetica: true,
@@ -173,7 +173,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
   // ── Seed 002: Prueba de manejo ──
   {
     conversation_id: 'demo-conv-003',
-    seed_id: 'demo-seed-002',
+    seed_id: 'featured-auto-001',
     dominio: 'automotive.sales',
     idioma: 'es',
     es_sintetica: true,
@@ -226,7 +226,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
   },
   {
     conversation_id: 'demo-conv-004',
-    seed_id: 'demo-seed-002',
+    seed_id: 'featured-auto-001',
     dominio: 'automotive.sales',
     idioma: 'es',
     es_sintetica: false,
@@ -274,7 +274,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
   // ── Seed 003: Trade-in ──
   {
     conversation_id: 'demo-conv-005',
-    seed_id: 'demo-seed-003',
+    seed_id: 'featured-auto-001',
     dominio: 'automotive.sales',
     idioma: 'es',
     es_sintetica: true,
@@ -364,7 +364,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
   },
   {
     conversation_id: 'demo-conv-006',
-    seed_id: 'demo-seed-003',
+    seed_id: 'featured-auto-001',
     dominio: 'automotive.sales',
     idioma: 'es',
     es_sintetica: true,
@@ -405,7 +405,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
   // ── Seed 004: Financiamiento ──
   {
     conversation_id: 'demo-conv-007',
-    seed_id: 'demo-seed-004',
+    seed_id: 'featured-auto-001',
     dominio: 'automotive.sales',
     idioma: 'es',
     es_sintetica: true,
@@ -465,7 +465,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
   },
   {
     conversation_id: 'demo-conv-008',
-    seed_id: 'demo-seed-004',
+    seed_id: 'featured-auto-001',
     dominio: 'automotive.sales',
     idioma: 'es',
     es_sintetica: false,
@@ -535,7 +535,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
   // ── Seed 005: Servicio post-venta ──
   {
     conversation_id: 'demo-conv-009',
-    seed_id: 'demo-seed-005',
+    seed_id: 'featured-auto-001',
     dominio: 'automotive.sales',
     idioma: 'es',
     es_sintetica: true,
@@ -588,7 +588,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
   },
   {
     conversation_id: 'demo-conv-010',
-    seed_id: 'demo-seed-005',
+    seed_id: 'featured-auto-001',
     dominio: 'automotive.sales',
     idioma: 'es',
     es_sintetica: false,
@@ -636,7 +636,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
   // ── Seed 006: Cardiology initial consultation (chest pain) ──
   {
     conversation_id: 'demo-conv-011',
-    seed_id: 'demo-seed-006',
+    seed_id: 'featured-med-001',
     dominio: 'medical.consultation',
     idioma: 'en',
     es_sintetica: true,
@@ -841,7 +841,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
   },
   {
     conversation_id: 'demo-conv-012',
-    seed_id: 'demo-seed-006',
+    seed_id: 'featured-med-001',
     dominio: 'medical.consultation',
     idioma: 'en',
     es_sintetica: true,
@@ -974,7 +974,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
   // ── Seed 007: Pediatric wellness visit (immunization) ──
   {
     conversation_id: 'demo-conv-013',
-    seed_id: 'demo-seed-007',
+    seed_id: 'featured-med-001',
     dominio: 'medical.consultation',
     idioma: 'en',
     es_sintetica: true,
@@ -1121,7 +1121,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
   },
   {
     conversation_id: 'demo-conv-014',
-    seed_id: 'demo-seed-007',
+    seed_id: 'featured-med-001',
     dominio: 'medical.consultation',
     idioma: 'en',
     es_sintetica: true,
@@ -1240,7 +1240,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
   // ── Seed 008: Dermatology follow-up (chronic skin condition) ──
   {
     conversation_id: 'demo-conv-015',
-    seed_id: 'demo-seed-008',
+    seed_id: 'featured-med-001',
     dominio: 'medical.consultation',
     idioma: 'en',
     es_sintetica: true,
@@ -1402,7 +1402,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
   },
   {
     conversation_id: 'demo-conv-016',
-    seed_id: 'demo-seed-008',
+    seed_id: 'featured-med-001',
     dominio: 'medical.consultation',
     idioma: 'en',
     es_sintetica: true,
@@ -1533,7 +1533,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
   // ── Seed 009: Mental health intake (anxiety/stress) ──
   {
     conversation_id: 'demo-conv-017',
-    seed_id: 'demo-seed-009',
+    seed_id: 'featured-med-001',
     dominio: 'medical.consultation',
     idioma: 'en',
     es_sintetica: true,
@@ -1691,7 +1691,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
   },
   {
     conversation_id: 'demo-conv-018',
-    seed_id: 'demo-seed-009',
+    seed_id: 'featured-med-001',
     dominio: 'medical.consultation',
     idioma: 'en',
     es_sintetica: true,
@@ -1850,7 +1850,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
   // ── Seed 010: Chronic disease management (diabetes type 2) ──
   {
     conversation_id: 'demo-conv-019',
-    seed_id: 'demo-seed-010',
+    seed_id: 'featured-med-001',
     dominio: 'medical.consultation',
     idioma: 'en',
     es_sintetica: true,
@@ -2053,7 +2053,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
   },
   {
     conversation_id: 'demo-conv-020',
-    seed_id: 'demo-seed-010',
+    seed_id: 'featured-med-001',
     dominio: 'medical.consultation',
     idioma: 'en',
     es_sintetica: true,

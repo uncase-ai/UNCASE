@@ -20,8 +20,13 @@ if TYPE_CHECKING:
 _ROLE_MAP: dict[str, str] = {
     "vendedor": "assistant",
     "asistente": "assistant",
+    "agente": "assistant",
+    "doctor": "assistant",
+    "asesor": "assistant",
     "cliente": "user",
     "usuario": "user",
+    "paciente": "user",
+    "estudiante": "user",
     "sistema": "system",
     "herramienta": "ipython",
     # Pass-through for already-mapped roles
@@ -146,9 +151,8 @@ class LlamaChatTemplate(BaseChatTemplate):
                 )
                 fragments.append(f"<|start_header_id|>ipython<|end_header_id|>\n\n{result_json}<|eot_id|>")
 
-        # Skip the herramienta/tool role content when tool_call_mode is NONE
-        # (tool turns have no meaningful text content outside tool results)
-        if role == "ipython" and tool_call_mode == ToolCallMode.NONE:
+        # Skip tool-role content when mode is NONE or when results already rendered
+        if role == "ipython" and (tool_call_mode == ToolCallMode.NONE or turn.tool_results):
             return fragments
 
         # Regular content

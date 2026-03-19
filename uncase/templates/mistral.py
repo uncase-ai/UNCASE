@@ -21,8 +21,13 @@ if TYPE_CHECKING:
 _ROLE_MAP: dict[str, str] = {
     "vendedor": "assistant",
     "asistente": "assistant",
+    "agente": "assistant",
+    "doctor": "assistant",
+    "asesor": "assistant",
     "cliente": "user",
     "usuario": "user",
+    "paciente": "user",
+    "estudiante": "user",
     "sistema": "system",
     "herramienta": "tool",
     # Pass-through
@@ -200,7 +205,11 @@ class MistralChatTemplate(BaseChatTemplate):
         turn: ConversationTurn,
         tool_call_mode: ToolCallMode,
     ) -> str:
-        """Build assistant content, including tool calls when inline."""
+        """Build assistant content, including tool calls when inline.
+
+        Note: tool-call content does NOT include a trailing ``</s>`` — the
+        caller is responsible for adding sentence boundaries.
+        """
         if tool_call_mode == ToolCallMode.INLINE and turn.tool_calls:
             calls = []
             for tc in turn.tool_calls:
@@ -211,7 +220,7 @@ class MistralChatTemplate(BaseChatTemplate):
                         "id": _generate_tool_call_id(),
                     }
                 )
-            return f"[TOOL_CALLS]{json.dumps(calls, ensure_ascii=False)}</s>"
+            return f"[TOOL_CALLS]{json.dumps(calls, ensure_ascii=False)}"
         return turn.contenido
 
     def _build_tool_result_content(self, turn: ConversationTurn) -> str:

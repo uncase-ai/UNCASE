@@ -32,10 +32,20 @@ _CHATBOT = "<|CHATBOT_TOKEN|>"
 _ROLE_TOKEN_MAP: dict[str, str] = {
     "vendedor": _CHATBOT,
     "asistente": _CHATBOT,
+    "agente": _CHATBOT,
+    "doctor": _CHATBOT,
+    "asesor": _CHATBOT,
     "cliente": _USER,
     "usuario": _USER,
+    "paciente": _USER,
+    "estudiante": _USER,
     "sistema": _SYSTEM,
     "herramienta": _SYSTEM,
+    # Pass-through
+    "assistant": _CHATBOT,
+    "user": _USER,
+    "system": _SYSTEM,
+    "tool": _SYSTEM,
 }
 
 
@@ -100,7 +110,7 @@ class HarmonyTemplate(BaseChatTemplate):
             role_token = _ROLE_TOKEN_MAP.get(turn.rol, _USER)
 
             # Tool-result turns rendered as system results
-            if tool_call_mode == ToolCallMode.INLINE and turn.tool_results and turn.rol in ("herramienta", "sistema"):
+            if tool_call_mode == ToolCallMode.INLINE and turn.tool_results and role_token == _SYSTEM:
                 for result in turn.tool_results:
                     parts.append(self._format_tool_result(result))
                 continue

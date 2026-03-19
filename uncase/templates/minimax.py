@@ -41,10 +41,20 @@ if TYPE_CHECKING:
 _ROLE_MAP: dict[str, str] = {
     "vendedor": "assistant",
     "asistente": "assistant",
+    "agente": "assistant",
+    "doctor": "assistant",
+    "asesor": "assistant",
     "cliente": "user",
     "usuario": "user",
+    "paciente": "user",
+    "estudiante": "user",
     "sistema": "system",
     "herramienta": "function",
+    # Pass-through
+    "assistant": "assistant",
+    "user": "user",
+    "system": "system",
+    "function": "function",
 }
 
 _IM_START = "<|im_start|>"

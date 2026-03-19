@@ -246,7 +246,21 @@ comparar_modelos = ToolDefinition(
             },
             "criterios": {
                 "type": "array",
-                "items": {"type": "string"},
+                "items": {
+                    "type": "string",
+                    "enum": [
+                        "precio",
+                        "rendimiento",
+                        "equipamiento",
+                        "garantia",
+                        "espacio",
+                        "seguridad",
+                        "consumo",
+                        "potencia",
+                        "transmision",
+                        "traccion",
+                    ],
+                },
                 "description": "Criteria for comparison (e.g. precio, rendimiento, equipamiento).",
             },
         },

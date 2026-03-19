@@ -15,41 +15,41 @@ export const DEMO_ACTIVITY: ActivityEvent[] = [
     id: 'demo-act-001',
     type: 'seed_created',
     title: 'Seed created: Consulta vehículo nuevo',
-    description: 'automotive.sales — demo-seed-001',
+    description: 'automotive.sales — featured-auto-001',
     timestamp: daysAgo(7, 9, 0),
-    metadata: { seed_id: 'demo-seed-001' }
+    metadata: { seed_id: 'featured-auto-001' }
   },
   {
     id: 'demo-act-002',
     type: 'seed_created',
     title: 'Seed created: Prueba de manejo',
-    description: 'automotive.sales — demo-seed-002',
+    description: 'medical.consultation — featured-med-001',
     timestamp: daysAgo(7, 9, 15),
-    metadata: { seed_id: 'demo-seed-002' }
+    metadata: { seed_id: 'featured-med-001' }
   },
   {
     id: 'demo-act-003',
     type: 'seed_created',
     title: 'Seed created: Evaluación trade-in',
-    description: 'automotive.sales — demo-seed-003',
+    description: 'legal.advisory — featured-legal-001',
     timestamp: daysAgo(7, 9, 30),
-    metadata: { seed_id: 'demo-seed-003' }
+    metadata: { seed_id: 'featured-legal-001' }
   },
   {
     id: 'demo-act-004',
     type: 'seed_created',
     title: 'Seed created: Financiamiento automotriz',
-    description: 'automotive.sales — demo-seed-004',
+    description: 'finance.advisory — featured-fin-001',
     timestamp: daysAgo(7, 10, 0),
-    metadata: { seed_id: 'demo-seed-004' }
+    metadata: { seed_id: 'featured-fin-001' }
   },
   {
     id: 'demo-act-005',
     type: 'seed_created',
     title: 'Seed created: Servicio post-venta',
-    description: 'automotive.sales — demo-seed-005',
+    description: 'industrial.support — featured-ind-001',
     timestamp: daysAgo(7, 10, 15),
-    metadata: { seed_id: 'demo-seed-005' }
+    metadata: { seed_id: 'featured-ind-001' }
   },
 
   // Day 6 — tool_registered
@@ -93,7 +93,7 @@ export const DEMO_ACTIVITY: ActivityEvent[] = [
     id: 'demo-act-010',
     type: 'conversation_generated',
     title: 'Synthetic conversation generated',
-    description: 'demo-conv-001 — from demo-seed-001',
+    description: 'demo-conv-001 — from featured-auto-001',
     timestamp: daysAgo(4, 10, 0),
     metadata: { conversation_id: 'demo-conv-001', model: 'claude-3.5-sonnet' }
   },
@@ -101,7 +101,7 @@ export const DEMO_ACTIVITY: ActivityEvent[] = [
     id: 'demo-act-011',
     type: 'conversation_generated',
     title: 'Synthetic conversation generated',
-    description: 'demo-conv-002 — from demo-seed-001',
+    description: 'demo-conv-002 — from featured-auto-001',
     timestamp: daysAgo(4, 10, 15),
     metadata: { conversation_id: 'demo-conv-002', model: 'claude-3.5-sonnet' }
   },
@@ -109,7 +109,7 @@ export const DEMO_ACTIVITY: ActivityEvent[] = [
     id: 'demo-act-012',
     type: 'conversation_generated',
     title: 'Synthetic conversation generated',
-    description: 'demo-conv-005 — from demo-seed-003',
+    description: 'demo-conv-005 — from featured-legal-001',
     timestamp: daysAgo(4, 11, 0),
     metadata: { conversation_id: 'demo-conv-005', model: 'claude-3.5-sonnet' }
   },
@@ -117,7 +117,7 @@ export const DEMO_ACTIVITY: ActivityEvent[] = [
     id: 'demo-act-013',
     type: 'conversation_generated',
     title: 'Synthetic conversation generated',
-    description: 'demo-conv-009 — from demo-seed-005',
+    description: 'demo-conv-009 — from featured-ind-001',
     timestamp: daysAgo(4, 11, 30),
     metadata: { conversation_id: 'demo-conv-009', model: 'claude-3.5-sonnet' }
   },

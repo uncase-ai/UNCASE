@@ -84,6 +84,8 @@ interface ParameterEntry {
   description: string
   required: boolean
   enumValues: string
+  itemType: string
+  itemEnumValues: string
 }
 
 interface ToolCreationWizardProps {
@@ -110,7 +112,9 @@ function createEmptyParam(): ParameterEntry {
     type: 'string',
     description: '',
     required: false,
-    enumValues: ''
+    enumValues: '',
+    itemType: 'string',
+    itemEnumValues: ''
   }
 }
 
@@ -131,6 +135,21 @@ function parametersToJsonSchema(params: ParameterEntry[]): Record<string, unknow
         .split(',')
         .map(v => v.trim())
         .filter(Boolean)
+    }
+
+    // Array items sub-schema
+    if (p.type === 'array') {
+      const items: Record<string, unknown> = { type: p.itemType || 'string' }
+      const itemEnums = p.itemEnumValues?.trim()
+
+      if (itemEnums) {
+        items.enum = itemEnums
+          .split(',')
+          .map(v => v.trim())
+          .filter(Boolean)
+      }
+
+      prop.items = items
     }
 
     properties[p.name.trim()] = prop
@@ -392,6 +411,39 @@ function ParameterRow({
           </div>
         )}
       </div>
+
+      {/* Array-specific: item type and predefined values */}
+      {param.type === 'array' && (
+        <div className="flex flex-col gap-2 rounded-md border border-dashed bg-muted/30 p-2">
+          <div className="flex items-center gap-2">
+            <span className="shrink-0 text-[10px] font-medium text-muted-foreground">Item type:</span>
+            <Select value={param.itemType || 'string'} onValueChange={v => onChange({ itemType: v })}>
+              <SelectTrigger className="h-7 w-28 text-[11px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="string" className="text-xs">string</SelectItem>
+                <SelectItem value="number" className="text-xs">number</SelectItem>
+                <SelectItem value="integer" className="text-xs">integer</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] text-muted-foreground">
+              Predefined values (users will pick from these in the simulation):
+            </span>
+            <Input
+              placeholder="e.g. precio, rendimiento, equipamiento"
+              value={param.itemEnumValues}
+              onChange={e => onChange({ itemEnumValues: e.target.value })}
+              className="h-7 text-[11px]"
+            />
+            <p className="text-[9px] text-muted-foreground">
+              Comma-separated. Leave empty to let users type freely.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,4 +1,4 @@
-"""Load featured seeds and domain seed packages into the database on first deploy.
+"""Load featured seeds into the database on first deploy.
 
 Idempotent: checks if seed IDs already exist before inserting.
 Called from the app startup event after migrations complete.
@@ -440,15 +440,10 @@ def _build_seed_model(seed_dict: dict[str, object], *, seed_id: str | None = Non
 
 
 async def load_featured_seeds(session: AsyncSession) -> int:
-    """Insert featured seeds and domain seed packages if the seeds table is empty.
+    """Insert 6 featured seeds (one per industry) if the seeds table is empty.
 
     Returns the number of seeds inserted (0 if table already has data).
-    Loads:
-      - 6 featured seeds (one per industry)
-      - 150 domain package seeds (50 automotive, 50 medical, 50 finance)
     """
-    from uncase.domains.seed_packages import DOMAIN_PACKAGES
-
     count = await session.scalar(select(func.count()).select_from(SeedModel))
     if count and count > 0:
         logger.info("seed_data_skip", reason="seeds table already has data", existing=count)
@@ -456,20 +451,10 @@ async def load_featured_seeds(session: AsyncSession) -> int:
 
     inserted = 0
 
-    # 1. Featured seeds (explicit IDs)
     for seed_dict in FEATURED_SEEDS:
         session.add(_build_seed_model(seed_dict))
         inserted += 1
 
-    # 2. Domain package seeds (auto-generated IDs)
-    for domain, seeds in DOMAIN_PACKAGES.items():
-        for idx, seed_dict in enumerate(seeds, start=1):
-            seed_id = f"pkg-{domain.replace('.', '-')}-{idx:03d}"
-            session.add(_build_seed_model(seed_dict, seed_id=seed_id))
-            inserted += 1
-        logger.info("seed_package_loaded", domain=domain, count=len(seeds))
-
     await session.commit()
-    pkg_count = inserted - len(FEATURED_SEEDS)
-    logger.info("seed_data_loaded", featured=len(FEATURED_SEEDS), packages=pkg_count, total=inserted)
+    logger.info("seed_data_loaded", featured=inserted)
     return inserted

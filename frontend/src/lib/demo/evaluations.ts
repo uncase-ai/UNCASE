@@ -13,7 +13,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   // ── 8 Passing automotive evaluations ──
   {
     conversation_id: 'demo-conv-001',
-    seed_id: 'demo-seed-001',
+    seed_id: 'featured-auto-001',
     metrics: {
       rouge_l: 0.38,
       fidelidad_factual: 0.94,
@@ -32,7 +32,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   },
   {
     conversation_id: 'demo-conv-002',
-    seed_id: 'demo-seed-001',
+    seed_id: 'featured-auto-001',
     metrics: {
       rouge_l: 0.42,
       fidelidad_factual: 0.96,
@@ -51,7 +51,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   },
   {
     conversation_id: 'demo-conv-003',
-    seed_id: 'demo-seed-002',
+    seed_id: 'featured-auto-001',
     metrics: {
       rouge_l: 0.32,
       fidelidad_factual: 0.91,
@@ -70,7 +70,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   },
   {
     conversation_id: 'demo-conv-005',
-    seed_id: 'demo-seed-003',
+    seed_id: 'featured-auto-001',
     metrics: {
       rouge_l: 0.45,
       fidelidad_factual: 0.97,
@@ -89,7 +89,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   },
   {
     conversation_id: 'demo-conv-006',
-    seed_id: 'demo-seed-003',
+    seed_id: 'featured-auto-001',
     metrics: {
       rouge_l: 0.36,
       fidelidad_factual: 0.92,
@@ -108,7 +108,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   },
   {
     conversation_id: 'demo-conv-007',
-    seed_id: 'demo-seed-004',
+    seed_id: 'featured-auto-001',
     metrics: {
       rouge_l: 0.48,
       fidelidad_factual: 0.98,
@@ -127,7 +127,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   },
   {
     conversation_id: 'demo-conv-009',
-    seed_id: 'demo-seed-005',
+    seed_id: 'featured-auto-001',
     metrics: {
       rouge_l: 0.39,
       fidelidad_factual: 0.93,
@@ -146,7 +146,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   },
   {
     conversation_id: 'demo-conv-010',
-    seed_id: 'demo-seed-005',
+    seed_id: 'featured-auto-001',
     metrics: {
       rouge_l: 0.34,
       fidelidad_factual: 0.91,
@@ -169,7 +169,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   // Low lexical diversity
   {
     conversation_id: 'demo-conv-004',
-    seed_id: 'demo-seed-002',
+    seed_id: 'featured-auto-001',
     metrics: {
       rouge_l: 0.32,
       fidelidad_factual: 0.90,
@@ -190,7 +190,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   // Low factual fidelity
   {
     conversation_id: 'demo-conv-008',
-    seed_id: 'demo-seed-004',
+    seed_id: 'featured-auto-001',
     metrics: {
       rouge_l: 0.28,
       fidelidad_factual: 0.74,
@@ -211,7 +211,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   // Privacy violation
   {
     conversation_id: 'demo-conv-004-pii',
-    seed_id: 'demo-seed-002',
+    seed_id: 'featured-auto-001',
     metrics: {
       rouge_l: 0.35,
       fidelidad_factual: 0.93,
@@ -232,7 +232,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   // Low dialogic coherence
   {
     conversation_id: 'demo-conv-006-v2',
-    seed_id: 'demo-seed-003',
+    seed_id: 'featured-auto-001',
     metrics: {
       rouge_l: 0.31,
       fidelidad_factual: 0.91,
@@ -253,7 +253,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   // ── Medical consultation evaluations (10 passing) ──
   {
     conversation_id: 'demo-conv-011',
-    seed_id: 'demo-seed-006',
+    seed_id: 'featured-med-001',
     metrics: {
       rouge_l: 0.41,
       fidelidad_factual: 0.97,
@@ -272,7 +272,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   },
   {
     conversation_id: 'demo-conv-012',
-    seed_id: 'demo-seed-006',
+    seed_id: 'featured-med-001',
     metrics: {
       rouge_l: 0.37,
       fidelidad_factual: 0.95,
@@ -291,7 +291,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   },
   {
     conversation_id: 'demo-conv-013',
-    seed_id: 'demo-seed-007',
+    seed_id: 'featured-med-001',
     metrics: {
       rouge_l: 0.43,
       fidelidad_factual: 0.98,
@@ -310,7 +310,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   },
   {
     conversation_id: 'demo-conv-014',
-    seed_id: 'demo-seed-007',
+    seed_id: 'featured-med-001',
     metrics: {
       rouge_l: 0.35,
       fidelidad_factual: 0.96,
@@ -329,7 +329,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   },
   {
     conversation_id: 'demo-conv-015',
-    seed_id: 'demo-seed-008',
+    seed_id: 'featured-med-001',
     metrics: {
       rouge_l: 0.47,
       fidelidad_factual: 0.99,
@@ -348,7 +348,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   },
   {
     conversation_id: 'demo-conv-016',
-    seed_id: 'demo-seed-008',
+    seed_id: 'featured-med-001',
     metrics: {
       rouge_l: 0.40,
       fidelidad_factual: 0.96,
@@ -367,7 +367,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   },
   {
     conversation_id: 'demo-conv-017',
-    seed_id: 'demo-seed-009',
+    seed_id: 'featured-med-001',
     metrics: {
       rouge_l: 0.44,
       fidelidad_factual: 0.97,
@@ -386,7 +386,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   },
   {
     conversation_id: 'demo-conv-018',
-    seed_id: 'demo-seed-009',
+    seed_id: 'featured-med-001',
     metrics: {
       rouge_l: 0.39,
       fidelidad_factual: 0.95,
@@ -405,7 +405,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   },
   {
     conversation_id: 'demo-conv-019',
-    seed_id: 'demo-seed-010',
+    seed_id: 'featured-med-001',
     metrics: {
       rouge_l: 0.49,
       fidelidad_factual: 0.99,
@@ -424,7 +424,7 @@ export const DEMO_EVALUATIONS: QualityReport[] = [
   },
   {
     conversation_id: 'demo-conv-020',
-    seed_id: 'demo-seed-010',
+    seed_id: 'featured-med-001',
     metrics: {
       rouge_l: 0.41,
       fidelidad_factual: 0.97,

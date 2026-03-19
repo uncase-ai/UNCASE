@@ -1,16 +1,18 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
 import Link from 'next/link'
-import { ArrowLeft, Loader2, Play, Puzzle } from 'lucide-react'
+import { ArrowLeft, Loader2, Play, Puzzle, X } from 'lucide-react'
 
 import type { ToolDefinition, ToolResult } from '@/types/api'
 import { useApi } from '@/hooks/use-api'
+import { cn } from '@/lib/utils'
 import { fetchTool, simulateTool } from '@/lib/api/tools'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -38,6 +40,10 @@ interface SchemaProperty {
   description?: string
   enum?: string[]
   default?: unknown
+  items?: {
+    type?: string
+    enum?: string[]
+  }
 }
 
 interface InputSchema {
@@ -53,6 +59,8 @@ function buildInitialArgs(schema: InputSchema): Record<string, unknown> {
   for (const [key, prop] of Object.entries(properties)) {
     if (prop.default !== undefined) {
       args[key] = prop.default
+    } else if (prop.type === 'array') {
+      args[key] = []
     } else if (prop.type === 'boolean') {
       args[key] = false
     } else if (prop.type === 'number' || prop.type === 'integer') {
@@ -68,6 +76,150 @@ function buildInitialArgs(schema: InputSchema): Record<string, unknown> {
 
   return args
 }
+
+// ─── Tag Input for array-of-strings (no predefined values) ───
+
+function TagInput({
+  value,
+  onChange,
+  placeholder
+}: {
+  value: string[]
+  onChange: (items: string[]) => void
+  placeholder?: string
+}) {
+  const [draft, setDraft] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  function addItem(text: string) {
+    const trimmed = text.trim()
+
+    if (trimmed && !value.includes(trimmed)) {
+      onChange([...value, trimmed])
+    }
+
+    setDraft('')
+  }
+
+  function removeItem(item: string) {
+    onChange(value.filter(v => v !== item))
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault()
+      addItem(draft)
+    }
+
+    if (e.key === 'Backspace' && draft === '' && value.length > 0) {
+      removeItem(value[value.length - 1])
+    }
+  }
+
+  return (
+    <div
+      className="flex min-h-9 flex-wrap items-center gap-1.5 rounded-md border bg-background px-2.5 py-1.5
+        focus-within:ring-2 focus-within:ring-ring/20"
+      onClick={() => inputRef.current?.focus()}
+    >
+      {value.map(item => (
+        <Badge key={item} variant="secondary" className="gap-1 py-0.5 pl-2 pr-1 text-xs">
+          {item}
+          <button
+            type="button"
+            onClick={e => {
+              e.stopPropagation()
+              removeItem(item)
+            }}
+            className="rounded-full p-0.5 hover:bg-foreground/10"
+          >
+            <X className="size-3" />
+          </button>
+        </Badge>
+      ))}
+      <input
+        ref={inputRef}
+        className="min-w-20 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+        value={draft}
+        onChange={e => setDraft(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onBlur={() => { if (draft.trim()) addItem(draft) }}
+        placeholder={value.length === 0 ? placeholder : 'Add more...'}
+      />
+    </div>
+  )
+}
+
+// ─── Multi-select for array with predefined enum options ───
+
+function MultiSelectInput({
+  options,
+  value,
+  onChange
+}: {
+  options: string[]
+  value: string[]
+  onChange: (items: string[]) => void
+}) {
+  function toggle(option: string) {
+    if (value.includes(option)) {
+      onChange(value.filter(v => v !== option))
+    } else {
+      onChange([...value, option])
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-1.5">
+        {value.map(item => (
+          <Badge key={item} variant="default" className="gap-1 py-0.5 pl-2 pr-1 text-xs">
+            {item}
+            <button
+              type="button"
+              onClick={() => toggle(item)}
+              className="rounded-full p-0.5 hover:bg-primary-foreground/20"
+            >
+              <X className="size-3" />
+            </button>
+          </Badge>
+        ))}
+      </div>
+      <div className="grid max-h-40 grid-cols-2 gap-1 overflow-y-auto rounded-md border p-2">
+        {options.map(opt => {
+          const checked = value.includes(opt)
+
+          return (
+            <label
+              key={opt}
+              className={cn(
+                'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors',
+                checked ? 'bg-primary/10 font-medium' : 'hover:bg-muted/50'
+              )}
+            >
+              <Checkbox checked={checked} onCheckedChange={() => toggle(opt)} />
+              <span>{opt}</span>
+            </label>
+          )
+        })}
+      </div>
+      {value.length > 0 && (
+        <p className="text-[10px] text-muted-foreground">
+          {value.length} selected
+          <button
+            type="button"
+            className="ml-2 text-primary hover:underline"
+            onClick={() => onChange([])}
+          >
+            Clear all
+          </button>
+        </p>
+      )}
+    </div>
+  )
+}
+
+// ─── Property field renderer (smart per-type) ───
 
 function PropertyField({
   propKey,
@@ -126,6 +278,48 @@ function PropertyField({
     )
   }
 
+  // Array with predefined item enums -> Multi-select checkboxes
+  if (prop.type === 'array' && prop.items?.enum && prop.items.enum.length > 0) {
+    const items = Array.isArray(value) ? (value as string[]) : []
+
+    return (
+      <div className="space-y-2">
+        <Label>
+          {label}
+          {required && <span className="ml-0.5 text-destructive">*</span>}
+        </Label>
+        <MultiSelectInput
+          options={prop.items.enum}
+          value={items}
+          onChange={v => onChange(propKey, v)}
+        />
+      </div>
+    )
+  }
+
+  // Array without predefined values -> Tag input
+  if (prop.type === 'array') {
+    const items = Array.isArray(value) ? (value as string[]) : []
+
+    return (
+      <div className="space-y-2">
+        <Label>
+          {label}
+          {required && <span className="ml-0.5 text-destructive">*</span>}
+        </Label>
+        <TagInput
+          value={items}
+          onChange={v => onChange(propKey, v)}
+          placeholder={`Type and press Enter to add`}
+        />
+        <p className="text-[10px] text-muted-foreground">
+          Press <kbd className="rounded border bg-muted px-1 font-mono">Enter</kbd> or{' '}
+          <kbd className="rounded border bg-muted px-1 font-mono">,</kbd> to add an item
+        </p>
+      </div>
+    )
+  }
+
   // Number / integer -> Input type=number
   if (prop.type === 'number' || prop.type === 'integer') {
     return (
@@ -167,7 +361,7 @@ function PropertyField({
     )
   }
 
-  // Fallback: Textarea for JSON
+  // Fallback: Textarea for complex objects
   return (
     <div className="space-y-2">
       <Label htmlFor={labelId}>

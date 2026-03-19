@@ -20,8 +20,13 @@ if TYPE_CHECKING:
 _ROLE_MAP: dict[str, str] = {
     "vendedor": "assistant",
     "asistente": "assistant",
+    "agente": "assistant",
+    "doctor": "assistant",
+    "asesor": "assistant",
     "cliente": "user",
     "usuario": "user",
+    "paciente": "user",
+    "estudiante": "user",
     "sistema": "system",
     "herramienta": "tool",
     # Pass-through
@@ -137,15 +142,6 @@ class QwenChatTemplate(BaseChatTemplate):
         fragments: list[str] = []
         role = _map_role(turn.rol)
 
-        # -- Tool calls inside assistant turn -------------------------------
-        if tool_call_mode == ToolCallMode.INLINE and turn.tool_calls:
-            for tc in turn.tool_calls:
-                call_json = json.dumps(
-                    {"name": tc.tool_name, "arguments": tc.arguments},
-                    ensure_ascii=False,
-                )
-                fragments.append(f"<|im_start|>assistant\n<tool_call>\n{call_json}\n</tool_call><|im_end|>")
-
         # -- Tool results rendered as tool turns ----------------------------
         if tool_call_mode == ToolCallMode.INLINE and turn.tool_results:
             for tr in turn.tool_results:
@@ -154,9 +150,24 @@ class QwenChatTemplate(BaseChatTemplate):
                     ensure_ascii=False,
                 )
                 fragments.append(f"<|im_start|>tool\n<tool_response>\n{result_json}\n</tool_response><|im_end|>")
+            return fragments
 
         # Skip tool-role turns when mode is NONE
         if role == "tool" and tool_call_mode == ToolCallMode.NONE:
+            return fragments
+
+        # -- Assistant turn with inline tool calls --------------------------
+        if tool_call_mode == ToolCallMode.INLINE and turn.tool_calls and role == "assistant":
+            content_parts: list[str] = []
+            if turn.contenido:
+                content_parts.append(turn.contenido)
+            for tc in turn.tool_calls:
+                call_json = json.dumps(
+                    {"name": tc.tool_name, "arguments": tc.arguments},
+                    ensure_ascii=False,
+                )
+                content_parts.append(f"<tool_call>\n{call_json}\n</tool_call>")
+            fragments.append(f"<|im_start|>assistant\n{''.join(content_parts)}<|im_end|>")
             return fragments
 
         # Regular content
