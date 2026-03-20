@@ -334,7 +334,7 @@ export function ExportPage() {
     {
       key: 'template',
       header: 'Template',
-      cell: row => <Badge variant="secondary" className="text-[10px]">{row.template}</Badge>
+      cell: row => <Badge variant="secondary" className="text-xs">{row.template}</Badge>
     },
     {
       key: 'domain',
@@ -502,7 +502,7 @@ export function ExportPage() {
                 <div className="flex items-center justify-between rounded-md border px-3 py-2">
                   <div>
                     <Label className="text-xs">Synthetic Only</Label>
-                    <p className="text-[10px] text-muted-foreground">Only include synthetic data</p>
+                    <p className="text-xs text-muted-foreground">Only include synthetic data</p>
                   </div>
                   <Switch
                     checked={syntheticOnly}
@@ -525,7 +525,7 @@ export function ExportPage() {
               {/* Preview */}
               <div className="rounded-md border bg-muted/50 p-3">
                 <p className="text-xs font-medium">Export Preview</p>
-                <div className="mt-1 grid grid-cols-1 gap-1 text-[11px] text-muted-foreground sm:grid-cols-3 sm:gap-2">
+                <div className="mt-1 grid grid-cols-1 gap-1 text-xs text-muted-foreground sm:grid-cols-3 sm:gap-2">
                   <div>
                     Conversations: <strong className="text-foreground">{filteredConversations.length}</strong>
                   </div>
@@ -608,8 +608,8 @@ export function ExportPage() {
                       { label: 'Coherence', value: qualityCertificate.avgCoherence }
                     ].map(metric => (
                       <div key={metric.label} className="flex items-center justify-between">
-                        <span className="text-[11px] text-muted-foreground">{metric.label}</span>
-                        <span className="text-[11px] font-mono font-medium">
+                        <span className="text-xs text-muted-foreground">{metric.label}</span>
+                        <span className="text-xs font-mono font-medium">
                           {metric.value.toFixed(3)}
                         </span>
                       </div>
@@ -632,7 +632,7 @@ export function ExportPage() {
             <CardContent className="space-y-2">
               {Object.entries(domainCounts).map(([domain, count]) => (
                 <div key={domain} className="flex items-center justify-between">
-                  <Badge variant="outline" className="text-[10px]">
+                  <Badge variant="outline" className="text-xs">
                     {domain.split('.').pop()}
                   </Badge>
                   <span className="text-xs text-muted-foreground">{count} conversations</span>

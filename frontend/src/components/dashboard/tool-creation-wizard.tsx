@@ -192,7 +192,7 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
           <div key={step.number} className="flex items-center gap-1.5">
             <div
               className={cn(
-                'flex size-6 items-center justify-center rounded-full text-[11px] font-medium transition-colors',
+                'flex size-6 items-center justify-center rounded-full text-xs font-medium transition-colors',
                 isActive && 'bg-primary text-primary-foreground ring-2 ring-primary/30',
                 isDone && 'bg-primary/15 text-primary',
                 !isActive && !isDone && 'bg-muted text-muted-foreground'
@@ -260,7 +260,7 @@ function StepBasics({
           className="font-mono text-sm"
         />
         {name && (
-          <p className="text-[10px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Identifier: <code className="rounded bg-muted px-1">{name}</code>
           </p>
         )}
@@ -278,7 +278,7 @@ function StepBasics({
           onChange={e => onDescriptionChange(e.target.value)}
           className="min-h-[80px] resize-none text-sm"
         />
-        <p className={cn('text-[10px]', description.length < 10 ? 'text-muted-foreground' : 'text-emerald-600')}>
+        <p className={cn('text-xs', description.length < 10 ? 'text-muted-foreground' : 'text-emerald-600')}>
           {description.length} / 10 min characters
         </p>
       </div>
@@ -401,12 +401,12 @@ function ParameterRow({
 
         {param.type === 'string' && (
           <div className="flex flex-1 items-center gap-1.5">
-            <span className="shrink-0 text-[10px] text-muted-foreground">Enum:</span>
+            <span className="shrink-0 text-xs text-muted-foreground">Enum:</span>
             <Input
               placeholder="value1, value2, value3"
               value={param.enumValues}
               onChange={e => onChange({ enumValues: e.target.value })}
-              className="h-7 flex-1 text-[11px]"
+              className="h-7 flex-1 text-xs"
             />
           </div>
         )}
@@ -416,9 +416,9 @@ function ParameterRow({
       {param.type === 'array' && (
         <div className="flex flex-col gap-2 rounded-md border border-dashed bg-muted/30 p-2">
           <div className="flex items-center gap-2">
-            <span className="shrink-0 text-[10px] font-medium text-muted-foreground">Item type:</span>
+            <span className="shrink-0 text-xs font-medium text-muted-foreground">Item type:</span>
             <Select value={param.itemType || 'string'} onValueChange={v => onChange({ itemType: v })}>
-              <SelectTrigger className="h-7 w-28 text-[11px]">
+              <SelectTrigger className="h-7 w-28 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -429,16 +429,16 @@ function ParameterRow({
             </Select>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-[10px] text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               Predefined values (users will pick from these in the simulation):
             </span>
             <Input
               placeholder="e.g. precio, rendimiento, equipamiento"
               value={param.itemEnumValues}
               onChange={e => onChange({ itemEnumValues: e.target.value })}
-              className="h-7 text-[11px]"
+              className="h-7 text-xs"
             />
-            <p className="text-[9px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Comma-separated. Leave empty to let users type freely.
             </p>
           </div>
@@ -518,7 +518,7 @@ function StepParameters({
         >
           {showOutput ? <ChevronLeft className="size-3 rotate-[-90deg]" /> : <ChevronRight className="size-3" />}
           Output Parameters
-          <Badge variant="secondary" className="text-[9px]">optional</Badge>
+          <Badge variant="secondary" className="text-xs">optional</Badge>
         </button>
 
         {showOutput && (
@@ -601,7 +601,7 @@ function StepConfiguration({
           </SelectContent>
         </Select>
         {activeMode && (
-          <p className="text-[11px] text-muted-foreground">{activeMode.description}</p>
+          <p className="text-xs text-muted-foreground">{activeMode.description}</p>
         )}
       </div>
 
@@ -611,7 +611,7 @@ function StepConfiguration({
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-0.5">
             <Label className="text-xs">Requires Authentication</Label>
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Enable if the tool needs credentials to execute
             </p>
           </div>
@@ -708,7 +708,7 @@ function StepReview({
       {/* Summary card */}
       <div className="rounded-md border p-3">
         <ReviewField label="Name">
-          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px]">{name}</code>
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{name}</code>
         </ReviewField>
         <ReviewField label="Description">
           <span className="max-w-[200px] break-words text-right">{description}</span>
@@ -716,32 +716,32 @@ function StepReview({
         <ReviewField label="Domain(s)">
           <div className="flex flex-wrap justify-end gap-1">
             {domains.map(d => (
-              <Badge key={d} variant="secondary" className="text-[10px]">
+              <Badge key={d} variant="secondary" className="text-xs">
                 {d.split('.').pop()}
               </Badge>
             ))}
           </div>
         </ReviewField>
         <ReviewField label="Category">
-          <Badge variant="outline" className="text-[10px]">{category}</Badge>
+          <Badge variant="outline" className="text-xs">{category}</Badge>
         </ReviewField>
         <ReviewField label="Execution Mode">
           <Badge
             variant={executionMode === 'live' ? 'default' : 'secondary'}
-            className="text-[10px]"
+            className="text-xs"
           >
             {executionMode}
           </Badge>
         </ReviewField>
         <ReviewField label="Auth">
           {requiresAuth ? (
-            <Badge variant="outline" className="text-[10px]">{authType}</Badge>
+            <Badge variant="outline" className="text-xs">{authType}</Badge>
           ) : (
             <span className="text-muted-foreground">None</span>
           )}
         </ReviewField>
         <ReviewField label="Version">
-          <code className="font-mono text-[11px]">{version}</code>
+          <code className="font-mono text-xs">{version}</code>
         </ReviewField>
         <ReviewField label="Input Params">
           {inputParams.filter(p => p.name.trim()).length} defined

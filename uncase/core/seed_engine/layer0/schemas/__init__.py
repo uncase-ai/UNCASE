@@ -6,10 +6,14 @@ from uncase.core.seed_engine.layer0.schemas.base import (
     FieldMeta,
     FieldStatus,
 )
+from uncase.core.seed_engine.layer0.schemas.finance import SeedFinance
+from uncase.core.seed_engine.layer0.schemas.medical import SeedMedical
 
 __all__ = [
     "BaseSeedExtraction",
     "FieldMeta",
     "FieldStatus",
     "SeedAutomotriz",
+    "SeedFinance",
+    "SeedMedical",
 ]

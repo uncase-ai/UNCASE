@@ -485,7 +485,7 @@ export function SeedDetailPage({ id }: SeedDetailPageProps) {
                 <div className="mt-1 flex flex-wrap gap-1">
                   {tools.map(t => (
                     <Link key={t} href={`/dashboard/tools/${encodeURIComponent(t)}`}>
-                      <Badge variant="outline" className="cursor-pointer font-mono text-[10px] transition-colors hover:bg-muted">
+                      <Badge variant="outline" className="cursor-pointer font-mono text-xs transition-colors hover:bg-muted">
                         {t}
                       </Badge>
                     </Link>
@@ -629,7 +629,7 @@ export function SeedDetailPage({ id }: SeedDetailPageProps) {
               )}
             </Button>
             {(isDemoMode() || !apiAvailable) && (
-              <Badge variant="outline" className="text-[10px]">Demo Mode</Badge>
+              <Badge variant="outline" className="text-xs">Demo Mode</Badge>
             )}
           </div>
 
@@ -708,18 +708,18 @@ export function SeedDetailPage({ id }: SeedDetailPageProps) {
                         {report ? (
                           report.passed ? (
                             <Badge className={cn(
-                              'text-[10px]',
+                              'text-xs',
                               'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300'
                             )}>
                               <Check className="mr-0.5 size-3" /> Passed
                             </Badge>
                           ) : (
-                            <Badge variant="destructive" className="text-[10px]">
+                            <Badge variant="destructive" className="text-xs">
                               <X className="mr-0.5 size-3" /> Failed
                             </Badge>
                           )
                         ) : (
-                          <Badge variant="outline" className="text-[10px]">Pending</Badge>
+                          <Badge variant="outline" className="text-xs">Pending</Badge>
                         )}
                       </TableCell>
                       <TableCell className="text-right">

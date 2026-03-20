@@ -69,7 +69,7 @@ export function WelcomeModal() {
           <div>
             <div className="mb-2 flex items-center gap-2">
               <Badge variant="secondary" className="text-xs">Works out of the box</Badge>
-              <span className="text-[10px] text-muted-foreground">No API needed</span>
+              <span className="text-xs text-muted-foreground">No API needed</span>
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
               {offlineFeatures.map(f => (
@@ -77,7 +77,7 @@ export function WelcomeModal() {
                   <f.icon className="mt-0.5 size-4 shrink-0 text-primary" />
                   <div>
                     <p className="text-xs font-medium">{f.label}</p>
-                    <p className="text-[11px] text-muted-foreground">{f.desc}</p>
+                    <p className="text-xs text-muted-foreground">{f.desc}</p>
                   </div>
                 </div>
               ))}
@@ -88,7 +88,7 @@ export function WelcomeModal() {
           <div>
             <div className="mb-2 flex items-center gap-2">
               <Badge variant="outline" className="text-xs">Requires LLM API</Badge>
-              <span className="text-[10px] text-muted-foreground">Connect your provider to unlock</span>
+              <span className="text-xs text-muted-foreground">Connect your provider to unlock</span>
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
               {apiFeatures.map(f => (
@@ -96,7 +96,7 @@ export function WelcomeModal() {
                   <f.icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                   <div>
                     <p className="text-xs font-medium">{f.label}</p>
-                    <p className="text-[11px] text-muted-foreground">{f.desc}</p>
+                    <p className="text-xs text-muted-foreground">{f.desc}</p>
                   </div>
                 </div>
               ))}
@@ -106,7 +106,7 @@ export function WelcomeModal() {
           {/* Getting started */}
           <div className="rounded-md bg-muted/50 p-3">
             <p className="mb-2 text-xs font-semibold">Getting started</p>
-            <ol className="space-y-1.5 text-[11px] text-muted-foreground">
+            <ol className="space-y-1.5 text-xs text-muted-foreground">
               <li>1. Explore the <strong className="text-foreground">Seed Library</strong> to see pre-loaded conversation templates</li>
               <li>2. Click <strong className="text-foreground">Generate</strong> on any seed to create demo conversations instantly</li>
               <li>3. Check the <strong className="text-foreground">Pipeline</strong> to see the full SCSF workflow</li>

@@ -784,7 +784,7 @@ export function SeedCreatePage() {
                 )}
               >
                 <span className={cn(
-                  'flex size-5 items-center justify-center rounded-full text-[10px] font-bold',
+                  'flex size-5 items-center justify-center rounded-full text-xs font-bold',
                   isActive && 'bg-primary-foreground/20',
                   isDone && 'bg-primary/10 text-primary',
                   !isActive && !isDone && 'bg-muted'
@@ -908,7 +908,7 @@ export function SeedCreatePage() {
                 </SelectContent>
               </Select>
               {draft.dominio && DOMAIN_DEFAULTS[draft.dominio] && (
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Roles, flow steps, and context have been pre-filled for this domain. You can customize them in the following steps.
                 </p>
               )}
@@ -922,7 +922,7 @@ export function SeedCreatePage() {
               </Label>
               {objectiveTemplates.length > 0 && (
                 <div className="space-y-1.5">
-                  <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Suggested objectives
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -932,7 +932,7 @@ export function SeedCreatePage() {
                         type="button"
                         onClick={() => updateDraft({ objetivo: tmpl.text })}
                         className={cn(
-                          'rounded-md border px-2 py-1 text-left text-[11px] transition-colors hover:bg-muted/60',
+                          'rounded-md border px-2 py-1 text-left text-xs transition-colors hover:bg-muted/60',
                           draft.objetivo === tmpl.text && 'border-primary bg-primary/5 text-primary'
                         )}
                       >
@@ -1020,7 +1020,7 @@ export function SeedCreatePage() {
               )}
               {tagSuggestions.length > 0 && (
                 <div className="space-y-1.5">
-                  <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Suggested tags
                   </p>
                   <div className="flex flex-wrap gap-1">
@@ -1029,7 +1029,7 @@ export function SeedCreatePage() {
                         key={tag}
                         type="button"
                         onClick={() => addTag(tag)}
-                        className="rounded-full border border-dashed px-2 py-0.5 text-[11px] text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                        className="rounded-full border border-dashed px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-primary"
                       >
                         <Plus className="mr-0.5 inline size-2.5" />
                         {tag}
@@ -1063,7 +1063,7 @@ export function SeedCreatePage() {
             {/* Quick add section */}
             {quickAddRoles.length > 0 && (
               <div className="space-y-1.5">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Quick add
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -1072,7 +1072,7 @@ export function SeedCreatePage() {
                       key={role.id}
                       type="button"
                       onClick={() => addRoleFromPreset(role)}
-                      className="flex items-center gap-1 rounded-full border border-dashed px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                      className="flex items-center gap-1 rounded-full border border-dashed px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-primary"
                     >
                       <Plus className="size-3" />
                       {role.label}
@@ -1132,7 +1132,7 @@ export function SeedCreatePage() {
                         <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
                           {Object.entries(groupedResults).map(([category, roles]) => (
                             <div key={category}>
-                              <p className="px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                              <p className="px-2 py-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                                 {CATEGORY_LABELS[category] || category}
                               </p>
                               {roles.map(preset => (
@@ -1147,10 +1147,10 @@ export function SeedCreatePage() {
                                 >
                                   <div className="min-w-0 flex-1">
                                     <span className="text-xs font-medium">{preset.label}</span>
-                                    <p className="truncate text-[10px] text-muted-foreground">{preset.description}</p>
+                                    <p className="truncate text-xs text-muted-foreground">{preset.description}</p>
                                   </div>
                                   {preset.domains.length > 0 && (
-                                    <Badge variant="outline" className="shrink-0 text-[9px]">
+                                    <Badge variant="outline" className="shrink-0 text-xs">
                                       {preset.domains[0].split('.')[0]}
                                     </Badge>
                                   )}
@@ -1222,14 +1222,14 @@ export function SeedCreatePage() {
                 >
                   <div className="flex items-center gap-2">
                     <div className={cn(
-                      'flex size-5 items-center justify-center rounded-full border text-[10px]',
+                      'flex size-5 items-center justify-center rounded-full border text-xs',
                       !selectedFlowId ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/30'
                     )}>
                       {!selectedFlowId && <Check className="size-3" />}
                     </div>
                     <span className="text-xs font-medium">Custom</span>
                   </div>
-                  <p className="mt-1 pl-7 text-[10px] text-muted-foreground">Build your own flow from scratch</p>
+                  <p className="mt-1 pl-7 text-xs text-muted-foreground">Build your own flow from scratch</p>
                 </button>
 
                 {/* Flow template cards */}
@@ -1249,20 +1249,20 @@ export function SeedCreatePage() {
                     >
                       <div className="flex items-center gap-2">
                         <div className={cn(
-                          'flex size-5 items-center justify-center rounded-full border text-[10px]',
+                          'flex size-5 items-center justify-center rounded-full border text-xs',
                           isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/30'
                         )}>
                           {isSelected && <Check className="size-3" />}
                         </div>
                         <span className="text-xs font-medium">{flow.label}</span>
                         {isDomainSpecific && (
-                          <Badge variant="outline" className="ml-auto text-[9px]">
+                          <Badge variant="outline" className="ml-auto text-xs">
                             {flow.domains[0].split('.')[0]}
                           </Badge>
                         )}
                       </div>
-                      <p className="mt-1 pl-7 text-[10px] text-muted-foreground">{flow.description}</p>
-                      <p className="mt-0.5 pl-7 text-[10px] text-muted-foreground/70">
+                      <p className="mt-1 pl-7 text-xs text-muted-foreground">{flow.description}</p>
+                      <p className="mt-0.5 pl-7 text-xs text-muted-foreground/70">
                         {flow.steps.length} steps &middot; {flow.turnRange[0]}-{flow.turnRange[1]} turns
                       </p>
                     </button>
@@ -1421,12 +1421,12 @@ export function SeedCreatePage() {
               {/* Restriction preset pills grouped by category */}
               {Object.keys(groupedRestrictions).length > 0 && (
                 <div className="space-y-2 rounded-md border p-3">
-                  <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Preset restrictions
                   </p>
                   {Object.entries(groupedRestrictions).map(([category, presets]) => (
                     <div key={category} className="space-y-1">
-                      <p className="text-[10px] font-medium text-muted-foreground">
+                      <p className="text-xs font-medium text-muted-foreground">
                         {RESTRICTION_CATEGORY_LABELS[category] || category}
                       </p>
                       <div className="flex flex-wrap gap-1.5">
@@ -1439,7 +1439,7 @@ export function SeedCreatePage() {
                               type="button"
                               onClick={() => toggleRestrictionPreset(preset.text)}
                               className={cn(
-                                'flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] transition-colors',
+                                'flex items-center gap-1 rounded-md border px-2 py-1 text-xs transition-colors',
                                 isActive
                                   ? 'border-primary bg-primary/10 text-primary'
                                   : 'border-dashed text-muted-foreground hover:border-primary/50 hover:text-foreground'
@@ -1462,7 +1462,7 @@ export function SeedCreatePage() {
               )}
 
               {/* Custom restrictions */}
-              <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Custom restrictions
               </p>
               {(draft.parametros_factuales?.restricciones || [])
@@ -1509,7 +1509,7 @@ export function SeedCreatePage() {
                   {domainTools.length > 0 && (
                     <div className="space-y-1.5">
                       {selectedDomain && (
-                        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                           {DOMAIN_LABELS[selectedDomain] || selectedDomain} tools
                         </p>
                       )}
@@ -1538,9 +1538,9 @@ export function SeedCreatePage() {
                                   {tool.name}
                                   <ExternalLink className="ml-0.5 inline size-2.5 text-muted-foreground" />
                                 </Link>
-                                <Badge variant="outline" className="text-[9px]">{tool.category}</Badge>
+                                <Badge variant="outline" className="text-xs">{tool.category}</Badge>
                               </div>
-                              <p className="truncate text-[10px] text-muted-foreground">{tool.description}</p>
+                              <p className="truncate text-xs text-muted-foreground">{tool.description}</p>
                             </div>
                           </label>
                         ))}
@@ -1549,7 +1549,7 @@ export function SeedCreatePage() {
                   )}
                   {otherTools.length > 0 && (
                     <div className="space-y-1.5">
-                      <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Other domains</p>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Other domains</p>
                       <div className="max-h-56 space-y-1 overflow-y-auto rounded-md border p-2">
                         {otherTools.map(tool => (
                           <label
@@ -1575,9 +1575,9 @@ export function SeedCreatePage() {
                                   {tool.name}
                                   <ExternalLink className="ml-0.5 inline size-2.5 text-muted-foreground" />
                                 </Link>
-                                <Badge variant="outline" className="text-[9px]">{(tool.domains ?? []).join(', ')}</Badge>
+                                <Badge variant="outline" className="text-xs">{(tool.domains ?? []).join(', ')}</Badge>
                               </div>
-                              <p className="truncate text-[10px] text-muted-foreground">{tool.description}</p>
+                              <p className="truncate text-xs text-muted-foreground">{tool.description}</p>
                             </div>
                           </label>
                         ))}
@@ -1585,7 +1585,7 @@ export function SeedCreatePage() {
                     </div>
                   )}
                   {selectedTools.size > 0 && (
-                    <p className="text-[10px] text-muted-foreground sm:col-span-2">{selectedTools.size} tool{selectedTools.size > 1 ? 's' : ''} selected</p>
+                    <p className="text-xs text-muted-foreground sm:col-span-2">{selectedTools.size} tool{selectedTools.size > 1 ? 's' : ''} selected</p>
                   )}
                 </div>
               ) : (
@@ -1641,19 +1641,19 @@ export function SeedCreatePage() {
                               <span className="text-xs font-medium">
                                 {(sc.name ?? '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                               </span>
-                              <Badge variant="outline" className="text-[9px]">{sc.skill_level}</Badge>
+                              <Badge variant="outline" className="text-xs">{sc.skill_level}</Badge>
                               {sc.edge_case && (
-                                <Badge variant="outline" className="bg-orange-500/10 text-[9px] text-orange-600">edge</Badge>
+                                <Badge variant="outline" className="bg-orange-500/10 text-xs text-orange-600">edge</Badge>
                               )}
                             </div>
-                            <p className="truncate text-[10px] text-muted-foreground">{sc.description}</p>
+                            <p className="truncate text-xs text-muted-foreground">{sc.description}</p>
                           </div>
                         </label>
                       )
                     })}
                   </div>
                   {((draft as Record<string, unknown>)._scenarios as ScenarioTemplate[] | undefined)?.length ? (
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       {((draft as Record<string, unknown>)._scenarios as ScenarioTemplate[]).length} scenario{((draft as Record<string, unknown>)._scenarios as ScenarioTemplate[]).length > 1 ? 's' : ''} selected
                     </p>
                   ) : null}
@@ -1727,7 +1727,7 @@ export function SeedCreatePage() {
                 max={1}
                 step={0.01}
               />
-              <div className="flex justify-between text-[10px] text-muted-foreground">
+              <div className="flex justify-between text-xs text-muted-foreground">
                 <span>0.00</span>
                 <span>1.00</span>
               </div>
@@ -1777,7 +1777,7 @@ export function SeedCreatePage() {
                 <span className="text-xs text-muted-foreground">Tags</span>
                 <div className="mt-1 flex flex-wrap gap-1">
                   {(draft.etiquetas || []).map((t, i) => (
-                    <Badge key={i} variant="secondary" className="text-[10px]">{t}</Badge>
+                    <Badge key={i} variant="secondary" className="text-xs">{t}</Badge>
                   ))}
                   {(!draft.etiquetas || draft.etiquetas.length === 0) && <span className="text-xs text-muted-foreground">No tags</span>}
                 </div>
@@ -1805,7 +1805,7 @@ export function SeedCreatePage() {
                   <span className="text-xs text-muted-foreground">Tools</span>
                   <div className="mt-1 flex flex-wrap gap-1">
                     {(draft.parametros_factuales?.herramientas || []).map((t, i) => (
-                      <Badge key={i} variant="outline" className="font-mono text-[10px]">
+                      <Badge key={i} variant="outline" className="font-mono text-xs">
                         <Wrench className="mr-0.5 size-2.5" />{t}
                       </Badge>
                     ))}

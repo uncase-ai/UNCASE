@@ -173,8 +173,8 @@ export function Topbar({ sidebarCollapsed, onToggleSidebar, onOpenMobile }: Topb
                 <span className="text-sm font-medium">{user.display_name}</span>
                 <span className="text-xs text-muted-foreground">{user.email}</span>
                 <div className="flex items-center gap-1.5 pt-0.5">
-                  <Badge variant="outline" className="px-1.5 py-0 text-[10px]">{user.role}</Badge>
-                  {isDemo && <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">Demo</Badge>}
+                  <Badge variant="outline" className="px-1.5 py-0 text-xs">{user.role}</Badge>
+                  {isDemo && <Badge variant="secondary" className="px-1.5 py-0 text-xs">Demo</Badge>}
                 </div>
               </div>
             </DropdownMenuLabel>

@@ -66,11 +66,11 @@ export function ChatBubble({ role, content, timestamp, showAvatar = true }: Chat
           <p className="whitespace-pre-wrap text-sm leading-relaxed">{content}</p>
           {timestamp && (
             <div className={cn('mt-1 flex', isUser ? 'justify-end' : 'justify-start')}>
-              <span className="text-[10px] text-gray-500 dark:text-zinc-400">
+              <span className="text-xs text-gray-500 dark:text-zinc-400">
                 {timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
               {isUser && (
-                <span className="ml-1 text-[10px] text-blue-500">✓✓</span>
+                <span className="ml-1 text-xs text-blue-500">✓✓</span>
               )}
             </div>
           )}

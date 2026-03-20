@@ -337,9 +337,9 @@ export function ToolsPage() {
                       <div className="flex items-center gap-1.5">
                         <CardTitle className="text-sm">{tool.name}</CardTitle>
                         {builtin ? (
-                          <Badge variant="secondary" className="text-[9px]">built-in</Badge>
+                          <Badge variant="secondary" className="text-xs">built-in</Badge>
                         ) : (
-                          <Badge variant="outline" className="gap-0.5 text-[9px]">
+                          <Badge variant="outline" className="gap-0.5 text-xs">
                             <Code2 className="size-2" />
                             custom
                           </Badge>
@@ -363,11 +363,11 @@ export function ToolsPage() {
                       >
                         {tool.execution_mode}
                       </StatusBadge>
-                      <Badge variant="outline" className="text-[10px]">
+                      <Badge variant="outline" className="text-xs">
                         {tool.category}
                       </Badge>
                       {tool.domains.map(domain => (
-                        <Badge key={domain} variant="secondary" className="text-[10px]">
+                        <Badge key={domain} variant="secondary" className="text-xs">
                           {domain.split('.').pop()}
                         </Badge>
                       ))}
@@ -376,7 +376,7 @@ export function ToolsPage() {
                           href={`/dashboard/pipeline/seeds?tool=${encodeURIComponent(tool.name)}`}
                           onClick={e => e.stopPropagation()}
                         >
-                          <Badge variant="outline" className="gap-0.5 text-[10px] transition-colors hover:bg-muted">
+                          <Badge variant="outline" className="gap-0.5 text-xs transition-colors hover:bg-muted">
                             <Sprout className="size-2.5" />
                             {seedCount} seed{seedCount > 1 ? 's' : ''}
                           </Badge>

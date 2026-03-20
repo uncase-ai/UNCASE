@@ -345,11 +345,11 @@ export function SeedsPage() {
     return (
       <div className="flex items-center gap-1.5">
         {apiAvailable ? (
-          <Badge variant="outline" className="gap-1 text-[10px]">
+          <Badge variant="outline" className="gap-1 text-xs">
             <Cloud className="size-3" /> API Connected
           </Badge>
         ) : (
-          <Badge variant="outline" className="gap-1 text-[10px]">
+          <Badge variant="outline" className="gap-1 text-xs">
             <CloudOff className="size-3" /> Local Only
           </Badge>
         )}
@@ -365,7 +365,7 @@ export function SeedsPage() {
         <CardContent className="flex items-start gap-3 p-4 sm:p-5">
           <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground sm:size-5" />
           <div className="space-y-1 text-xs text-muted-foreground sm:text-sm">
-            <p className="text-[17px] font-bold text-foreground sm:text-lg">What are Seeds?</p>
+            <p className="text-lg font-bold text-foreground sm:text-lg">What are Seeds?</p>
             <p>
               Seeds are structured templates that define the parameters for synthetic conversation generation.
               Each seed specifies the domain, roles, conversation flow, factual constraints, and privacy settings.
@@ -563,35 +563,35 @@ export function SeedsPage() {
                     <span className="min-w-0 truncate font-mono text-xs font-semibold">
                       {seed.seed_id}
                     </span>
-                    <Badge variant="secondary" className="ml-auto shrink-0 text-[10px]">
+                    <Badge variant="secondary" className="ml-auto shrink-0 text-xs">
                       {DOMAIN_LABELS[seed.dominio] || (seed.dominio ?? '').split('.').pop()}
                     </Badge>
                   </div>
 
                   {/* Row 2: Objective */}
-                  <p className="line-clamp-2 text-[12px] leading-snug text-muted-foreground">
+                  <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
                     {seed.objetivo}
                   </p>
 
                   {/* Row 3: Roles + Tags compact */}
                   <div className="flex flex-wrap gap-1">
                     {(seed.roles ?? []).map(role => (
-                      <Badge key={role} variant="outline" className="font-mono text-[9px]">
+                      <Badge key={role} variant="outline" className="font-mono text-xs">
                         {role}
                       </Badge>
                     ))}
                     {(seed.etiquetas ?? []).slice(0, 3).map(tag => (
-                      <Badge key={tag} variant="secondary" className="text-[9px] font-normal">
+                      <Badge key={tag} variant="secondary" className="text-xs font-normal">
                         {tag}
                       </Badge>
                     ))}
                     {(seed.etiquetas ?? []).length > 3 && (
-                      <span className="text-[9px] text-muted-foreground">+{(seed.etiquetas ?? []).length - 3}</span>
+                      <span className="text-xs text-muted-foreground">+{(seed.etiquetas ?? []).length - 3}</span>
                     )}
                   </div>
 
                   {/* Row 4: Technical specs */}
-                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span>{seed.pasos_turnos?.turnos_min ?? 0}-{seed.pasos_turnos?.turnos_max ?? 0} turns</span>
                     <span className="text-muted-foreground/30">|</span>
                     <span>{seed.tono}</span>
@@ -608,7 +608,7 @@ export function SeedsPage() {
                   </div>
 
                   {/* Row 5: Stats footer */}
-                  <div className="flex items-center gap-3 border-t pt-2 text-[10px] text-muted-foreground">
+                  <div className="flex items-center gap-3 border-t pt-2 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Play className="size-2.5" />
                       <span className="font-medium text-foreground">{runs}</span> runs
@@ -623,7 +623,7 @@ export function SeedsPage() {
                   </div>
 
                   {/* Row 6: Date */}
-                  <div className="text-[10px] text-muted-foreground">
+                  <div className="text-xs text-muted-foreground">
                     Created {timeAgo(seed.created_at)}
                   </div>
                 </CardContent>

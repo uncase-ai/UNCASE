@@ -213,7 +213,7 @@ function PipelineSteps({ stats, loading }: { stats: BlockchainStats | null; load
                 </motion.div>
                 <div className="text-center">
                   <p className="text-xs font-semibold">{step.label}</p>
-                  <p className="text-[10px] text-muted-foreground">{step.desc}</p>
+                  <p className="text-xs text-muted-foreground">{step.desc}</p>
                   {!loading && (
                     <p className="mt-0.5 text-sm font-bold tabular-nums">
                       <NumberTicker value={step.count} />
@@ -369,7 +369,7 @@ function VerificationResult({
             <div className="flex items-center gap-2">
               <TreePine className="size-4 text-cyan-500" />
               <span className="text-sm font-medium">Merkle Proof</span>
-              <Badge variant="secondary" className="text-[10px]">
+              <Badge variant="secondary" className="text-xs">
                 {verification.proof.siblings.length} sibling{verification.proof.siblings.length !== 1 ? 's' : ''}
               </Badge>
             </div>
@@ -385,7 +385,7 @@ function VerificationResult({
                 className="overflow-hidden"
               >
                 <div className="border-t bg-muted/30 p-4 space-y-3">
-                  <div className="grid gap-2 text-[11px]">
+                  <div className="grid gap-2 text-xs">
                     <div className="flex items-center gap-2">
                       <span className="w-20 shrink-0 font-medium text-muted-foreground">Leaf Index</span>
                       <code className="rounded bg-muted px-2 py-0.5">{verification.proof.leaf_index}</code>
@@ -403,7 +403,7 @@ function VerificationResult({
                   <Separator />
 
                   <div className="space-y-2">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Sibling Path
                     </p>
                     {verification.proof.siblings.map((sibling, i) => (
@@ -414,12 +414,12 @@ function VerificationResult({
                         transition={{ delay: i * 0.05 }}
                         className="flex items-center gap-2"
                       >
-                        <span className="flex size-5 shrink-0 items-center justify-center rounded bg-violet-500/10 text-[9px] font-bold text-violet-500">
+                        <span className="flex size-5 shrink-0 items-center justify-center rounded bg-violet-500/10 text-xs font-bold text-violet-500">
                           {i}
                         </span>
                         <Badge
                           variant="outline"
-                          className={`shrink-0 text-[9px] ${
+                          className={`shrink-0 text-xs ${
                             verification.proof!.directions[i] === 'left'
                               ? 'border-cyan-500/30 text-cyan-600 dark:text-cyan-400'
                               : 'border-amber-500/30 text-amber-600 dark:text-amber-400'
@@ -427,7 +427,7 @@ function VerificationResult({
                         >
                           {verification.proof!.directions[i]}
                         </Badge>
-                        <code className="flex-1 break-all text-[10px] text-muted-foreground">{sibling}</code>
+                        <code className="flex-1 break-all text-xs text-muted-foreground">{sibling}</code>
                       </motion.div>
                     ))}
                   </div>
@@ -519,7 +519,7 @@ function NetworkInfoPanel({ batches }: { batches: MerkleBatch[] | null }) {
                     href={`${networkChain.explorerBase}/address/${networkChain.contractAddress}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 truncate rounded-md bg-violet-500/10 px-2 py-0.5 text-[11px] font-mono text-violet-600 hover:bg-violet-500/20 dark:text-violet-400"
+                    className="inline-flex items-center gap-1 truncate rounded-md bg-violet-500/10 px-2 py-0.5 text-xs font-mono text-violet-600 hover:bg-violet-500/20 dark:text-violet-400"
                   >
                     {truncateHash(networkChain.contractAddress, 8)}
                     <ExternalLink className="size-3 shrink-0" />
@@ -651,12 +651,12 @@ function AutoAnchorStatus({ schedule, loading }: { schedule: AnchorSchedule | nu
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="flex size-5 items-center justify-center rounded-full bg-muted text-[10px] font-bold">
+                  <span className="flex size-5 items-center justify-center rounded-full bg-muted text-xs font-bold">
                     {i + 1}
                   </span>
                   <p className="text-xs font-semibold">{step.title}</p>
                 </div>
-                <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{step.desc}</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{step.desc}</p>
               </div>
             </motion.div>
           ))}
@@ -789,10 +789,10 @@ export function BlockchainPage() {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <code className="cursor-help text-[11px] text-muted-foreground">{truncateHash(row.merkle_root, 8)}</code>
+              <code className="cursor-help text-xs text-muted-foreground">{truncateHash(row.merkle_root, 8)}</code>
             </TooltipTrigger>
             <TooltipContent>
-              <code className="text-[10px]">{row.merkle_root}</code>
+              <code className="text-xs">{row.merkle_root}</code>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -831,7 +831,7 @@ export function BlockchainPage() {
             href={`${row.chain_id === 137 ? 'https://polygonscan.com' : 'https://amoy.polygonscan.com'}/tx/${row.tx_hash}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 rounded-md bg-violet-500/10 px-2 py-0.5 text-[11px] font-mono text-violet-600 hover:bg-violet-500/20 dark:text-violet-400"
+            className="inline-flex items-center gap-1 rounded-md bg-violet-500/10 px-2 py-0.5 text-xs font-mono text-violet-600 hover:bg-violet-500/20 dark:text-violet-400"
           >
             {truncateHash(row.tx_hash, 6)}
             <ExternalLink className="size-3" />
@@ -885,7 +885,7 @@ export function BlockchainPage() {
             </div>
             <div>
               <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Blockchain Certification</h1>
-              <p className="text-[15px] text-muted-foreground">Immutable quality verification via Polygon PoS</p>
+              <p className="text-base text-muted-foreground">Immutable quality verification via Polygon PoS</p>
             </div>
           </div>
         </div>
@@ -920,7 +920,7 @@ export function BlockchainPage() {
           </div>
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Blockchain Certification</h1>
-            <p className="text-[15px] text-muted-foreground">Immutable quality verification via Polygon PoS</p>
+            <p className="text-base text-muted-foreground">Immutable quality verification via Polygon PoS</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -1128,19 +1128,19 @@ export function BlockchainPage() {
               </CardHeader>
               <CardContent className="space-y-3 text-xs text-muted-foreground">
                 <div className="flex gap-3">
-                  <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-violet-500/10 text-[10px] font-bold text-violet-500">1</div>
+                  <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-violet-500/10 text-xs font-bold text-violet-500">1</div>
                   <p><strong className="text-foreground">Hash.</strong> Each quality evaluation report is serialized to canonical JSON and hashed with SHA-256, creating a unique 64-character fingerprint.</p>
                 </div>
                 <div className="flex gap-3">
-                  <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-cyan-500/10 text-[10px] font-bold text-cyan-500">2</div>
+                  <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-cyan-500/10 text-xs font-bold text-cyan-500">2</div>
                   <p><strong className="text-foreground">Batch.</strong> Multiple hashes are grouped into a binary Merkle tree. Each leaf gets a cryptographic proof linking it to the tree root.</p>
                 </div>
                 <div className="flex gap-3">
-                  <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-[10px] font-bold text-emerald-500">3</div>
+                  <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-xs font-bold text-emerald-500">3</div>
                   <p><strong className="text-foreground">Anchor.</strong> The Merkle root is submitted to a smart contract on Polygon PoS. This creates a permanent, publicly verifiable on-chain record.</p>
                 </div>
                 <div className="flex gap-3">
-                  <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-[10px] font-bold text-amber-500">4</div>
+                  <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-xs font-bold text-amber-500">4</div>
                   <p><strong className="text-foreground">Verify.</strong> Anyone can verify a report by recomputing its hash, walking the Merkle proof, and checking the root against the on-chain record.</p>
                 </div>
               </CardContent>

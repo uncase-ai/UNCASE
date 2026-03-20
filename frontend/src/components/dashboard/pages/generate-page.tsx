@@ -401,7 +401,7 @@ export function GeneratePage() {
         <CardContent className="flex items-start gap-3 p-4">
           <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
           <div className="space-y-1 text-xs text-muted-foreground">
-            <p className="text-[15px] font-semibold text-foreground">How Synthetic Generation Works</p>
+            <p className="text-base font-semibold text-foreground">How Synthetic Generation Works</p>
             <p>
               Select one or more seeds and configure generation parameters. The SCSF engine uses your seed&apos;s
               domain context, role definitions, and conversation flow to generate realistic synthetic conversations
@@ -478,19 +478,19 @@ export function GeneratePage() {
             <div className="grid grid-cols-3 gap-2 text-center sm:gap-4">
               <div>
                 <p className="text-lg font-bold">{qualityResults.total}</p>
-                <p className="text-[10px] text-muted-foreground">Evaluated</p>
+                <p className="text-xs text-muted-foreground">Evaluated</p>
               </div>
               <div>
                 <p className="text-lg font-bold">
                   {qualityResults.passed}
                 </p>
-                <p className="text-[10px] text-muted-foreground">Passed</p>
+                <p className="text-xs text-muted-foreground">Passed</p>
               </div>
               <div>
                 <p className="text-lg font-bold">
                   {qualityResults.avgScore?.toFixed(3) ?? 'N/A'}
                 </p>
-                <p className="text-[10px] text-muted-foreground">Avg Score</p>
+                <p className="text-xs text-muted-foreground">Avg Score</p>
               </div>
             </div>
           </CardContent>
@@ -541,18 +541,18 @@ export function GeneratePage() {
                         </span>
                         <Badge
                           variant="secondary"
-                          className={cn('shrink-0 text-[10px]', DOMAIN_COLORS[seed.dominio])}
+                          className={cn('shrink-0 text-xs', DOMAIN_COLORS[seed.dominio])}
                         >
                           {(seed.dominio ?? '').split('.').pop()}
                         </Badge>
-                        <Badge variant="outline" className="shrink-0 text-[10px]">
+                        <Badge variant="outline" className="shrink-0 text-xs">
                           {seed.idioma}
                         </Badge>
                       </div>
                       <p className="mt-0.5 truncate text-xs text-muted-foreground">
                         {seed.objetivo}
                       </p>
-                      <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
+                      <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                         <span>{(seed.roles ?? []).join(', ')}</span>
                         <span>|</span>
                         <span>{seed.pasos_turnos?.turnos_min ?? 0}-{seed.pasos_turnos?.turnos_max ?? 0} turns</span>
@@ -594,7 +594,7 @@ export function GeneratePage() {
                   </Label>
                   <Switch checked={demoMode} onCheckedChange={setDemoMode} />
                 </div>
-                <Badge variant="outline" className="gap-1 text-[10px]">
+                <Badge variant="outline" className="gap-1 text-xs">
                   {apiAvailable ? (
                     <>
                       <Cloud className="size-3" /> API Connected
@@ -643,7 +643,7 @@ export function GeneratePage() {
                     setConversationsPerSeed(v)
                   }}
                 />
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Range: 1-50. Will generate {totalToGenerate > 0 ? totalToGenerate : '...'} total.
                 </p>
               </div>
@@ -675,7 +675,7 @@ export function GeneratePage() {
                   max={2}
                   step={0.1}
                 />
-                <div className="flex justify-between text-[10px] text-muted-foreground">
+                <div className="flex justify-between text-xs text-muted-foreground">
                   <span>0.0 (deterministic)</span>
                   <span>2.0 (creative)</span>
                 </div>
@@ -715,7 +715,7 @@ export function GeneratePage() {
               {selectedCount > 0 && (
                 <div className="rounded-md border bg-muted/50 p-3">
                   <p className="text-xs font-medium">Generation Summary</p>
-                  <ul className="mt-1 space-y-0.5 text-[11px] text-muted-foreground">
+                  <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
                     <li>Seeds selected: <strong className="text-foreground">{selectedCount}</strong></li>
                     <li>Conversations per seed: <strong className="text-foreground">{conversationsPerSeed}</strong></li>
                     <li>Total to generate: <strong className="text-foreground">{totalToGenerate}</strong></li>
@@ -765,12 +765,12 @@ export function GeneratePage() {
                         {run.conversation_count} conversation{run.conversation_count !== 1 ? 's' : ''} from{' '}
                         {run.seed_count} seed{run.seed_count !== 1 ? 's' : ''}
                       </p>
-                      <p className="text-[10px] text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         {new Date(run.timestamp).toLocaleString()} | temp: {run.temperature} | lang: {run.language_override || 'default'}
                       </p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="text-[10px]">
+                  <Badge variant="outline" className="text-xs">
                     {run.mode === 'api' ? 'API' : 'Demo'} | {run.conversations_per_seed}/seed
                   </Badge>
                 </div>

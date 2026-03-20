@@ -25,6 +25,8 @@ from uncase.core.seed_engine.layer0.config import Layer0Config
 from uncase.core.seed_engine.layer0.extractor import SeedExtractor
 from uncase.core.seed_engine.layer0.interviewer.interviewer import Interviewer
 from uncase.core.seed_engine.layer0.schemas.automotriz import SeedAutomotriz
+from uncase.core.seed_engine.layer0.schemas.finance import SeedFinance
+from uncase.core.seed_engine.layer0.schemas.medical import SeedMedical
 from uncase.core.seed_engine.layer0.state_manager import ActionType, StateManager
 from uncase.log_config import get_logger
 
@@ -81,6 +83,8 @@ def _load_schema(industry: str) -> BaseSeedExtraction:
     """
     schemas: dict[str, type[BaseSeedExtraction]] = {
         "automotive": SeedAutomotriz,
+        "medical": SeedMedical,
+        "finance": SeedFinance,
     }
     schema_cls = schemas.get(industry.lower())
     if schema_cls is None:

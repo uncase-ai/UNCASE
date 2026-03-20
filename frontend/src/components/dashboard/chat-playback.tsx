@@ -101,7 +101,7 @@ export function ChatPlayback({ totalMessages, children }: ChatPlaybackProps) {
         <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={handleSkip} disabled={visibleCount >= totalMessages}>
           <SkipForward className="size-3.5" />
         </Button>
-        <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px]" onClick={handleSpeedCycle}>
+        <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={handleSpeedCycle}>
           <FastForward className="size-3" />
           {speed}x
         </Button>
@@ -118,7 +118,7 @@ export function ChatPlayback({ totalMessages, children }: ChatPlaybackProps) {
             className="h-1"
           />
         </div>
-        <span className="text-[11px] text-muted-foreground">
+        <span className="text-xs text-muted-foreground">
           {visibleCount}/{totalMessages}
         </span>
       </div>

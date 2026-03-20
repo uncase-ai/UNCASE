@@ -16,7 +16,7 @@ export function EmptyState({ icon: Icon, title, description, action }: EmptyStat
         <Icon className="size-6 text-muted-foreground" />
       </div>
       <h3 className="mb-1 text-base font-bold">{title}</h3>
-      <p className="mb-4 max-w-sm text-[15px] text-muted-foreground">{description}</p>
+      <p className="mb-4 max-w-sm text-base text-muted-foreground">{description}</p>
       {action}
     </div>
   )

@@ -237,7 +237,7 @@ export function ActivityPage() {
                         <p className="text-xs text-muted-foreground">{event.description}</p>
                       )}
                     </div>
-                    <span className="flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
+                    <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
                       <Clock className="size-3" />
                       {timeAgo(event.timestamp)}
                     </span>

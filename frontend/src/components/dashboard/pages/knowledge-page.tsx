@@ -394,7 +394,7 @@ export function KnowledgePage() {
     if (apiAvailable === null) return null
 
     return (
-      <Badge variant="outline" className="gap-1.5 text-[10px]">
+      <Badge variant="outline" className="gap-1.5 text-xs">
         {storageMode === 'api' ? (
           <>
             <Cloud className="size-2.5" /> Synced to API
@@ -425,7 +425,7 @@ export function KnowledgePage() {
                 accept=".txt,.md,.csv,.tsv,.log"
                 onChange={handleFileSelect}
               />
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Supported: .txt, .md, .csv, .tsv, .log (plain text files).
                 {storageMode === 'api' && ' Server-side chunking with configurable parameters.'}
               </p>
@@ -461,7 +461,7 @@ export function KnowledgePage() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[11px] text-muted-foreground">{TYPE_DESCRIPTIONS[uploadType]}</p>
+              <p className="text-xs text-muted-foreground">{TYPE_DESCRIPTIONS[uploadType]}</p>
             </div>
 
             <div className="space-y-1">
@@ -526,7 +526,7 @@ export function KnowledgePage() {
               <CloudOff className="size-4 shrink-0 text-amber-500" />
               <div>
                 <p className="text-xs font-medium text-amber-700 dark:text-amber-400">API unavailable</p>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Documents are stored locally. They will sync to the backend when the API becomes available.
                 </p>
               </div>
@@ -542,7 +542,7 @@ export function KnowledgePage() {
           <CardContent className="space-y-3">
             {(Object.entries(TYPE_LABELS) as [KnowledgeType, string][]).map(([key, label]) => (
               <div key={key} className="flex items-start gap-3">
-                <Badge variant="outline" className="mt-0.5 shrink-0 text-[10px] font-normal">
+                <Badge variant="outline" className="mt-0.5 shrink-0 text-xs font-normal">
                   {label}
                 </Badge>
                 <span className="text-xs text-muted-foreground">{TYPE_DESCRIPTIONS[key]}</span>
@@ -640,12 +640,12 @@ export function KnowledgePage() {
             {searchResults.results.map(result => (
               <div key={result.chunk_id} className="rounded border bg-muted/30 px-3 py-2">
                 <div className="mb-1 flex items-center gap-2">
-                  <span className="text-[10px] font-medium text-muted-foreground">{result.filename}</span>
-                  <Badge variant="outline" className="text-[9px]">
+                  <span className="text-xs font-medium text-muted-foreground">{result.filename}</span>
+                  <Badge variant="outline" className="text-xs">
                     {TYPE_LABELS[result.type as KnowledgeType] ?? result.type}
                   </Badge>
                   {result.tags.map(t => (
-                    <span key={t} className="text-[9px] text-muted-foreground">
+                    <span key={t} className="text-xs text-muted-foreground">
                       #{t}
                     </span>
                   ))}
@@ -669,12 +669,12 @@ export function KnowledgePage() {
             {matchingChunks.map(chunk => (
               <div key={chunk.id} className="rounded border bg-muted/30 px-3 py-2">
                 <div className="mb-1 flex items-center gap-2">
-                  <span className="text-[10px] font-medium text-muted-foreground">{chunk.docFilename}</span>
-                  <Badge variant="outline" className="text-[9px]">
+                  <span className="text-xs font-medium text-muted-foreground">{chunk.docFilename}</span>
+                  <Badge variant="outline" className="text-xs">
                     {TYPE_LABELS[chunk.type]}
                   </Badge>
                   {chunk.tags.map(t => (
-                    <span key={t} className="text-[9px] text-muted-foreground">
+                    <span key={t} className="text-xs text-muted-foreground">
                       #{t}
                     </span>
                   ))}
@@ -709,14 +709,14 @@ export function KnowledgePage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="truncate text-sm font-medium">{doc.filename}</span>
-                        <Badge variant="outline" className="shrink-0 text-[10px] font-normal">
+                        <Badge variant="outline" className="shrink-0 text-xs font-normal">
                           {TYPE_LABELS[doc.type]}
                         </Badge>
-                        <Badge variant="secondary" className="shrink-0 text-[10px]">
+                        <Badge variant="secondary" className="shrink-0 text-xs">
                           {(doc.domain ?? '').split('.').pop()}
                         </Badge>
                       </div>
-                      <div className="mt-0.5 flex items-center gap-3 text-[11px] text-muted-foreground">
+                      <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
                         <span>{doc.chunk_count} chunks</span>
                         <span>{new Date(doc.uploaded_at).toLocaleDateString()}</span>
                         {(doc.metadata.tags as string[])?.length > 0 && (
@@ -747,7 +747,7 @@ export function KnowledgePage() {
                     {doc.chunks.length > 0 ? (
                       doc.chunks.map((chunk, ci) => (
                         <div key={chunk.id} className="rounded border bg-muted/20 px-3 py-2">
-                          <div className="mb-1 flex items-center gap-2 text-[10px] text-muted-foreground">
+                          <div className="mb-1 flex items-center gap-2 text-xs text-muted-foreground">
                             <span className="font-medium">Chunk {ci + 1}</span>
                             <span>{chunk.content.length} chars</span>
                           </div>
@@ -783,7 +783,7 @@ export function KnowledgePage() {
           <List className="size-4 shrink-0 text-muted-foreground" />
           <div>
             <p className="text-xs font-medium">How knowledge is used</p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Knowledge chunks are injected as factual context during synthetic generation, enriching seeds with domain-specific
               facts, procedures, and terminology. This makes generated conversations deeply specialized to your industry.
             </p>

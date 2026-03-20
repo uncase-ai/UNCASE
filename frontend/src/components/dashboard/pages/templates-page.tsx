@@ -434,11 +434,11 @@ export function TemplatesPage() {
                   <div className="flex items-center gap-1.5">
                     <CardTitle className="text-sm">{template.display_name}</CardTitle>
                     {isDefault && (
-                      <Badge variant="secondary" className="text-[9px]">default</Badge>
+                      <Badge variant="secondary" className="text-xs">default</Badge>
                     )}
                   </div>
                   {isSelected && compareMode && (
-                    <Badge variant="default" className="shrink-0 text-[10px]">
+                    <Badge variant="default" className="shrink-0 text-xs">
                       {selectionIndex === 0 ? 'A' : 'B'}
                     </Badge>
                   )}
@@ -455,13 +455,13 @@ export function TemplatesPage() {
                     <Badge
                       key={token}
                       variant="secondary"
-                      className="font-mono text-[10px]"
+                      className="font-mono text-xs"
                     >
                       {token}
                     </Badge>
                   ))}
                   {template.special_tokens.length > 3 && (
-                    <Badge variant="outline" className="text-[10px]">
+                    <Badge variant="outline" className="text-xs">
                       +{template.special_tokens.length - 3} more
                     </Badge>
                   )}

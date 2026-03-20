@@ -204,7 +204,7 @@ function MultiSelectInput({
         })}
       </div>
       {value.length > 0 && (
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {value.length} selected
           <button
             type="button"
@@ -312,7 +312,7 @@ function PropertyField({
           onChange={v => onChange(propKey, v)}
           placeholder={`Type and press Enter to add`}
         />
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Press <kbd className="rounded border bg-muted px-1 font-mono">Enter</kbd> or{' '}
           <kbd className="rounded border bg-muted px-1 font-mono">,</kbd> to add an item
         </p>
@@ -529,7 +529,7 @@ export function ToolDetailPage({ name }: ToolDetailPageProps) {
             </StatusBadge>
 
             {/* Version */}
-            <Badge variant="outline" className="font-mono text-[10px]">
+            <Badge variant="outline" className="font-mono text-xs">
               v{tool.version}
             </Badge>
           </div>

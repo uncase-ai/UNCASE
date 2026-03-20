@@ -335,7 +335,7 @@ export function SettingsPage() {
       cell: row => (
         <div className="flex gap-1">
           {row.scopes.split(',').map(s => (
-            <Badge key={s} variant="secondary" className="text-[10px]">
+            <Badge key={s} variant="secondary" className="text-xs">
               {s.trim()}
             </Badge>
           ))}
@@ -417,7 +417,7 @@ export function SettingsPage() {
                 </Button>
               </div>
             ) : (
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 No API key active. Create one below and set it as active to authenticate requests.
               </p>
             )}
@@ -476,7 +476,7 @@ export function SettingsPage() {
                 </StatusBadge>
               </div>
               {org.description && <p className="text-sm text-muted-foreground">{org.description}</p>}
-              <p className="text-[11px] text-muted-foreground">ID: {org.id}</p>
+              <p className="text-xs text-muted-foreground">ID: {org.id}</p>
             </div>
           ) : (
             <div className="flex items-center gap-2">
@@ -582,7 +582,7 @@ export function SettingsPage() {
             <div className="space-y-1">
               <Label>Slug</Label>
               <Input value={newOrgSlug} onChange={e => setNewOrgSlug(e.target.value)} placeholder="my-org" />
-              <p className="text-[11px] text-muted-foreground">Lowercase, hyphens only. Auto-generated if empty.</p>
+              <p className="text-xs text-muted-foreground">Lowercase, hyphens only. Auto-generated if empty.</p>
             </div>
             <div className="space-y-1">
               <Label>Description</Label>
@@ -719,9 +719,9 @@ export function SettingsPage() {
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium">{p.name}</span>
-                        <Badge variant="secondary" className="text-[10px]">{p.provider_type}</Badge>
+                        <Badge variant="secondary" className="text-xs">{p.provider_type}</Badge>
                         {p.is_default && (
-                          <Badge variant="outline" className="gap-1 text-[10px]">
+                          <Badge variant="outline" className="gap-1 text-xs">
                             <Star className="size-2.5" /> Default
                           </Badge>
                         )}
@@ -820,7 +820,7 @@ export function SettingsPage() {
                 onChange={e => setNewProvider(prev => ({ ...prev, api_key: e.target.value }))}
                 placeholder="sk-..."
               />
-              <p className="text-[11px] text-muted-foreground">Encrypted at rest. Not required for local providers (Ollama, vLLM).</p>
+              <p className="text-xs text-muted-foreground">Encrypted at rest. Not required for local providers (Ollama, vLLM).</p>
             </div>
             {['ollama', 'vllm', 'custom'].includes(newProvider.provider_type) && (
               <div className="space-y-1">
@@ -898,15 +898,15 @@ export function SettingsPage() {
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-lg border px-3 py-2">
-                  <p className="text-[10px] font-medium uppercase text-muted-foreground">Hashed</p>
+                  <p className="text-xs font-medium uppercase text-muted-foreground">Hashed</p>
                   <p className="text-lg font-bold">{bcStats.total_hashed}</p>
                 </div>
                 <div className="rounded-lg border px-3 py-2">
-                  <p className="text-[10px] font-medium uppercase text-muted-foreground">Batches</p>
+                  <p className="text-xs font-medium uppercase text-muted-foreground">Batches</p>
                   <p className="text-lg font-bold">{bcStats.total_batches}</p>
                 </div>
                 <div className="rounded-lg border px-3 py-2">
-                  <p className="text-[10px] font-medium uppercase text-muted-foreground">Anchored</p>
+                  <p className="text-xs font-medium uppercase text-muted-foreground">Anchored</p>
                   <p className="text-lg font-bold">{bcStats.total_anchored}</p>
                 </div>
               </div>
@@ -917,7 +917,7 @@ export function SettingsPage() {
                     {bcStats.total_anchored > 0 || bcStats.total_batches > 0 ? 'Configured' : 'Not configured'}
                   </StatusBadge>
                 </div>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Blockchain settings (RPC URL, chain ID, contract address, private key) are configured via server environment variables. They cannot be modified from the UI for security reasons.
                 </p>
               </div>

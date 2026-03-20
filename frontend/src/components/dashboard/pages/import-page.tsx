@@ -453,7 +453,7 @@ export function ImportPage() {
           <CardContent className="flex items-start gap-3 p-4">
             <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
             <div className="space-y-1 text-xs text-muted-foreground">
-              <p className="text-[15px] font-semibold text-foreground">Import &amp; Tool Discovery Pipeline</p>
+              <p className="text-base font-semibold text-foreground">Import &amp; Tool Discovery Pipeline</p>
               <p>
                 Upload conversation data, then our scanner analyzes it to identify tool usage patterns and automatically
                 generates robust, MCP-compatible tool definitions ready for the pipeline. Supports OpenAI, ShareGPT,
@@ -531,7 +531,7 @@ export function ImportPage() {
                   <FileText className="size-4 text-muted-foreground" />
                   <div>
                     <p className="text-xs font-medium">{f.label}</p>
-                    <p className="text-[10px] text-muted-foreground">{f.desc}</p>
+                    <p className="text-xs text-muted-foreground">{f.desc}</p>
                   </div>
                 </div>
               </CardContent>
@@ -559,8 +559,8 @@ export function ImportPage() {
           <div className="flex items-center gap-3">
             <FileText className="size-4 text-muted-foreground" />
             <span className="text-sm font-medium">{selectedFile.name}</span>
-            <Badge variant="secondary" className="text-[10px] uppercase">{detectedFormat}</Badge>
-            <Badge variant="outline" className="text-[10px]">{(selectedFile.size / 1024).toFixed(1)} KB</Badge>
+            <Badge variant="secondary" className="text-xs uppercase">{detectedFormat}</Badge>
+            <Badge variant="outline" className="text-xs">{(selectedFile.size / 1024).toFixed(1)} KB</Badge>
           </div>
         )}
 
@@ -617,7 +617,7 @@ export function ImportPage() {
                 </TableBody>
               </Table>
               {result.errors.length > 10 && (
-                <p className="mt-2 text-[10px] text-muted-foreground">+{result.errors.length - 10} more errors</p>
+                <p className="mt-2 text-xs text-muted-foreground">+{result.errors.length - 10} more errors</p>
               )}
             </CardContent>
           </Card>
@@ -635,12 +635,12 @@ export function ImportPage() {
             {convs.slice(0, 5).map(conv => (
               <div key={conv.conversation_id} className="rounded-lg border p-3">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className="font-mono text-[10px] text-muted-foreground">{conv.conversation_id.slice(0, 12)}...</span>
-                  <Badge variant="secondary" className="text-[10px]">{conv.dominio}</Badge>
-                  <Badge variant="outline" className="text-[10px]">{conv.turnos.length} turns</Badge>
-                  <Badge variant="outline" className="text-[10px] uppercase">{conv.idioma}</Badge>
+                  <span className="font-mono text-xs text-muted-foreground">{conv.conversation_id.slice(0, 12)}...</span>
+                  <Badge variant="secondary" className="text-xs">{conv.dominio}</Badge>
+                  <Badge variant="outline" className="text-xs">{conv.turnos.length} turns</Badge>
+                  <Badge variant="outline" className="text-xs uppercase">{conv.idioma}</Badge>
                   {conv.turnos.some(t => t.herramientas_usadas.length > 0) && (
-                    <Badge variant="outline" className="gap-1 text-[10px]">
+                    <Badge variant="outline" className="gap-1 text-xs">
                       <Wrench className="size-2.5" /> Tools
                     </Badge>
                   )}
@@ -656,7 +656,7 @@ export function ImportPage() {
                     </div>
                   ))}
                   {conv.turnos.length > 3 && (
-                    <p className="pl-5 text-[10px] text-muted-foreground">+{conv.turnos.length - 3} more turns</p>
+                    <p className="pl-5 text-xs text-muted-foreground">+{conv.turnos.length - 3} more turns</p>
                   )}
                 </div>
               </div>
@@ -753,23 +753,23 @@ export function ImportPage() {
                   <TableBody>
                     {scanResults.map(r => (
                       <TableRow key={r.conversation_id}>
-                        <TableCell className="font-mono text-[10px]">{r.conversation_id.slice(0, 10)}...</TableCell>
+                        <TableCell className="font-mono text-xs">{r.conversation_id.slice(0, 10)}...</TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
                             {r.identified_tools.map(t => (
-                              <Badge key={t.name} variant="outline" className="text-[9px]">{t.name}</Badge>
+                              <Badge key={t.name} variant="outline" className="text-xs">{t.name}</Badge>
                             ))}
                             {r.identified_tools.length === 0 && (
-                              <span className="text-[10px] text-muted-foreground">None</span>
+                              <span className="text-xs text-muted-foreground">None</span>
                             )}
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={r.confidence > 0.7 ? 'default' : 'secondary'} className="text-[10px]">
+                          <Badge variant={r.confidence > 0.7 ? 'default' : 'secondary'} className="text-xs">
                             {(r.confidence * 100).toFixed(0)}%
                           </Badge>
                         </TableCell>
-                        <TableCell className="max-w-[200px] truncate text-[10px] text-muted-foreground">
+                        <TableCell className="max-w-[200px] truncate text-xs text-muted-foreground">
                           {r.reasoning}
                         </TableCell>
                       </TableRow>
@@ -820,7 +820,7 @@ export function ImportPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <p className="text-sm font-medium">{generatedTools.length} tools generated</p>
-            <Badge variant="secondary" className="text-[10px]">{selectedTools.size} selected</Badge>
+            <Badge variant="secondary" className="text-xs">{selectedTools.size} selected</Badge>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -874,19 +874,19 @@ export function ImportPage() {
                       {/* Row 1: Name + badges */}
                       <div className="mb-1.5 flex flex-wrap items-center gap-2">
                         <span className="font-mono text-sm font-semibold">{tool.name}</span>
-                        <Badge className={cn('text-[9px]', CATEGORY_COLORS[tool.category] ?? '')}>
+                        <Badge className={cn('text-xs', CATEGORY_COLORS[tool.category] ?? '')}>
                           {tool.category}
                         </Badge>
-                        <Badge variant="outline" className="gap-1 text-[9px]">
+                        <Badge variant="outline" className="gap-1 text-xs">
                           {tool.method}
                         </Badge>
                         {tool.auth_type !== 'none' && (
-                          <Badge variant="outline" className="gap-1 text-[9px]">
+                          <Badge variant="outline" className="gap-1 text-xs">
                             <Lock className="size-2" /> {tool.auth_type}
                           </Badge>
                         )}
                         {tool.mcp_compatible && (
-                          <Badge variant="outline" className="gap-1 text-[9px]">
+                          <Badge variant="outline" className="gap-1 text-xs">
                             <Plug className="size-2" /> MCP
                           </Badge>
                         )}
@@ -910,16 +910,16 @@ export function ImportPage() {
                       {/* Row 3: Domains + params */}
                       <div className="mb-2 flex flex-wrap items-center gap-2">
                         {tool.domains.map(d => (
-                          <Badge key={d} variant="secondary" className="text-[9px]">{d}</Badge>
+                          <Badge key={d} variant="secondary" className="text-xs">{d}</Badge>
                         ))}
-                        <span className="text-[10px] text-muted-foreground">{paramCount} params</span>
-                        <span className="text-[10px] text-muted-foreground">v{tool.version}</span>
+                        <span className="text-xs text-muted-foreground">{paramCount} params</span>
+                        <span className="text-xs text-muted-foreground">v{tool.version}</span>
                       </div>
 
                       {/* Row 4: Visibility selector */}
                       {isSelected && (
                         <div className="mb-2 flex items-center gap-2">
-                          <Label className="text-[10px] text-muted-foreground">Visibility:</Label>
+                          <Label className="text-xs text-muted-foreground">Visibility:</Label>
                           <div className="flex gap-1">
                             {VISIBILITY_OPTIONS.map(v => {
                               const VIcon = v.icon
@@ -930,7 +930,7 @@ export function ImportPage() {
                                     <TooltipTrigger asChild>
                                       <button
                                         className={cn(
-                                          'flex items-center gap-1 rounded-md px-2 py-1 text-[10px] transition-colors',
+                                          'flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors',
                                           vis === v.value
                                             ? 'bg-foreground text-background'
                                             : 'bg-muted text-muted-foreground hover:text-foreground'
@@ -952,7 +952,7 @@ export function ImportPage() {
 
                       {/* Expand/collapse */}
                       <button
-                        className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
                         onClick={() => setExpandedTool(isExpanded ? null : tool.name)}
                       >
                         {isExpanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
@@ -964,32 +964,32 @@ export function ImportPage() {
                         <div className="mt-3 space-y-3 border-t pt-3">
                           <div className="grid gap-3 sm:grid-cols-2">
                             <div>
-                              <p className="mb-1 text-[10px] font-medium">Endpoint</p>
-                              <code className="block rounded bg-muted px-2 py-1 text-[10px]">{tool.endpoint_url}</code>
+                              <p className="mb-1 text-xs font-medium">Endpoint</p>
+                              <code className="block rounded bg-muted px-2 py-1 text-xs">{tool.endpoint_url}</code>
                             </div>
                             <div>
-                              <p className="mb-1 text-[10px] font-medium">Fallback Strategy</p>
-                              <p className="text-[10px] text-muted-foreground">{tool.fallback_strategy}</p>
+                              <p className="mb-1 text-xs font-medium">Fallback Strategy</p>
+                              <p className="text-xs text-muted-foreground">{tool.fallback_strategy}</p>
                             </div>
                           </div>
 
                           <div>
-                            <p className="mb-1 text-[10px] font-medium">Error Handling</p>
-                            <p className="text-[10px] text-muted-foreground">{tool.error_handling}</p>
+                            <p className="mb-1 text-xs font-medium">Error Handling</p>
+                            <p className="text-xs text-muted-foreground">{tool.error_handling}</p>
                           </div>
 
                           <Tabs defaultValue="input" className="w-full">
                             <TabsList className="h-7">
-                              <TabsTrigger value="input" className="text-[10px]">Input Schema</TabsTrigger>
-                              <TabsTrigger value="output" className="text-[10px]">Output Schema</TabsTrigger>
+                              <TabsTrigger value="input" className="text-xs">Input Schema</TabsTrigger>
+                              <TabsTrigger value="output" className="text-xs">Output Schema</TabsTrigger>
                             </TabsList>
                             <TabsContent value="input">
-                              <pre className="max-h-[200px] overflow-auto rounded-md bg-muted p-2 text-[10px]">
+                              <pre className="max-h-[200px] overflow-auto rounded-md bg-muted p-2 text-xs">
                                 {JSON.stringify(tool.input_schema, null, 2)}
                               </pre>
                             </TabsContent>
                             <TabsContent value="output">
-                              <pre className="max-h-[200px] overflow-auto rounded-md bg-muted p-2 text-[10px]">
+                              <pre className="max-h-[200px] overflow-auto rounded-md bg-muted p-2 text-xs">
                                 {JSON.stringify(tool.output_schema, null, 2)}
                               </pre>
                             </TabsContent>
@@ -1096,7 +1096,7 @@ export function ImportPage() {
             <CardContent className="p-3">
               <p className="mb-1 text-xs font-medium text-amber-700 dark:text-amber-300">Security Notes</p>
               {mcpPreview.securityNotes.map((note, i) => (
-                <p key={i} className="text-[10px] text-amber-600 dark:text-amber-400">• {note}</p>
+                <p key={i} className="text-xs text-amber-600 dark:text-amber-400">• {note}</p>
               ))}
             </CardContent>
           </Card>
@@ -1128,7 +1128,7 @@ export function ImportPage() {
                 {codeCopied ? 'Copied!' : 'Copy'}
               </Button>
             </div>
-            <pre className="max-h-[400px] overflow-auto rounded-lg border bg-muted/50 p-4 text-[11px] leading-relaxed">
+            <pre className="max-h-[400px] overflow-auto rounded-lg border bg-muted/50 p-4 text-xs leading-relaxed">
               {mcpPreview.generatedCode}
             </pre>
           </TabsContent>
@@ -1138,17 +1138,17 @@ export function ImportPage() {
               <CardContent className="space-y-3 p-4">
                 <div>
                   <p className="mb-1 text-xs font-medium">curl Example</p>
-                  <pre className="rounded bg-muted p-2 text-[10px]">{mcpPreview.connectionInfo.curlExample}</pre>
+                  <pre className="rounded bg-muted p-2 text-xs">{mcpPreview.connectionInfo.curlExample}</pre>
                 </div>
                 <div>
                   <p className="mb-1 text-xs font-medium">Deploy Command</p>
-                  <pre className="rounded bg-muted p-2 text-[10px]">{mcpPreview.connectionInfo.deployCommand}</pre>
+                  <pre className="rounded bg-muted p-2 text-xs">{mcpPreview.connectionInfo.deployCommand}</pre>
                 </div>
                 {mcpPreview.connectionInfo.envVars.length > 0 && (
                   <div>
                     <p className="mb-1 text-xs font-medium">Required Environment Variables</p>
                     {mcpPreview.connectionInfo.envVars.map(v => (
-                      <code key={v} className="mr-2 rounded bg-muted px-1.5 py-0.5 text-[10px]">{v}</code>
+                      <code key={v} className="mr-2 rounded bg-muted px-1.5 py-0.5 text-xs">{v}</code>
                     ))}
                   </div>
                 )}
@@ -1157,17 +1157,17 @@ export function ImportPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="text-[10px]">Tool</TableHead>
-                        <TableHead className="text-[10px]">Method</TableHead>
-                        <TableHead className="text-[10px]">URL</TableHead>
+                        <TableHead className="text-xs">Tool</TableHead>
+                        <TableHead className="text-xs">Method</TableHead>
+                        <TableHead className="text-xs">URL</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {mcpPreview.connectionInfo.toolEndpoints.map(ep => (
                         <TableRow key={ep.name}>
-                          <TableCell className="font-mono text-[10px]">{ep.name}</TableCell>
-                          <TableCell className="text-[10px]">{ep.method}</TableCell>
-                          <TableCell className="max-w-[200px] truncate text-[10px]">{ep.url}</TableCell>
+                          <TableCell className="font-mono text-xs">{ep.name}</TableCell>
+                          <TableCell className="text-xs">{ep.method}</TableCell>
+                          <TableCell className="max-w-[200px] truncate text-xs">{ep.url}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -1178,7 +1178,7 @@ export function ImportPage() {
           </TabsContent>
 
           <TabsContent value="config">
-            <pre className="max-h-[300px] overflow-auto rounded-lg border bg-muted/50 p-4 text-[11px]">
+            <pre className="max-h-[300px] overflow-auto rounded-lg border bg-muted/50 p-4 text-xs">
               {JSON.stringify(mcpPreview.connectionInfo.mcpConfig ?? {}, null, 2)}
             </pre>
           </TabsContent>

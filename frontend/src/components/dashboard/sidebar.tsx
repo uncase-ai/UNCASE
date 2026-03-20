@@ -119,7 +119,7 @@ export function Sidebar({ collapsed, onNavigate }: SidebarProps) {
               <div key={gi}>
                 {gi > 0 && <Separator className="my-2" />}
                 {group.label && !collapsed && (
-                  <span className="mb-1 block px-3 pt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span className="mb-1 block px-3 pt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     {group.label}
                   </span>
                 )}
@@ -151,8 +151,8 @@ export function Sidebar({ collapsed, onNavigate }: SidebarProps) {
               <div className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-sm font-medium leading-tight">{user.display_name}</span>
                 <div className="flex items-center gap-1">
-                  <Badge variant="outline" className="px-1.5 py-0 text-[10px]">{user.role}</Badge>
-                  {isDemo && <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">Demo</Badge>}
+                  <Badge variant="outline" className="px-1.5 py-0 text-xs">{user.role}</Badge>
+                  {isDemo && <Badge variant="secondary" className="px-1.5 py-0 text-xs">Demo</Badge>}
                 </div>
               </div>
               <Button variant="ghost" size="icon" className="size-7 shrink-0" onClick={logout}>

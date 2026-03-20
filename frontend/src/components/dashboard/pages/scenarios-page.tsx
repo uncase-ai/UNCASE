@@ -194,7 +194,7 @@ export function ScenariosPage() {
           title="Scenario Packs"
           description="Curated conversation archetypes for synthetic data generation"
           actions={
-            <StatusBadge variant={apiOnline ? 'success' : 'error'} className="text-[10px]">
+            <StatusBadge variant={apiOnline ? 'success' : 'error'} className="text-xs">
               {apiOnline ? <Cloud className="mr-1 size-3" /> : <CloudOff className="mr-1 size-3" />}
               {apiOnline ? 'API' : 'Offline'}
             </StatusBadge>
@@ -225,7 +225,7 @@ export function ScenariosPage() {
         title="Scenario Packs"
         description={`${packs.length} domain packs with ${totalScenarios} scenario templates across ${SUPPORTED_DOMAINS.length} industries`}
         actions={
-          <StatusBadge variant={apiOnline ? 'success' : 'error'} className="text-[10px]">
+          <StatusBadge variant={apiOnline ? 'success' : 'error'} className="text-xs">
             {apiOnline ? <Cloud className="mr-1 size-3" /> : <CloudOff className="mr-1 size-3" />}
             {apiOnline ? 'API' : 'Offline'}
           </StatusBadge>
@@ -279,7 +279,7 @@ export function ScenariosPage() {
                       <span className="text-lg">{info.icon}</span>
                       <CardTitle className="text-sm">{info.label}</CardTitle>
                     </div>
-                    <Badge variant="secondary" className="text-[10px]">
+                    <Badge variant="secondary" className="text-xs">
                       v{pack.version}
                     </Badge>
                   </div>
@@ -304,7 +304,7 @@ export function ScenariosPage() {
                       <Badge
                         key={level}
                         variant="outline"
-                        className={cn('text-[10px]', SKILL_COLORS[level as SkillLevel])}
+                        className={cn('text-xs', SKILL_COLORS[level as SkillLevel])}
                       >
                         {level}
                       </Badge>
@@ -422,12 +422,12 @@ function ScenarioCard({
               <h4 className="text-sm font-medium">{formatName(scenario.name)}</h4>
               <Badge
                 variant="outline"
-                className={cn('text-[10px]', SKILL_COLORS[scenario.skill_level])}
+                className={cn('text-xs', SKILL_COLORS[scenario.skill_level])}
               >
                 {scenario.skill_level}
               </Badge>
               {scenario.edge_case && (
-                <Badge variant="outline" className="text-[10px] bg-orange-500/10 text-orange-700 dark:text-orange-400">
+                <Badge variant="outline" className="text-xs bg-orange-500/10 text-orange-700 dark:text-orange-400">
                   <AlertTriangle className="mr-0.5 size-2.5" /> edge case
                 </Badge>
               )}
@@ -435,23 +435,23 @@ function ScenarioCard({
             <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{scenario.description}</p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {scenario.expected_tool_sequence.length > 0 && (
-                <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Wrench className="size-3" />
                   {scenario.expected_tool_sequence.length} tool{scenario.expected_tool_sequence.length > 1 ? 's' : ''}
                 </span>
               )}
-              <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Zap className="size-3" />
                 {scenario.flow_steps.length} steps
               </span>
               <div className="flex flex-wrap gap-1">
                 {scenario.tags.slice(0, 3).map(tag => (
-                  <Badge key={tag} variant="secondary" className="text-[10px] px-1.5">
+                  <Badge key={tag} variant="secondary" className="text-xs px-1.5">
                     {tag}
                   </Badge>
                 ))}
                 {scenario.tags.length > 3 && (
-                  <Badge variant="secondary" className="text-[10px] px-1.5">
+                  <Badge variant="secondary" className="text-xs px-1.5">
                     +{scenario.tags.length - 3}
                   </Badge>
                 )}
@@ -459,7 +459,7 @@ function ScenarioCard({
             </div>
           </div>
           <div className="flex flex-col items-end gap-1 text-right">
-            <span className="text-[10px] text-muted-foreground">Weight</span>
+            <span className="text-xs text-muted-foreground">Weight</span>
             <div className="flex items-center gap-1.5">
               <Progress value={weightPercent} className="h-1.5 w-12" />
               <span className="text-xs font-mono font-medium">{scenario.weight}</span>
@@ -490,12 +490,12 @@ function ScenarioDetailDialog({
             <DialogTitle className="text-base">{formatName(scenario.name)}</DialogTitle>
             <Badge
               variant="outline"
-              className={cn('text-[10px]', SKILL_COLORS[scenario.skill_level])}
+              className={cn('text-xs', SKILL_COLORS[scenario.skill_level])}
             >
               {scenario.skill_level}
             </Badge>
             {scenario.edge_case && (
-              <Badge variant="outline" className="text-[10px] bg-orange-500/10 text-orange-700 dark:text-orange-400">
+              <Badge variant="outline" className="text-xs bg-orange-500/10 text-orange-700 dark:text-orange-400">
                 edge case
               </Badge>
             )}
@@ -518,7 +518,7 @@ function ScenarioDetailDialog({
             <ol className="space-y-1.5">
               {scenario.flow_steps.map((step, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm">
-                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-medium">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium">
                     {i + 1}
                   </span>
                   <span>{step}</span>
@@ -536,7 +536,7 @@ function ScenarioDetailDialog({
               <div className="flex flex-wrap items-center gap-1.5">
                 {scenario.expected_tool_sequence.map((tool, i) => (
                   <span key={i} className="flex items-center gap-1">
-                    <Badge variant="outline" className="font-mono text-[11px]">
+                    <Badge variant="outline" className="font-mono text-xs">
                       <Wrench className="mr-1 size-3" />
                       {tool}
                     </Badge>
@@ -552,19 +552,19 @@ function ScenarioDetailDialog({
           {/* Metadata */}
           <div className="grid grid-cols-2 gap-3 rounded-lg bg-muted/50 p-3">
             <div>
-              <span className="text-[10px] font-medium text-muted-foreground">Domain</span>
+              <span className="text-xs font-medium text-muted-foreground">Domain</span>
               <p className="text-xs font-medium">{scenario.domain}</p>
             </div>
             <div>
-              <span className="text-[10px] font-medium text-muted-foreground">Weight</span>
+              <span className="text-xs font-medium text-muted-foreground">Weight</span>
               <p className="text-xs font-medium">{scenario.weight}</p>
             </div>
             <div>
-              <span className="text-[10px] font-medium text-muted-foreground">Skill Level</span>
+              <span className="text-xs font-medium text-muted-foreground">Skill Level</span>
               <p className="text-xs font-medium capitalize">{scenario.skill_level}</p>
             </div>
             <div>
-              <span className="text-[10px] font-medium text-muted-foreground">Edge Case</span>
+              <span className="text-xs font-medium text-muted-foreground">Edge Case</span>
               <p className="text-xs font-medium">{scenario.edge_case ? 'Yes' : 'No'}</p>
             </div>
           </div>
@@ -574,7 +574,7 @@ function ScenarioDetailDialog({
             <h5 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tags</h5>
             <div className="flex flex-wrap gap-1">
               {scenario.tags.map(tag => (
-                <Badge key={tag} variant="secondary" className="text-[10px]">
+                <Badge key={tag} variant="secondary" className="text-xs">
                   {tag}
                 </Badge>
               ))}

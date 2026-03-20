@@ -35,7 +35,7 @@ export function SidebarNavItem({ item, collapsed, onNavigate }: SidebarNavItemPr
         <>
           <span className="flex-1 truncate">{item.label}</span>
           {item.badge !== undefined && (
-            <Badge variant="secondary" className="ml-auto h-5 min-w-5 justify-center px-1 text-[10px]">
+            <Badge variant="secondary" className="ml-auto h-5 min-w-5 justify-center px-1 text-xs">
               {item.badge}
             </Badge>
           )}
@@ -51,7 +51,7 @@ export function SidebarNavItem({ item, collapsed, onNavigate }: SidebarNavItemPr
         <TooltipContent side="right" className="flex items-center gap-2">
           {item.label}
           {item.badge !== undefined && (
-            <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1 text-[10px]">
+            <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1 text-xs">
               {item.badge}
             </Badge>
           )}

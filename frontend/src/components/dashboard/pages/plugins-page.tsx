@@ -288,13 +288,13 @@ export function PluginsPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] text-muted-foreground">v{plugin.version}</span>
+                        <span className="text-xs text-muted-foreground">v{plugin.version}</span>
                         <span className="text-muted-foreground/40">·</span>
-                        <span className="text-[11px] text-muted-foreground">{plugin.author}</span>
+                        <span className="text-xs text-muted-foreground">{plugin.author}</span>
                         {plugin.downloads > 0 && (
                           <>
                             <span className="text-muted-foreground/40">·</span>
-                            <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
+                            <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
                               <Download className="size-2.5" />
                               {plugin.downloads.toLocaleString()}
                             </span>
@@ -357,29 +357,29 @@ export function PluginsPage() {
                       const DomainIcon = DOMAIN_ICONS[d]
 
                       return (
-                        <Badge key={d} variant="secondary" className="gap-1 text-[10px]">
+                        <Badge key={d} variant="secondary" className="gap-1 text-xs">
                           {DomainIcon && <DomainIcon className="size-2.5" />}
                           {d.replace('.', ' / ')}
                         </Badge>
                       )
                     })}
-                    <Badge variant="outline" className="gap-1 text-[10px]">
+                    <Badge variant="outline" className="gap-1 text-xs">
                       <Wrench className="size-2.5" />
                       {plugin.tools.length} tools
                     </Badge>
                     {plugin.source === 'official' && (
-                      <Badge variant="outline" className="gap-1 text-[10px]">
+                      <Badge variant="outline" className="gap-1 text-xs">
                         <Users className="size-2.5" />
                         Official
                       </Badge>
                     )}
                     {plugin.license && (
-                      <Badge variant="outline" className="text-[10px]">
+                      <Badge variant="outline" className="text-xs">
                         {plugin.license}
                       </Badge>
                     )}
                     {installedRecord && (
-                      <Badge variant="outline" className="gap-1 text-[10px]">
+                      <Badge variant="outline" className="gap-1 text-xs">
                         <Clock className="size-2.5" />
                         {new Date(installedRecord.created_at).toLocaleDateString()}
                       </Badge>
@@ -407,9 +407,9 @@ export function PluginsPage() {
                               key={tool.name}
                               className="flex items-start gap-2 rounded-md px-2 py-1.5"
                             >
-                              <code className="shrink-0 text-[11px] font-medium">{tool.name}</code>
+                              <code className="shrink-0 text-xs font-medium">{tool.name}</code>
                               {isRegistered && <Check className="mt-0.5 size-3 shrink-0 text-foreground" />}
-                              <span className="line-clamp-1 text-[11px] text-muted-foreground">
+                              <span className="line-clamp-1 text-xs text-muted-foreground">
                                 {(tool.description ?? '').split('\n')[0]}
                               </span>
                             </div>

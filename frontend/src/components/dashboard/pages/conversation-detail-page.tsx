@@ -334,7 +334,7 @@ function ToolAutocompleteDropdown({
       className="fixed z-50 max-h-48 w-64 overflow-y-auto rounded-md border bg-popover p-1 shadow-md"
       style={{ top: position.top, left: position.left }}
     >
-      <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground">Insert tool call</div>
+      <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Insert tool call</div>
       {filtered.map((tool, i) => (
         <button
           key={tool}
@@ -523,10 +523,10 @@ function MessageBubble({
     <div className={cn('rounded-lg border p-3', style.bgClass, style.borderClass)}>
       <div className="mb-2 flex items-center gap-2">
         <Icon className={cn('size-3.5', style.iconClass)} />
-        <span className={cn('text-[11px] font-bold uppercase tracking-wide', style.labelClass)}>
+        <span className={cn('text-xs font-bold uppercase tracking-wide', style.labelClass)}>
           {style.label}
         </span>
-        <span className="font-mono text-[10px] text-muted-foreground">#{item.turn.turno}</span>
+        <span className="font-mono text-xs text-muted-foreground">#{item.turn.turno}</span>
       </div>
 
       {isEditing ? (
@@ -542,8 +542,8 @@ function MessageBubble({
             autoFocus
           />
           {availableTools.length > 0 && !showToolMenu && (
-            <p className="text-[10px] text-muted-foreground">
-              Type <kbd className="rounded border bg-muted px-1 py-0.5 font-mono text-[9px]">&lt;</kbd> to insert a tool call
+            <p className="text-xs text-muted-foreground">
+              Type <kbd className="rounded border bg-muted px-1 py-0.5 font-mono text-xs">&lt;</kbd> to insert a tool call
             </p>
           )}
           {showToolMenu && (
@@ -582,11 +582,11 @@ function MessageBubble({
               <div className="rounded-md border border-amber-200 bg-amber-50/60 p-2 dark:border-amber-800/50 dark:bg-amber-950/30">
                 <div className="mb-1 flex items-center gap-1.5">
                   <Wrench className="size-3 text-amber-600 dark:text-amber-400" />
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
                     Tool Call
                   </span>
                 </div>
-                <pre className="overflow-x-auto text-[11px] leading-relaxed text-amber-900 dark:text-amber-200">
+                <pre className="overflow-x-auto text-xs leading-relaxed text-amber-900 dark:text-amber-200">
                   {block}
                 </pre>
               </div>
@@ -596,7 +596,7 @@ function MessageBubble({
           {item.turn.herramientas_usadas.length > 0 && !item.turn.tool_calls?.length && (
             <div className="mt-2 flex flex-wrap gap-1">
               {item.turn.herramientas_usadas.map(h => (
-                <Badge key={h} variant="outline" className="text-[10px]">
+                <Badge key={h} variant="outline" className="text-xs">
                   <Wrench className="mr-0.5 size-2.5" />{h}
                 </Badge>
               ))}
@@ -619,11 +619,11 @@ function ToolCallBlock({ toolName, toolCallId, args }: { toolName: string; toolC
         {expanded ? <ChevronDown className="size-3 text-amber-600 dark:text-amber-400" /> : <ChevronRight className="size-3 text-amber-600 dark:text-amber-400" />}
         <Wrench className="size-3 text-amber-600 dark:text-amber-400" />
         <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">{toolName}</span>
-        <span className="font-mono text-[10px] text-muted-foreground">({toolCallId.slice(0, 8)})</span>
+        <span className="font-mono text-xs text-muted-foreground">({toolCallId.slice(0, 8)})</span>
       </button>
       {expanded && (
         <div className="border-t border-amber-200/60 px-3 py-2 dark:border-amber-800/40">
-          <pre className="overflow-x-auto text-[11px] leading-relaxed text-amber-900 dark:text-amber-200">
+          <pre className="overflow-x-auto text-xs leading-relaxed text-amber-900 dark:text-amber-200">
             {JSON.stringify(args, null, 2)}
           </pre>
         </div>
@@ -643,12 +643,12 @@ function ToolResultBlock({ toolName, status, result, durationMs }: { toolName: s
         {expanded ? <ChevronDown className="size-3 text-teal-600 dark:text-teal-400" /> : <ChevronRight className="size-3 text-teal-600 dark:text-teal-400" />}
         <Code2 className="size-3 text-teal-600 dark:text-teal-400" />
         <span className="text-xs font-semibold text-teal-700 dark:text-teal-300">{toolName}</span>
-        <StatusBadge variant={status === 'success' ? 'success' : 'error'} className="text-[10px]">{status}</StatusBadge>
-        {durationMs !== undefined && <span className="font-mono text-[10px] text-muted-foreground">{durationMs}ms</span>}
+        <StatusBadge variant={status === 'success' ? 'success' : 'error'} className="text-xs">{status}</StatusBadge>
+        {durationMs !== undefined && <span className="font-mono text-xs text-muted-foreground">{durationMs}ms</span>}
       </button>
       {expanded && (
         <div className="border-t border-teal-200/60 px-3 py-2 dark:border-teal-800/40">
-          <pre className="overflow-x-auto text-[11px] leading-relaxed text-teal-900 dark:text-teal-200">
+          <pre className="overflow-x-auto text-xs leading-relaxed text-teal-900 dark:text-teal-200">
             {typeof result === 'string' ? result : JSON.stringify(result, null, 2)}
           </pre>
         </div>
@@ -883,7 +883,7 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
           <span className="text-xs text-destructive/80">
             Marked as invalid — excluded from exports and evaluations.
           </span>
-          <Button variant="outline" size="sm" className="ml-auto h-6 text-[10px]" onClick={handleToggleStatus}>
+          <Button variant="outline" size="sm" className="ml-auto h-6 text-xs" onClick={handleToggleStatus}>
             Restore
           </Button>
         </div>
@@ -1006,7 +1006,7 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
                     onChange={e => setNewTag(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') addTag() }}
                     placeholder="+ tag"
-                    className="h-6 w-20 border-dashed px-2 text-[11px]"
+                    className="h-6 w-20 border-dashed px-2 text-xs"
                   />
                   {newTag && (
                     <Button size="sm" variant="ghost" className="h-6 px-1" onClick={addTag}>
@@ -1103,7 +1103,7 @@ export function ConversationDetailPage({ id }: ConversationDetailPageProps) {
                 <span className="text-muted-foreground">Roles</span>
                 <div className="mt-1 flex flex-wrap gap-1">
                   {[...new Set(conversation.turnos.map(t => t.rol))].map(r => (
-                    <Badge key={r} variant="secondary" className="text-[10px]">{r}</Badge>
+                    <Badge key={r} variant="secondary" className="text-xs">{r}</Badge>
                   ))}
                 </div>
               </div>

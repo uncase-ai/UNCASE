@@ -241,7 +241,7 @@ export function PipelinePage() {
             <ArrowRight className="size-4 shrink-0 text-primary" />
             <div className="flex-1">
               <p className="text-xs font-medium">Recommended next step</p>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {nextStepIdx === 0 && 'Create your first seed to define the conversation structure for your domain.'}
                 {nextStepIdx === 3 && `You have ${seedCount} seed${seedCount !== 1 ? 's' : ''} ready. Generate synthetic conversations from them.`}
                 {nextStepIdx === 4 && `You have ${convCount} conversation${convCount !== 1 ? 's' : ''} to evaluate. Run quality checks to certify them.`}
@@ -265,7 +265,7 @@ export function PipelinePage() {
             <CheckCircle2 className="size-4 shrink-0 text-green-600 dark:text-green-400" />
             <div className="flex-1">
               <p className="text-xs font-medium text-green-800 dark:text-green-300">Pipeline complete</p>
-              <p className="text-[11px] text-green-700/80 dark:text-green-400/70">
+              <p className="text-xs text-green-700/80 dark:text-green-400/70">
                 You have certified datasets ready for fine-tuning. Create more seeds or iterate to improve quality.
               </p>
             </div>
@@ -313,7 +313,7 @@ export function PipelinePage() {
               {/* Content */}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className={cn('text-[10px] font-normal', !ready && 'text-muted-foreground')}>
+                  <Badge variant="outline" className={cn('text-xs font-normal', !ready && 'text-muted-foreground')}>
                     Stage {i + 1}
                   </Badge>
                   <span className={cn('text-sm font-medium', !ready && 'text-muted-foreground')}>
@@ -323,7 +323,7 @@ export function PipelinePage() {
                     <Lock className="size-3 text-muted-foreground" />
                   )}
                   {count > 0 && ready && (
-                    <Badge variant="secondary" className="text-[10px]">
+                    <Badge variant="secondary" className="text-xs">
                       {count} {stage.countLabel}
                     </Badge>
                   )}
@@ -333,7 +333,7 @@ export function PipelinePage() {
                 </p>
                 <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
                   {stage.details.map(d => (
-                    <li key={d} className={cn('text-[11px]', ready ? 'text-muted-foreground' : 'text-muted-foreground/50')}>
+                    <li key={d} className={cn('text-xs', ready ? 'text-muted-foreground' : 'text-muted-foreground/50')}>
                       {d}
                     </li>
                   ))}
@@ -409,10 +409,10 @@ export function PipelinePage() {
                     {job.job_type} <span className="text-muted-foreground">#{job.id.slice(0, 8)}</span>
                   </p>
                   {job.current_stage && (
-                    <p className="text-[11px] text-muted-foreground">{job.current_stage}</p>
+                    <p className="text-xs text-muted-foreground">{job.current_stage}</p>
                   )}
                 </div>
-                <Badge variant="outline" className={cn('text-[10px]', getJobStatusColor(job.status))}>
+                <Badge variant="outline" className={cn('text-xs', getJobStatusColor(job.status))}>
                   {job.status}
                 </Badge>
                 {typeof job.progress === 'number' && job.progress > 0 && job.progress < 1 && (
@@ -429,7 +429,7 @@ export function PipelinePage() {
         <CheckCircle2 className="size-4 shrink-0 text-muted-foreground" />
         <div>
           <p className="text-xs font-medium">Flywheel Loop</p>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             After export, deploy your LoRA adapter to production. Collect feedback and feed it back as new seeds.
           </p>
         </div>

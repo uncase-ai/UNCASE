@@ -11,18 +11,18 @@ interface FieldCardProps {
 
 function confidenceBadge(confidence: number, status: string) {
   if (status === 'empty') {
-    return <Badge variant="outline" className="border-gray-300 text-[9px] text-gray-400">vacío</Badge>
+    return <Badge variant="outline" className="border-gray-300 text-xs text-gray-400">vacío</Badge>
   }
 
   if (confidence >= 0.9) {
-    return <Badge className="bg-emerald-100 text-[9px] text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">{Math.round(confidence * 100)}%</Badge>
+    return <Badge className="bg-emerald-100 text-xs text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">{Math.round(confidence * 100)}%</Badge>
   }
 
   if (confidence >= 0.7) {
-    return <Badge className="bg-blue-100 text-[9px] text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{Math.round(confidence * 100)}%</Badge>
+    return <Badge className="bg-blue-100 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{Math.round(confidence * 100)}%</Badge>
   }
 
-  return <Badge className="bg-amber-100 text-[9px] text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">{Math.round(confidence * 100)}%</Badge>
+  return <Badge className="bg-amber-100 text-xs text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">{Math.round(confidence * 100)}%</Badge>
 }
 
 export function FieldCard({ name, field }: FieldCardProps) {
@@ -53,7 +53,7 @@ export function FieldCard({ name, field }: FieldCardProps) {
           {name.replace(/_/g, ' ')}
         </span>
         {field.is_required && (
-          <span className="text-[9px] text-red-400">*</span>
+          <span className="text-xs text-red-400">*</span>
         )}
       </div>
       {confidenceBadge(field.confidence, field.status)}

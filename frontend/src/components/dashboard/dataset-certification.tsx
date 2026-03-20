@@ -792,7 +792,7 @@ export function DatasetCertification({
         </div>
 
         <div className="flex shrink-0 items-center justify-between border-t px-5 py-3">
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             Certificate {certId}
           </span>
           <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={handleDownloadHTML} disabled={downloading}>

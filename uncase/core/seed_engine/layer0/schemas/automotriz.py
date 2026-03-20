@@ -51,6 +51,21 @@ class ClientePerfil(BaseModel):
         default=None,
         description=("Forma de pago preferida. Valores: 'contado', 'financiamiento', 'mixto'. Optional."),
     )
+    rango_edad: str | None = Field(
+        default=None,
+        description=("Rango de edad del cliente. Valores: '18-25', '26-35', '36-45', '46-55', '56+'. Optional."),
+    )
+    estado_emocional: str | None = Field(
+        default=None,
+        description=(
+            "Estado emocional predominante del cliente. "
+            "Valores: 'entusiasta', 'indeciso', 'desconfiado', 'frustrado', 'racional'. Optional."
+        ),
+    )
+    interes_trade_in: bool | None = Field(
+        default=None,
+        description="Si el cliente está interesado en dar su vehículo actual a cuenta (trade-in). Optional.",
+    )
 
 
 # ── Category 2: Purchase Intent ─────────────────────────────────────
@@ -65,6 +80,10 @@ class Intencion(BaseModel):
             "Tipo de vehículo deseado. "
             "Valores: 'sedan', 'suv', 'pickup', 'hatchback', 'van', 'deportivo', 'otro'. Optional."
         ),
+    )
+    condicion: str | None = Field(
+        default=None,
+        description=("Condición del vehículo. Valores: 'nuevo', 'seminuevo', 'certificado'. Optional."),
     )
     marca_preferida: str | None = Field(
         default=None,
@@ -87,12 +106,20 @@ class Intencion(BaseModel):
     caracteristicas_importantes: list[str] | None = Field(
         default=None,
         description=(
-            "Características importantes para el cliente. Ejemplos: 'rendimiento', 'seguridad', 'tecnología'. Optional."
+            "Características importantes para el cliente. Ejemplos: 'rendimiento', 'seguridad', 'tecnología', "
+            "'espacio', 'consumo_combustible', 'diseño'. Optional."
         ),
     )
     factores_decision: list[str] | None = Field(
         default=None,
-        description=("Factores decisivos de compra. Ejemplos: 'precio', 'garantía', 'reputación'. Optional."),
+        description=(
+            "Factores decisivos de compra. Ejemplos: 'precio', 'garantía', 'reputación', "
+            "'disponibilidad', 'financiamiento', 'valor_reventa'. Optional."
+        ),
+    )
+    numero_pasajeros: int | None = Field(
+        default=None,
+        description="Número de pasajeros habituales. Optional.",
     )
 
 
@@ -119,13 +146,27 @@ class ContextoConversacion(BaseModel):
     )
     objeciones_conocidas: list[str] | None = Field(
         default=None,
-        description=("Objeciones conocidas del cliente. Ejemplos: 'precio_alto', 'no_confia_en_usados'. Optional."),
+        description=(
+            "Objeciones conocidas del cliente. Ejemplos: 'precio_alto', 'no_confia_en_usados', "
+            "'tiempo_entrega', 'mal_servicio_previo'. Optional."
+        ),
     )
     nivel_conocimiento_tecnico: str | None = Field(
         default=None,
         description=(
             "Nivel de conocimiento técnico del cliente sobre vehículos. Valores: 'bajo', 'medio', 'alto'. Optional."
         ),
+    )
+    horario_contacto: str | None = Field(
+        default=None,
+        description=(
+            "Preferencia de horario de contacto. "
+            "Valores: 'manana', 'tarde', 'noche', 'cualquier_hora'. Optional."
+        ),
+    )
+    region_geografica: str | None = Field(
+        default=None,
+        description="Región o ciudad del cliente para contextualizar disponibilidad y precios. Optional.",
     )
 
 
@@ -188,6 +229,21 @@ class ReglasNegocio(BaseModel):
         default=None,
         description=(
             "Restricciones de la conversación. Ejemplos: 'no_mencionar_competencia', 'no_prometer_fechas'. Optional."
+        ),
+    )
+    garantia_info: str | None = Field(
+        default=None,
+        description="Información sobre la garantía ofrecida (duración, cobertura). Optional.",
+    )
+    proceso_entrega: str | None = Field(
+        default=None,
+        description="Descripción del proceso de entrega del vehículo. Optional.",
+    )
+    documentacion_requerida: list[str] | None = Field(
+        default=None,
+        description=(
+            "Documentos que el cliente necesita presentar. "
+            "Ejemplos: 'INE', 'comprobante_domicilio', 'estados_cuenta'. Optional."
         ),
     )
 
@@ -272,9 +328,18 @@ class SeedAutomotriz(BaseSeedExtraction):
         scenario_type = self.escenario.tipo_escenario or "venta_directa"
         uso = self.intencion.uso_principal or "general"
         tipo_cliente = self.cliente_perfil.tipo_cliente or "particular"
+        condicion = self.intencion.condicion or "nuevo"
+        vehiculo_desc = ""
+        if self.intencion.marca_preferida:
+            vehiculo_desc = f" de {self.intencion.marca_preferida}"
+            if self.intencion.modelo_especifico:
+                vehiculo_desc += f" {self.intencion.modelo_especifico}"
+        tipo_veh = self.intencion.tipo_vehiculo or "vehículo"
+
         objetivo = (
             f"Simular una conversación de {scenario_type} automotriz "
-            f"con un cliente {tipo_cliente} interesado en uso {uso}"
+            f"con un cliente {tipo_cliente} interesado en un {tipo_veh} "
+            f"{condicion}{vehiculo_desc} para uso {uso}"
         )
 
         # Build roles based on client profile
@@ -283,23 +348,54 @@ class SeedAutomotriz(BaseSeedExtraction):
         canal = self.contexto_conversacion.canal or "presencial"
 
         roles = ["customer", "sales_advisor"]
+
+        # Rich customer description
+        customer_parts = [f"Cliente {tipo_cliente}"]
+        customer_parts.append(f"experiencia: {nivel}")
+        customer_parts.append(f"urgencia: {urgencia}")
+        if self.cliente_perfil.rango_edad:
+            customer_parts.append(f"edad: {self.cliente_perfil.rango_edad}")
+        if self.cliente_perfil.estado_emocional:
+            customer_parts.append(f"estado emocional: {self.cliente_perfil.estado_emocional}")
+        if self.cliente_perfil.forma_pago_preferida:
+            customer_parts.append(f"pago: {self.cliente_perfil.forma_pago_preferida}")
+
+        # Rich advisor description
+        advisor_parts = ["Asesor de ventas certificado con acceso al inventario"]
+        if self.reglas_negocio.garantia_info:
+            advisor_parts.append(f"Garantía: {self.reglas_negocio.garantia_info}")
+        if self.reglas_negocio.politica_descuento:
+            advisor_parts.append(f"Descuentos: {self.reglas_negocio.politica_descuento}")
+
         descripcion_roles: dict[str, str] = {
-            "customer": (
-                f"Cliente {tipo_cliente}, experiencia: {nivel}, "
-                f"urgencia: {urgencia}"
-            ),
-            "sales_advisor": "Asesor de ventas certificado con acceso al inventario",
+            "customer": ", ".join(customer_parts),
+            "sales_advisor": ". ".join(advisor_parts),
         }
 
-        # Build flow steps
-        flujo: list[str] = ["Saludo", "Detección de necesidad"]
+        # Build flow steps based on scenario complexity
+        complejidad = self.escenario.complejidad or "medio"
+        flujo: list[str] = ["Saludo y bienvenida", "Detección de necesidades"]
+
+        if self.cliente_perfil.tiene_vehiculo_actual or self.cliente_perfil.interes_trade_in:
+            flujo.append("Evaluación de vehículo actual / trade-in")
+
+        flujo.append("Presentación de opciones")
+
+        if self.escenario.incluir_comparacion_competencia:
+            flujo.append("Comparación con competencia")
+
         if self.escenario.incluir_objeciones:
             flujo.append("Manejo de objeciones")
+
         if self.escenario.incluir_negociacion:
-            flujo.append("Negociación")
-        if self.escenario.incluir_comparacion_competencia:
-            flujo.append("Comparación")
-        flujo.extend(["Presentación/Cotización", "Cierre/Siguiente paso"])
+            flujo.append("Negociación de precio y condiciones")
+
+        flujo.append("Cotización formal")
+
+        if self.reglas_negocio.condiciones_financiamiento:
+            flujo.append("Opciones de financiamiento")
+
+        flujo.append("Cierre y siguiente paso")
 
         # Build constraints
         restricciones: list[str] = list(self.reglas_negocio.restricciones or [])
@@ -308,26 +404,57 @@ class SeedAutomotriz(BaseSeedExtraction):
         if not self.escenario.incluir_comparacion_competencia:
             restricciones.append("No comparar con la competencia")
 
-        # Build context
+        # Build rich context
         contexto_parts: list[str] = [f"Canal: {canal}"]
         if self.intencion.tipo_vehiculo:
             contexto_parts.append(f"Tipo de vehículo: {self.intencion.tipo_vehiculo}")
+        if self.intencion.condicion:
+            contexto_parts.append(f"Condición: {self.intencion.condicion}")
         if self.intencion.marca_preferida:
             contexto_parts.append(f"Marca: {self.intencion.marca_preferida}")
         if self.intencion.modelo_especifico:
             contexto_parts.append(f"Modelo: {self.intencion.modelo_especifico}")
+        if self.intencion.anio_rango:
+            contexto_parts.append(f"Año: {self.intencion.anio_rango}")
+        if self.intencion.numero_pasajeros:
+            contexto_parts.append(f"Pasajeros: {self.intencion.numero_pasajeros}")
         if self.cliente_perfil.presupuesto_rango:
             contexto_parts.append(f"Presupuesto: {self.cliente_perfil.presupuesto_rango}")
+        if self.cliente_perfil.vehiculo_actual_descripcion:
+            contexto_parts.append(f"Vehículo actual: {self.cliente_perfil.vehiculo_actual_descripcion}")
         if self.reglas_negocio.inventario_disponible_contexto:
             contexto_parts.append(f"Inventario: {self.reglas_negocio.inventario_disponible_contexto}")
+        if self.reglas_negocio.condiciones_financiamiento:
+            contexto_parts.append(f"Financiamiento: {self.reglas_negocio.condiciones_financiamiento}")
+        if self.contexto_conversacion.region_geografica:
+            contexto_parts.append(f"Región: {self.contexto_conversacion.region_geografica}")
+        if self.intencion.caracteristicas_importantes:
+            contexto_parts.append(f"Prioridades: {', '.join(self.intencion.caracteristicas_importantes)}")
+        if self.contexto_conversacion.objeciones_conocidas:
+            contexto_parts.append(f"Objeciones previstas: {', '.join(self.contexto_conversacion.objeciones_conocidas)}")
+
+        # Build tools list based on scenario
+        herramientas: list[str] = ["consultar_inventario", "generar_cotizacion"]
+        if self.reglas_negocio.condiciones_financiamiento:
+            herramientas.append("calcular_financiamiento")
+        if self.cliente_perfil.interes_trade_in:
+            herramientas.append("evaluar_trade_in")
+        if self.escenario.incluir_comparacion_competencia:
+            herramientas.append("comparar_modelos")
 
         # Map tone
         tono = self.escenario.tono_esperado or "profesional"
 
         # Build tags
-        etiquetas = ["ai-extracted", "automotive"]
-        if self.escenario.complejidad:
-            etiquetas.append(f"complexity:{self.escenario.complejidad}")
+        etiquetas = ["ai-extracted", "automotive", f"scenario:{scenario_type}"]
+        if complejidad:
+            etiquetas.append(f"complexity:{complejidad}")
+        if condicion != "nuevo":
+            etiquetas.append(f"condition:{condicion}")
+
+        # Adjust turn count based on complexity
+        turnos_map = {"simple": (3, 6), "medio": (5, 10), "complejo": (8, 15)}
+        turnos_min, turnos_max = turnos_map.get(complejidad, (5, 10))
 
         return {
             "version": "1.0",
@@ -339,22 +466,25 @@ class SeedAutomotriz(BaseSeedExtraction):
             "objetivo": objetivo,
             "tono": tono,
             "pasos_turnos": {
-                "turnos_min": 4,
-                "turnos_max": 10,
+                "turnos_min": turnos_min,
+                "turnos_max": turnos_max,
                 "flujo_esperado": flujo,
             },
             "parametros_factuales": {
                 "contexto": ". ".join(contexto_parts),
                 "restricciones": restricciones,
-                "herramientas": [],
+                "herramientas": herramientas,
                 "metadata": {
                     "extracted_by": "ai-interview",
                     "scenario_type": scenario_type,
-                    "complexity": self.escenario.complejidad or "medio",
+                    "complexity": complejidad,
                     "client_type": tipo_cliente,
                     "experience_level": nivel,
                     "urgency": urgencia,
                     "channel": canal,
+                    "vehicle_condition": condicion,
+                    "vehicle_type": self.intencion.tipo_vehiculo,
+                    "payment_method": self.cliente_perfil.forma_pago_preferida,
                 },
             },
             "privacidad": {

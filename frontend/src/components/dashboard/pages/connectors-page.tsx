@@ -477,7 +477,7 @@ function ImportTab() {
                               {ds.tags.length > 0 && (
                                 <div className="flex flex-wrap gap-1">
                                   {ds.tags.slice(0, 3).map(tag => (
-                                    <Badge key={tag} variant="outline" className="text-[10px]">
+                                    <Badge key={tag} variant="outline" className="text-xs">
                                       {tag}
                                     </Badge>
                                   ))}
@@ -528,7 +528,7 @@ function ImportTab() {
                   <p className="truncate text-sm font-medium">{selectedDataset.id}</p>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>{formatNumber(selectedDataset.downloads)} downloads</span>
-                    {selectedDataset.gated && <Badge variant="outline" className="text-[10px]">Gated</Badge>}
+                    {selectedDataset.gated && <Badge variant="outline" className="text-xs">Gated</Badge>}
                   </div>
                 </div>
                 <Button size="sm" variant="ghost" onClick={handleReset}>

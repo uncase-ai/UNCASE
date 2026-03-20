@@ -419,7 +419,7 @@ function ToolAutocompleteDropdown({
       className="fixed z-50 max-h-48 w-64 overflow-y-auto rounded-md border bg-popover p-1 shadow-md"
       style={{ top: position.top, left: position.left }}
     >
-      <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground">Insert tool call</div>
+      <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Insert tool call</div>
       {filtered.map((tool, i) => (
         <button
           key={tool}
@@ -487,22 +487,22 @@ function ConversationCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
             {tools.slice(0, 2).map(t => (
-              <Badge key={t} variant="secondary" className="text-[10px] font-medium">
+              <Badge key={t} variant="secondary" className="text-xs font-medium">
                 TC {t}
               </Badge>
             ))}
             {tools.length > 2 && (
-              <Badge variant="secondary" className="text-[10px]">
+              <Badge variant="secondary" className="text-xs">
                 +{tools.length - 2}
               </Badge>
             )}
-            <StatusBadge variant={status === 'valid' ? 'success' : 'warning'} dot={false} className="text-[10px]">
+            <StatusBadge variant={status === 'valid' ? 'success' : 'warning'} dot={false} className="text-xs">
               {status === 'valid' ? 'OK' : 'Invalid'}
             </StatusBadge>
           </div>
           <p className="mt-1.5 line-clamp-2 text-sm leading-snug">{preview}</p>
           <div className="mt-1.5 flex items-center gap-2">
-            <span className="text-[11px] text-muted-foreground">{conv.turnos.length} msgs</span>
+            <span className="text-xs text-muted-foreground">{conv.turnos.length} msgs</span>
             {(conv.rating ?? 0) > 0 && (
               <div className="flex items-center gap-0.5">
                 {Array.from({ length: conv.rating ?? 0 }).map((_, i) => (
@@ -701,8 +701,8 @@ function MessageBubble({
       {/* Role label */}
       <div className="mb-2 flex items-center gap-2">
         <Icon className={cn('size-3.5', style.iconClass)} />
-        <span className={cn('text-[11px] font-bold uppercase tracking-wide', style.labelClass)}>{style.label}</span>
-        <span className="font-mono text-[10px] text-muted-foreground">#{item.turn.turno}</span>
+        <span className={cn('text-xs font-bold uppercase tracking-wide', style.labelClass)}>{style.label}</span>
+        <span className="font-mono text-xs text-muted-foreground">#{item.turn.turno}</span>
       </div>
 
       {/* Content — click to edit */}
@@ -722,8 +722,8 @@ function MessageBubble({
             autoFocus
           />
           {availableTools.length > 0 && !showToolMenu && (
-            <p className="text-[10px] text-muted-foreground">
-              Type <kbd className="rounded border bg-muted px-1 py-0.5 font-mono text-[9px]">&lt;</kbd> to insert a
+            <p className="text-xs text-muted-foreground">
+              Type <kbd className="rounded border bg-muted px-1 py-0.5 font-mono text-xs">&lt;</kbd> to insert a
               tool call
             </p>
           )}
@@ -772,7 +772,7 @@ function MessageBubble({
           {item.turn.herramientas_usadas.length > 0 && !item.turn.tool_calls?.length && (
             <div className="mt-2 flex flex-wrap gap-1">
               {item.turn.herramientas_usadas.map(h => (
-                <Badge key={h} variant="outline" className="text-[10px]">
+                <Badge key={h} variant="outline" className="text-xs">
                   <Wrench className="mr-0.5 size-2.5" />
                   {h}
                 </Badge>
@@ -818,11 +818,11 @@ function InlineToolCallBlock({ content }: { content: string }) {
     <div className="rounded-md border border-amber-200 bg-amber-50/60 p-2 dark:border-amber-800/50 dark:bg-amber-950/30">
       <div className="mb-1 flex items-center gap-1.5">
         <Wrench className="size-3 text-amber-600 dark:text-amber-400" />
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+        <span className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
           Tool Call
         </span>
       </div>
-      <pre className="whitespace-pre-wrap break-all text-[11px] leading-relaxed text-amber-900 dark:text-amber-200">{content}</pre>
+      <pre className="whitespace-pre-wrap break-all text-xs leading-relaxed text-amber-900 dark:text-amber-200">{content}</pre>
     </div>
   )
 }
@@ -850,11 +850,11 @@ function ToolCallBlock({
         )}
         <Wrench className="size-3 text-amber-600 dark:text-amber-400" />
         <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">{toolName}</span>
-        <span className="font-mono text-[10px] text-muted-foreground">({toolCallId.slice(0, 8)})</span>
+        <span className="font-mono text-xs text-muted-foreground">({toolCallId.slice(0, 8)})</span>
       </button>
       {expanded && (
         <div className="border-t border-amber-200/60 px-3 py-2 dark:border-amber-800/40">
-          <pre className="whitespace-pre-wrap break-all text-[11px] leading-relaxed text-amber-900 dark:text-amber-200">
+          <pre className="whitespace-pre-wrap break-all text-xs leading-relaxed text-amber-900 dark:text-amber-200">
             {JSON.stringify(args, null, 2)}
           </pre>
         </div>
@@ -888,16 +888,16 @@ function ToolResultBlock({
         )}
         <Code2 className="size-3 text-teal-600 dark:text-teal-400" />
         <span className="text-xs font-semibold text-teal-700 dark:text-teal-300">{toolName}</span>
-        <StatusBadge variant={status === 'success' ? 'success' : 'error'} className="text-[10px]">
+        <StatusBadge variant={status === 'success' ? 'success' : 'error'} className="text-xs">
           {status}
         </StatusBadge>
         {durationMs !== undefined && (
-          <span className="font-mono text-[10px] text-muted-foreground">{durationMs}ms</span>
+          <span className="font-mono text-xs text-muted-foreground">{durationMs}ms</span>
         )}
       </button>
       {expanded && (
         <div className="border-t border-teal-200/60 px-3 py-2 dark:border-teal-800/40">
-          <pre className="whitespace-pre-wrap break-all text-[11px] leading-relaxed text-teal-900 dark:text-teal-200">
+          <pre className="whitespace-pre-wrap break-all text-xs leading-relaxed text-teal-900 dark:text-teal-200">
             {typeof result === 'string' ? result : JSON.stringify(result, null, 2)}
           </pre>
         </div>
@@ -954,7 +954,7 @@ function ReviewPanel({
                 if (e.key === 'Enter') addTag()
               }}
               placeholder="+ tag"
-              className="h-6 w-20 border-dashed px-2 text-[11px]"
+              className="h-6 w-20 border-dashed px-2 text-xs"
             />
             {newTag && (
               <Button size="sm" variant="ghost" className="h-6 px-1" onClick={addTag}>
@@ -1026,7 +1026,7 @@ function OnboardingDialog() {
               <p className="text-sm font-medium">Click to edit</p>
               <p className="text-xs text-muted-foreground">
                 Click any message to edit its content inline. Press{' '}
-                <kbd className="rounded border bg-muted px-1 font-mono text-[10px]">Esc</kbd> to cancel.
+                <kbd className="rounded border bg-muted px-1 font-mono text-xs">Esc</kbd> to cancel.
               </p>
             </div>
           </div>
@@ -1039,7 +1039,7 @@ function OnboardingDialog() {
               <p className="text-sm font-medium">Insert tool calls</p>
               <p className="text-xs text-muted-foreground">
                 While editing, type{' '}
-                <kbd className="rounded border bg-muted px-1 font-mono text-[10px]">&lt;</kbd> to open the tool picker
+                <kbd className="rounded border bg-muted px-1 font-mono text-xs">&lt;</kbd> to open the tool picker
                 and insert a tool call block.
               </p>
             </div>
@@ -1176,7 +1176,7 @@ function DetailPanel({
 
         {/* Row 2: Stats + compatible formats + actions */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span className="flex items-center gap-0.5">
               <User className="size-3" /> {userCount}
             </span>
@@ -1203,7 +1203,7 @@ function DetailPanel({
                   <Badge
                     key={fmt.template}
                     variant="outline"
-                    className="h-5 gap-0.5 border-emerald-300 bg-emerald-50/50 px-1.5 text-[10px] text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
+                    className="h-5 gap-0.5 border-emerald-300 bg-emerald-50/50 px-1.5 text-xs text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
                     title={fmt.models.join(', ')}
                   >
                     {fmt.label}
@@ -1253,7 +1253,7 @@ function DetailPanel({
           <span className="text-xs text-destructive/80">
             Marked as invalid — excluded from exports and evaluations.
           </span>
-          <Button variant="outline" size="sm" className="ml-auto h-6 text-[10px]" onClick={handleToggleStatus}>
+          <Button variant="outline" size="sm" className="ml-auto h-6 text-xs" onClick={handleToggleStatus}>
             Restore
           </Button>
         </div>
@@ -1294,7 +1294,7 @@ function DetailPanel({
                   <Rating value={displayConv.rating} size={14} readOnly variant="yellow" />
                 ) : null}
                 {(displayConv.tags?.length ?? 0) > 0 && (
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     {displayConv.tags!.length} tag{displayConv.tags!.length > 1 ? 's' : ''}
                   </span>
                 )}
@@ -1757,14 +1757,14 @@ export function ConversationsPage() {
               </Select>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-muted-foreground">{filtered.length} results</span>
+              <span className="text-xs text-muted-foreground">{filtered.length} results</span>
               <div className="flex items-center gap-1">
                 {selectMode ? (
                   <>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 text-[10px]"
+                      className="h-6 text-xs"
                       onClick={checkedIds.size === paged.length ? deselectAll : selectAllOnPage}
                     >
                       {checkedIds.size === paged.length ? 'Deselect All' : 'Select All'}
@@ -1773,7 +1773,7 @@ export function ConversationsPage() {
                       <Button
                         variant="destructive"
                         size="sm"
-                        className="h-6 gap-1 text-[10px]"
+                        className="h-6 gap-1 text-xs"
                         onClick={() => setShowBulkDelete(true)}
                       >
                         <Trash2 className="size-3" />
@@ -1783,7 +1783,7 @@ export function ConversationsPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 text-[10px]"
+                      className="h-6 text-xs"
                       onClick={() => {
                         setSelectMode(false)
                         setCheckedIds(new Set())
@@ -1793,7 +1793,7 @@ export function ConversationsPage() {
                     </Button>
                   </>
                 ) : (
-                  <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => setSelectMode(true)}>
+                  <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setSelectMode(true)}>
                     Select
                   </Button>
                 )}

@@ -42,7 +42,7 @@ function CategorySection({ name, fields }: { name: string; fields: Record<string
       >
         {expanded ? <ChevronDown className="size-3 text-muted-foreground" /> : <ChevronRight className="size-3 text-muted-foreground" />}
         <span className="flex-1 text-xs font-semibold capitalize">{name.replace(/_/g, ' ')}</span>
-        <span className="text-[10px] text-muted-foreground">{filled}/{total}</span>
+        <span className="text-xs text-muted-foreground">{filled}/{total}</span>
       </button>
       {expanded && (
         <div className="space-y-1 px-3 pb-2">
@@ -93,7 +93,7 @@ export function ExtractionProgressPanel({ progress }: ExtractionProgressPanelPro
           </div>
           <Progress value={requiredPercent} className="h-1.5" />
         </div>
-        <div className="flex items-center justify-between text-[11px]">
+        <div className="flex items-center justify-between text-xs">
           <span className="text-muted-foreground">Turno {progress.turn}/{progress.max_turns}</span>
           <span className={cn(
             'font-medium',

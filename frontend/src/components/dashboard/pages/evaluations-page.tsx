@@ -499,7 +499,7 @@ export function EvaluationsPage() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-            <div className="mt-2 flex items-center justify-center gap-4 text-[10px] text-muted-foreground">
+            <div className="mt-2 flex items-center justify-center gap-4 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
                 <span className="inline-block size-2.5 rounded-sm bg-primary" />
                 Passing (bucket &ge; 0.2)
@@ -543,7 +543,7 @@ export function EvaluationsPage() {
                 />
               </RadarChart>
             </ResponsiveContainer>
-            <div className="mt-2 flex items-center justify-center gap-4 text-[10px] text-muted-foreground">
+            <div className="mt-2 flex items-center justify-center gap-4 text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5">
                 <span className="inline-block h-px w-4 border-t-2 border-dashed border-muted-foreground" />
                 Threshold
@@ -579,7 +579,7 @@ export function EvaluationsPage() {
                     <div className="flex items-center justify-between">
                       <span className="text-xs">{reason}</span>
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-[10px]">
+                        <Badge variant="outline" className="text-xs">
                           {count} ({percentage}%)
                         </Badge>
                       </div>

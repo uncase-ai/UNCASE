@@ -85,7 +85,7 @@ function SetupStep({
           done ? 'bg-foreground text-background' : 'border-2 border-foreground/20 text-muted-foreground'
         )}
       >
-        {done ? <span className="text-[10px]">&#10003;</span> : step}
+        {done ? <span className="text-xs">&#10003;</span> : step}
       </div>
       <div className="flex-1 space-y-0.5">
         <div className={cn('text-sm font-medium', done && 'text-muted-foreground line-through')}>{title}</div>
@@ -279,7 +279,7 @@ export function OverviewPage() {
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-medium">Pipeline</CardTitle>
-            <span className="text-[11px] text-muted-foreground">7 stages</span>
+            <span className="text-xs text-muted-foreground">7 stages</span>
           </div>
         </CardHeader>
         <CardContent className="pt-0">
@@ -299,7 +299,7 @@ export function OverviewPage() {
                 </div>
                 <div className="text-center">
                   <div className="text-xs font-medium">{step.label}</div>
-                  <div className="hidden text-[10px] text-muted-foreground lg:block">{step.description}</div>
+                  <div className="hidden text-xs text-muted-foreground lg:block">{step.description}</div>
                 </div>
                 {i < PIPELINE_STEPS.length - 1 && (
                   <ChevronRight className="absolute right-0 top-1/2 size-3.5 -translate-y-1/2 translate-x-1/2 text-muted-foreground/40" />

@@ -58,11 +58,11 @@ function ToolCallCard({ toolName, args }: { toolName: string; args: Record<strin
       <button onClick={() => setExpanded(!expanded)} className="flex w-full items-center gap-1.5 px-2.5 py-1.5 text-left">
         {expanded ? <ChevronDown className="size-3 opacity-60" /> : <ChevronRight className="size-3 opacity-60" />}
         <Wrench className="size-3 opacity-60" />
-        <span className="text-[11px] font-medium opacity-80">{toolName}</span>
+        <span className="text-xs font-medium opacity-80">{toolName}</span>
       </button>
       {expanded && (
         <div className="border-t border-white/10 px-2.5 py-1.5 dark:border-zinc-600/20">
-          <pre className="overflow-x-auto text-[10px] leading-relaxed opacity-70">
+          <pre className="overflow-x-auto text-xs leading-relaxed opacity-70">
             {JSON.stringify(args, null, 2)}
           </pre>
         </div>
@@ -148,7 +148,7 @@ function WhatsAppBubble({
           {/* Role label */}
           {showAvatar && (
             <p className={cn(
-              'mb-0.5 text-[11px] font-semibold',
+              'mb-0.5 text-xs font-semibold',
               isUser ? 'text-emerald-700 dark:text-emerald-300' : 'text-blue-600 dark:text-blue-400'
             )}>
               {turn.rol}
@@ -165,8 +165,8 @@ function WhatsAppBubble({
                 autoFocus
               />
               <div className="flex justify-end gap-1">
-                <button onClick={onEditCancel} className="rounded px-2 py-0.5 text-[10px] hover:bg-black/5">Cancel</button>
-                <button onClick={onEditSave} className="rounded bg-emerald-600 px-2 py-0.5 text-[10px] text-white hover:bg-emerald-700">Apply</button>
+                <button onClick={onEditCancel} className="rounded px-2 py-0.5 text-xs hover:bg-black/5">Cancel</button>
+                <button onClick={onEditSave} className="rounded bg-emerald-600 px-2 py-0.5 text-xs text-white hover:bg-emerald-700">Apply</button>
               </div>
             </div>
           ) : (
@@ -182,10 +182,10 @@ function WhatsAppBubble({
 
           {/* Timestamp + checkmarks */}
           <div className={cn('mt-1 flex items-center gap-1', isUser ? 'justify-end' : 'justify-start')}>
-            <span className="text-[10px] opacity-50">
+            <span className="text-xs opacity-50">
               {timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
-            {isUser && <span className="text-[10px] text-blue-500">✓✓</span>}
+            {isUser && <span className="text-xs text-blue-500">✓✓</span>}
           </div>
         </div>
       </div>
@@ -220,7 +220,7 @@ export function WhatsAppChatViewer({
     <div className="whatsapp-bg-pattern flex flex-col gap-1 rounded-lg py-4">
       {/* Date header */}
       <div className="flex justify-center py-2">
-        <span className="rounded-lg bg-white/80 px-3 py-1 text-[11px] font-medium text-gray-600 shadow-sm dark:bg-zinc-700/80 dark:text-zinc-300">
+        <span className="rounded-lg bg-white/80 px-3 py-1 text-xs font-medium text-gray-600 shadow-sm dark:bg-zinc-700/80 dark:text-zinc-300">
           Hoy
         </span>
       </div>

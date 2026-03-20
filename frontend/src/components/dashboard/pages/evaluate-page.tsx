@@ -549,7 +549,7 @@ export function EvaluatePage() {
             {row.composite_score.toFixed(3)}
           </span>
           {row.weighted_mean != null && (
-            <span className="ml-1.5 font-mono text-[10px] text-muted-foreground" title="Weighted mean">
+            <span className="ml-1.5 font-mono text-xs text-muted-foreground" title="Weighted mean">
               (w̄ {row.weighted_mean.toFixed(3)})
             </span>
           )}
@@ -681,7 +681,7 @@ export function EvaluatePage() {
           <CardContent className="flex items-start gap-3 p-4">
             <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
             <div className="space-y-1 text-xs text-muted-foreground">
-              <p className="text-[15px] font-semibold text-foreground">How Quality Evaluation Works</p>
+              <p className="text-base font-semibold text-foreground">How Quality Evaluation Works</p>
               <p>
                 Each conversation is evaluated against its origin seed using up to 9 quality metrics.
                 Five core metrics (ROUGE-L &ge; 0.20, Fidelity &ge; 0.80, TTR &ge; 0.55, Coherence &ge; 0.65,
@@ -698,7 +698,7 @@ export function EvaluatePage() {
 
         {/* API status and demo mode toggle */}
         <div className="flex items-center gap-4">
-          <Badge variant="outline" className="gap-1 text-[10px]">
+          <Badge variant="outline" className="gap-1 text-xs">
             {apiAvailable ? (
               <>
                 <Cloud className="size-3" /> API Connected
@@ -710,7 +710,7 @@ export function EvaluatePage() {
             )}
           </Badge>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-muted-foreground">Demo Mode</span>
+            <span className="text-xs text-muted-foreground">Demo Mode</span>
             <Switch checked={demoMode} onCheckedChange={setDemoMode} />
           </div>
         </div>
@@ -753,10 +753,10 @@ export function EvaluatePage() {
               </div>
               {Object.keys(batchSummary.failure_summary).length > 0 && (
                 <div className="mt-3 rounded-md bg-muted/50 p-2">
-                  <p className="mb-1 text-[10px] font-medium text-muted-foreground">Failure Breakdown</p>
+                  <p className="mb-1 text-xs font-medium text-muted-foreground">Failure Breakdown</p>
                   <div className="flex flex-wrap gap-2">
                     {Object.entries(batchSummary.failure_summary).map(([metric, count]) => (
-                      <Badge key={metric} variant="outline" className="text-[10px]">
+                      <Badge key={metric} variant="outline" className="text-xs">
                         {metric}: {count}
                       </Badge>
                     ))}
@@ -793,11 +793,11 @@ export function EvaluatePage() {
               <div className="flex items-center gap-3 text-sm">
                 <div className="text-center">
                   <p className="text-lg font-bold">{passCount}</p>
-                  <p className="text-[10px] text-muted-foreground">Passed</p>
+                  <p className="text-xs text-muted-foreground">Passed</p>
                 </div>
                 <div className="text-center">
                   <p className="text-lg font-bold">{failCount}</p>
-                  <p className="text-[10px] text-muted-foreground">Failed</p>
+                  <p className="text-xs text-muted-foreground">Failed</p>
                 </div>
               </div>
             </CardContent>
@@ -870,7 +870,7 @@ export function EvaluatePage() {
                       <span className="block truncate font-mono text-xs">
                         {conv.conversation_id}
                       </span>
-                      <span className="text-[10px] text-muted-foreground">
+                      <span className="text-xs text-muted-foreground">
                         {conv.dominio} | {conv.turnos.length} turns
                       </span>
                     </div>
@@ -883,7 +883,7 @@ export function EvaluatePage() {
                       </Tooltip>
                     )}
                     {evaluations.find(e => e.conversation_id === conv.conversation_id) && (
-                      <Badge variant="outline" className="text-[9px]">evaluated</Badge>
+                      <Badge variant="outline" className="text-xs">evaluated</Badge>
                     )}
                   </label>
                 ))}
@@ -974,7 +974,7 @@ export function EvaluatePage() {
                         </span>
                       </div>
                       <Progress value={percentage} className={cn('h-2', !passed && '[&>div]:bg-destructive')} />
-                      <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
+                      <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                         <span>{m.description}</span>
                         <span>Threshold: {m.threshold}</span>
                       </div>
@@ -1009,7 +1009,7 @@ export function EvaluatePage() {
                   value={selectedReport.metrics.privacy_score === 0.0 ? 100 : 0}
                   className={cn('h-2', selectedReport.metrics.privacy_score !== 0.0 && '[&>div]:bg-destructive')}
                 />
-                <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
+                <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                   <span>Zero PII residual required</span>
                   <span>Must be 0.0</span>
                 </div>
@@ -1042,7 +1042,7 @@ export function EvaluatePage() {
                   value={Math.min(Math.round((1 - selectedReport.metrics.memorizacion / 0.05) * 100), 100)}
                   className={cn('h-2', selectedReport.metrics.memorizacion >= QUALITY_THRESHOLDS.memorizacion && '[&>div]:bg-destructive')}
                 />
-                <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
+                <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                   <span>Extraction attack success rate</span>
                   <span>Must be {'<'} {QUALITY_THRESHOLDS.memorizacion}</span>
                 </div>

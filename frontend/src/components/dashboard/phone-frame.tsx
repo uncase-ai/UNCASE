@@ -18,7 +18,7 @@ export function PhoneFrame({ children, title = 'UNCASE' }: PhoneFrameProps) {
         </div>
 
         {/* Status bar */}
-        <div className="flex items-center justify-between bg-emerald-700 px-4 py-1 text-[10px] text-white">
+        <div className="flex items-center justify-between bg-emerald-700 px-4 py-1 text-xs text-white">
           <span>9:41</span>
           <span className="font-medium">{title}</span>
           <div className="flex items-center gap-1">
@@ -31,7 +31,7 @@ export function PhoneFrame({ children, title = 'UNCASE' }: PhoneFrameProps) {
           <div className="size-8 rounded-full bg-white/20" />
           <div>
             <p className="text-sm font-semibold text-white">{title}</p>
-            <p className="text-[10px] text-white/70">en línea</p>
+            <p className="text-xs text-white/70">en línea</p>
           </div>
         </div>
 

@@ -39,6 +39,7 @@ const t = {
     industryLabel: 'Industry',
     automotive: 'Automotive',
     medical: 'Medical',
+    finance: 'Finance',
     languageLabel: 'Language',
     english: 'English',
     spanish: 'Spanish',
@@ -68,6 +69,7 @@ const t = {
     industryLabel: 'Industria',
     automotive: 'Automotriz',
     medical: 'Médica',
+    finance: 'Finanzas',
     languageLabel: 'Idioma',
     english: 'Inglés',
     spanish: 'Español',
@@ -214,167 +216,321 @@ const DEMO_SCRIPTS: Record<string, Record<string, DemoStep[]>> = {
   medical: {
     en: [
       {
-        question: "Hello! I'll help you design a synthetic consultation scenario for medical training. We'll define all the parameters to generate realistic patient-provider conversations. What type of medical consultation do you want to simulate? (e.g., cardiology evaluation, pediatric visit, mental health intake, follow-up)",
+        question: "Hello! I'll help you design a synthetic medical consultation scenario. We'll define all the parameters to generate realistic patient-provider conversations for AI training. What type of consultation do you want to simulate? (e.g., first visit, follow-up, second opinion, emergency, test results review)",
         fields: {},
       },
       {
-        question: "What patient profile should we simulate? Describe their condition, experience level with the healthcare system, and urgency (routine, moderately urgent, emergency).",
-        fields: { 'escenario.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true } },
-      },
-      {
-        question: "What's the communication channel — in-person, telemedicine, phone? And what's the primary clinical objective of this consultation?",
+        question: "What patient profile should we simulate? Describe the patient type (adult, pediatric, geriatric), their condition severity, and emotional state (calm, anxious, scared, frustrated).",
         fields: {
-          'escenario.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'cliente_perfil.tipo_cliente': { status: 'extracted', confidence: 0.90, is_required: true },
-          'cliente_perfil.nivel_experiencia_compra': { status: 'extracted', confidence: 0.90, is_required: true },
-          'cliente_perfil.urgencia': { status: 'extracted', confidence: 0.88, is_required: true },
+          'escenario_medico.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'motivo_consulta.especialidad': { status: 'extracted', confidence: 0.88, is_required: true },
         },
       },
       {
-        question: "What tone should the consultation have — formal-clinical, empathetic-supportive, or educational? How complex should the case be?",
+        question: "What's the chief complaint and the medical specialty? What's the symptom duration — acute, subacute, or chronic? Any previous treatments?",
         fields: {
-          'escenario.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'cliente_perfil.tipo_cliente': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'cliente_perfil.nivel_experiencia_compra': { status: 'confirmed', confidence: 0.92, is_required: true },
-          'cliente_perfil.urgencia': { status: 'confirmed', confidence: 0.92, is_required: true },
-          'contexto_conversacion.canal': { status: 'extracted', confidence: 0.90, is_required: true },
-          'intencion.uso_principal': { status: 'extracted', confidence: 0.88, is_required: true },
+          'escenario_medico.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'motivo_consulta.especialidad': { status: 'confirmed', confidence: 0.92, is_required: true },
+          'paciente_perfil.tipo_paciente': { status: 'extracted', confidence: 0.90, is_required: true },
+          'paciente_perfil.severidad_condicion': { status: 'extracted', confidence: 0.88, is_required: true },
         },
       },
       {
-        question: "What clinical constraints must be followed? (e.g., \"review allergies before prescribing\", \"emergency escalation protocol\", \"informed consent required\")",
+        question: "What's the setting — office visit, hospital, clinic, home visit, or ER? And the channel — in-person, telemedicine, phone, or medical chat?",
         fields: {
-          'escenario.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'cliente_perfil.tipo_cliente': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'cliente_perfil.nivel_experiencia_compra': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'cliente_perfil.urgencia': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'contexto_conversacion.canal': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'intencion.uso_principal': { status: 'confirmed', confidence: 0.92, is_required: true },
-          'escenario.tono_esperado': { status: 'extracted', confidence: 0.90, is_required: true },
-          'escenario.complejidad': { status: 'extracted', confidence: 0.88, is_required: true },
+          'escenario_medico.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'motivo_consulta.especialidad': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'paciente_perfil.tipo_paciente': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'paciente_perfil.severidad_condicion': { status: 'confirmed', confidence: 0.92, is_required: true },
+          'motivo_consulta.motivo_principal': { status: 'extracted', confidence: 0.90, is_required: true },
+          'motivo_consulta.duracion_sintomas': { status: 'extracted', confidence: 0.88, is_required: true },
         },
       },
       {
-        question: "Describe the expected consultation flow — what steps should the conversation follow? (e.g., chief complaint → history → examination → diagnosis → treatment plan → follow-up)",
+        question: "What tone should the consultation have — professional, empathetic, direct, or educational? How complex should the case be? Should it include physical examination, diagnostic reasoning, or patient education?",
         fields: {
-          'escenario.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'cliente_perfil.tipo_cliente': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'cliente_perfil.nivel_experiencia_compra': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'cliente_perfil.urgencia': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'contexto_conversacion.canal': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'intencion.uso_principal': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'escenario.tono_esperado': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'escenario.complejidad': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'escenario_medico.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'motivo_consulta.especialidad': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'paciente_perfil.tipo_paciente': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'paciente_perfil.severidad_condicion': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'motivo_consulta.motivo_principal': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'motivo_consulta.duracion_sintomas': { status: 'confirmed', confidence: 0.92, is_required: true },
+          'contexto_clinico.canal': { status: 'extracted', confidence: 0.90, is_required: true },
+          'contexto_clinico.entorno': { status: 'extracted', confidence: 0.88, is_required: true },
+        },
+      },
+      {
+        question: "Last question — any specific clinical rules or regulatory constraints? (e.g., \"review allergies before prescribing\", \"informed consent required\", \"HIPAA compliance\", \"emergency escalation protocol\")",
+        fields: {
+          'escenario_medico.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'motivo_consulta.especialidad': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'paciente_perfil.tipo_paciente': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'paciente_perfil.severidad_condicion': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'motivo_consulta.motivo_principal': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'motivo_consulta.duracion_sintomas': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'contexto_clinico.canal': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'contexto_clinico.entorno': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'escenario_medico.complejidad': { status: 'extracted', confidence: 0.90, is_required: true },
+          'escenario_medico.tono': { status: 'extracted', confidence: 0.88, is_required: true },
         },
       },
     ],
     es: [
       {
-        question: "Hola! Te ayudaré a diseñar un escenario de consulta médica sintética para entrenamiento de IA. ¿Qué tipo de consulta deseas simular? (ej: evaluación cardiológica, consulta pediátrica, evaluación de salud mental, seguimiento)",
+        question: "¡Hola! Te ayudaré a diseñar un escenario de consulta médica sintética para entrenamiento de IA. ¿Qué tipo de consulta deseas simular? (ej: primera consulta, seguimiento, segunda opinión, urgencia, revisión de resultados)",
         fields: {},
       },
       {
-        question: "¿Qué perfil de paciente debemos simular? Describe su condición, experiencia con el sistema de salud, y nivel de urgencia (rutina, moderadamente urgente, emergencia).",
-        fields: { 'escenario.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true } },
-      },
-      {
-        question: "¿Cuál es el canal — presencial, telemedicina, teléfono? ¿Y cuál es el objetivo clínico principal de esta consulta?",
+        question: "¿Qué perfil de paciente debemos simular? Describe el tipo (adulto, pediátrico, geriátrico), la severidad de su condición, y su estado emocional (tranquilo, ansioso, asustado, frustrado).",
         fields: {
-          'escenario.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'cliente_perfil.tipo_cliente': { status: 'extracted', confidence: 0.90, is_required: true },
-          'cliente_perfil.nivel_experiencia_compra': { status: 'extracted', confidence: 0.90, is_required: true },
-          'cliente_perfil.urgencia': { status: 'extracted', confidence: 0.88, is_required: true },
+          'escenario_medico.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'motivo_consulta.especialidad': { status: 'extracted', confidence: 0.88, is_required: true },
         },
       },
       {
-        question: "¿Qué tono debe tener la consulta — formal-clínico, empático, o educativo? ¿Qué tan complejo debe ser el caso?",
+        question: "¿Cuál es el motivo principal de consulta y la especialidad? ¿La duración de los síntomas — agudo, subagudo o crónico? ¿Tratamientos previos?",
         fields: {
-          'escenario.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'cliente_perfil.tipo_cliente': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'cliente_perfil.nivel_experiencia_compra': { status: 'confirmed', confidence: 0.92, is_required: true },
-          'cliente_perfil.urgencia': { status: 'confirmed', confidence: 0.92, is_required: true },
-          'contexto_conversacion.canal': { status: 'extracted', confidence: 0.90, is_required: true },
-          'intencion.uso_principal': { status: 'extracted', confidence: 0.88, is_required: true },
+          'escenario_medico.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'motivo_consulta.especialidad': { status: 'confirmed', confidence: 0.92, is_required: true },
+          'paciente_perfil.tipo_paciente': { status: 'extracted', confidence: 0.90, is_required: true },
+          'paciente_perfil.severidad_condicion': { status: 'extracted', confidence: 0.88, is_required: true },
         },
       },
       {
-        question: "¿Qué restricciones clínicas deben seguirse? (ej: \"revisar alergias antes de prescribir\", \"protocolo de escalación de emergencia\", \"consentimiento informado requerido\")",
+        question: "¿En qué entorno — consultorio, hospital, clínica, domicilio, o urgencias? ¿Y por qué canal — presencial, telemedicina, teléfono, o chat médico?",
         fields: {
-          'escenario.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'cliente_perfil.tipo_cliente': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'cliente_perfil.nivel_experiencia_compra': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'cliente_perfil.urgencia': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'contexto_conversacion.canal': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'intencion.uso_principal': { status: 'confirmed', confidence: 0.92, is_required: true },
-          'escenario.tono_esperado': { status: 'extracted', confidence: 0.90, is_required: true },
-          'escenario.complejidad': { status: 'extracted', confidence: 0.88, is_required: true },
+          'escenario_medico.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'motivo_consulta.especialidad': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'paciente_perfil.tipo_paciente': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'paciente_perfil.severidad_condicion': { status: 'confirmed', confidence: 0.92, is_required: true },
+          'motivo_consulta.motivo_principal': { status: 'extracted', confidence: 0.90, is_required: true },
+          'motivo_consulta.duracion_sintomas': { status: 'extracted', confidence: 0.88, is_required: true },
         },
       },
       {
-        question: "Describe el flujo clínico esperado — ¿qué pasos debe seguir la consulta? (ej: motivo → historial → exploración → diagnóstico → plan de tratamiento → seguimiento)",
+        question: "¿Qué tono debe tener la consulta — profesional, empático, directo, o didáctico? ¿Qué tan complejo debe ser el caso? ¿Debe incluir exploración física, razonamiento diagnóstico, o educación al paciente?",
         fields: {
-          'escenario.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'cliente_perfil.tipo_cliente': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'cliente_perfil.nivel_experiencia_compra': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'cliente_perfil.urgencia': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'contexto_conversacion.canal': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'intencion.uso_principal': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'escenario.tono_esperado': { status: 'confirmed', confidence: 0.95, is_required: true },
-          'escenario.complejidad': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'escenario_medico.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'motivo_consulta.especialidad': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'paciente_perfil.tipo_paciente': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'paciente_perfil.severidad_condicion': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'motivo_consulta.motivo_principal': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'motivo_consulta.duracion_sintomas': { status: 'confirmed', confidence: 0.92, is_required: true },
+          'contexto_clinico.canal': { status: 'extracted', confidence: 0.90, is_required: true },
+          'contexto_clinico.entorno': { status: 'extracted', confidence: 0.88, is_required: true },
+        },
+      },
+      {
+        question: "Última pregunta — ¿hay reglas clínicas o restricciones regulatorias específicas? (ej: \"revisar alergias antes de prescribir\", \"consentimiento informado requerido\", \"cumplimiento NOM\", \"protocolo de escalación\")",
+        fields: {
+          'escenario_medico.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'motivo_consulta.especialidad': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'paciente_perfil.tipo_paciente': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'paciente_perfil.severidad_condicion': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'motivo_consulta.motivo_principal': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'motivo_consulta.duracion_sintomas': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'contexto_clinico.canal': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'contexto_clinico.entorno': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'escenario_medico.complejidad': { status: 'extracted', confidence: 0.90, is_required: true },
+          'escenario_medico.tono': { status: 'extracted', confidence: 0.88, is_required: true },
+        },
+      },
+    ],
+  },
+  finance: {
+    en: [
+      {
+        question: "Hello! I'll help you design a synthetic financial advisory scenario. We'll define the parameters to generate realistic client-advisor conversations for AI training. What type of financial service do you want to simulate? (e.g., credit application, investment advisory, savings plan, insurance, debt restructuring)",
+        fields: {},
+      },
+      {
+        question: "What client profile should we simulate? Describe their type (individual, SME, corporate, investor), risk profile (conservative, moderate, aggressive), and financial literacy level.",
+        fields: {
+          'escenario_financiero.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'objetivo_financiero.tipo_servicio': { status: 'extracted', confidence: 0.88, is_required: true },
+        },
+      },
+      {
+        question: "What's the client's specific financial goal? What amount range and time horizon are we looking at — short-term, medium-term, or long-term?",
+        fields: {
+          'escenario_financiero.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'objetivo_financiero.tipo_servicio': { status: 'confirmed', confidence: 0.92, is_required: true },
+          'cliente_financiero.tipo_cliente': { status: 'extracted', confidence: 0.90, is_required: true },
+          'cliente_financiero.perfil_riesgo': { status: 'extracted', confidence: 0.88, is_required: true },
+        },
+      },
+      {
+        question: "What's the channel — branch office, phone, digital banking, WhatsApp, or video call? And the institution type — bank, fintech, brokerage, or insurance company?",
+        fields: {
+          'escenario_financiero.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'objetivo_financiero.tipo_servicio': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'cliente_financiero.tipo_cliente': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'cliente_financiero.perfil_riesgo': { status: 'confirmed', confidence: 0.92, is_required: true },
+          'objetivo_financiero.objetivo_especifico': { status: 'extracted', confidence: 0.90, is_required: true },
+          'objetivo_financiero.horizonte_temporal': { status: 'extracted', confidence: 0.88, is_required: true },
+        },
+      },
+      {
+        question: "What tone should the conversation have — professional, consultative, educational, or empathetic? Should it include risk disclosure, product comparisons, or financial simulations?",
+        fields: {
+          'escenario_financiero.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'objetivo_financiero.tipo_servicio': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'cliente_financiero.tipo_cliente': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'cliente_financiero.perfil_riesgo': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'objetivo_financiero.objetivo_especifico': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'objetivo_financiero.horizonte_temporal': { status: 'confirmed', confidence: 0.92, is_required: true },
+          'contexto_financiero.canal': { status: 'extracted', confidence: 0.90, is_required: true },
+          'contexto_financiero.tipo_institucion': { status: 'extracted', confidence: 0.88, is_required: true },
+        },
+      },
+      {
+        question: "Last question — any specific regulatory or compliance constraints? (e.g., \"KYC verification required\", \"mandatory risk disclosure\", \"CNBV compliance\", \"commission transparency\")",
+        fields: {
+          'escenario_financiero.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'objetivo_financiero.tipo_servicio': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'cliente_financiero.tipo_cliente': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'cliente_financiero.perfil_riesgo': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'objetivo_financiero.objetivo_especifico': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'objetivo_financiero.horizonte_temporal': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'contexto_financiero.canal': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'contexto_financiero.tipo_institucion': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'escenario_financiero.complejidad': { status: 'extracted', confidence: 0.90, is_required: true },
+          'escenario_financiero.tono': { status: 'extracted', confidence: 0.88, is_required: true },
+        },
+      },
+    ],
+    es: [
+      {
+        question: "¡Hola! Te ayudaré a diseñar un escenario de asesoría financiera sintética para entrenamiento de IA. ¿Qué tipo de servicio financiero deseas simular? (ej: solicitud de crédito, asesoría de inversión, plan de ahorro, seguro, reestructura de deuda)",
+        fields: {},
+      },
+      {
+        question: "¿Qué perfil de cliente debemos simular? Describe su tipo (persona física, PyME, corporativo, inversionista), perfil de riesgo (conservador, moderado, agresivo), y nivel de educación financiera.",
+        fields: {
+          'escenario_financiero.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'objetivo_financiero.tipo_servicio': { status: 'extracted', confidence: 0.88, is_required: true },
+        },
+      },
+      {
+        question: "¿Cuál es el objetivo financiero específico del cliente? ¿Qué monto y horizonte temporal — corto, mediano o largo plazo?",
+        fields: {
+          'escenario_financiero.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'objetivo_financiero.tipo_servicio': { status: 'confirmed', confidence: 0.92, is_required: true },
+          'cliente_financiero.tipo_cliente': { status: 'extracted', confidence: 0.90, is_required: true },
+          'cliente_financiero.perfil_riesgo': { status: 'extracted', confidence: 0.88, is_required: true },
+        },
+      },
+      {
+        question: "¿Por qué canal — sucursal, teléfono, banca digital, WhatsApp, o videollamada? ¿Y qué tipo de institución — banco, fintech, casa de bolsa, o aseguradora?",
+        fields: {
+          'escenario_financiero.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'objetivo_financiero.tipo_servicio': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'cliente_financiero.tipo_cliente': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'cliente_financiero.perfil_riesgo': { status: 'confirmed', confidence: 0.92, is_required: true },
+          'objetivo_financiero.objetivo_especifico': { status: 'extracted', confidence: 0.90, is_required: true },
+          'objetivo_financiero.horizonte_temporal': { status: 'extracted', confidence: 0.88, is_required: true },
+        },
+      },
+      {
+        question: "¿Qué tono debe tener la conversación — profesional, consultivo, educativo, o empático? ¿Debe incluir divulgación de riesgos, comparaciones de productos, o simulaciones financieras?",
+        fields: {
+          'escenario_financiero.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'objetivo_financiero.tipo_servicio': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'cliente_financiero.tipo_cliente': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'cliente_financiero.perfil_riesgo': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'objetivo_financiero.objetivo_especifico': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'objetivo_financiero.horizonte_temporal': { status: 'confirmed', confidence: 0.92, is_required: true },
+          'contexto_financiero.canal': { status: 'extracted', confidence: 0.90, is_required: true },
+          'contexto_financiero.tipo_institucion': { status: 'extracted', confidence: 0.88, is_required: true },
+        },
+      },
+      {
+        question: "Última pregunta — ¿hay restricciones regulatorias o de cumplimiento específicas? (ej: \"verificación KYC requerida\", \"divulgación de riesgos obligatoria\", \"cumplimiento CNBV\", \"transparencia en comisiones\")",
+        fields: {
+          'escenario_financiero.tipo_escenario': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'objetivo_financiero.tipo_servicio': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'cliente_financiero.tipo_cliente': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'cliente_financiero.perfil_riesgo': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'objetivo_financiero.objetivo_especifico': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'objetivo_financiero.horizonte_temporal': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'contexto_financiero.canal': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'contexto_financiero.tipo_institucion': { status: 'confirmed', confidence: 0.95, is_required: true },
+          'escenario_financiero.complejidad': { status: 'extracted', confidence: 0.90, is_required: true },
+          'escenario_financiero.tono': { status: 'extracted', confidence: 0.88, is_required: true },
         },
       },
     ],
   },
 }
 
-// All field names from the automotive extraction schema (dot-path format)
-const ALL_EXTRACTION_FIELDS = [
-  'cliente_perfil.tipo_cliente',
-  'cliente_perfil.nivel_experiencia_compra',
-  'cliente_perfil.urgencia',
-  'cliente_perfil.presupuesto_rango',
-  'intencion.uso_principal',
-  'intencion.tipo_vehiculo',
-  'contexto_conversacion.canal',
-  'contexto_conversacion.objeciones_conocidas',
-  'escenario.tipo_escenario',
-  'escenario.complejidad',
-  'escenario.tono_esperado',
-  'reglas_negocio.restricciones',
-]
+// Per-industry field names from extraction schemas (dot-path format)
+const INDUSTRY_FIELDS: Record<string, { all: string[]; required: Set<string> }> = {
+  automotive: {
+    all: [
+      'cliente_perfil.tipo_cliente', 'cliente_perfil.nivel_experiencia_compra', 'cliente_perfil.urgencia',
+      'cliente_perfil.presupuesto_rango', 'intencion.uso_principal', 'intencion.tipo_vehiculo',
+      'contexto_conversacion.canal', 'contexto_conversacion.objeciones_conocidas',
+      'escenario.tipo_escenario', 'escenario.complejidad', 'escenario.tono_esperado', 'reglas_negocio.restricciones',
+    ],
+    required: new Set([
+      'cliente_perfil.tipo_cliente', 'cliente_perfil.nivel_experiencia_compra', 'cliente_perfil.urgencia',
+      'intencion.uso_principal', 'contexto_conversacion.canal',
+      'escenario.tipo_escenario', 'escenario.complejidad', 'escenario.tono_esperado',
+    ]),
+  },
+  medical: {
+    all: [
+      'paciente_perfil.tipo_paciente', 'paciente_perfil.severidad_condicion', 'paciente_perfil.cobertura_medica',
+      'motivo_consulta.especialidad', 'motivo_consulta.motivo_principal', 'motivo_consulta.duracion_sintomas',
+      'contexto_clinico.canal', 'contexto_clinico.entorno', 'contexto_clinico.restriccion_tiempo',
+      'escenario_medico.tipo_escenario', 'escenario_medico.complejidad', 'escenario_medico.tono',
+    ],
+    required: new Set([
+      'paciente_perfil.tipo_paciente', 'paciente_perfil.severidad_condicion',
+      'motivo_consulta.especialidad', 'motivo_consulta.motivo_principal', 'motivo_consulta.duracion_sintomas',
+      'contexto_clinico.canal', 'escenario_medico.tipo_escenario', 'escenario_medico.complejidad',
+      'escenario_medico.tono',
+    ]),
+  },
+  finance: {
+    all: [
+      'cliente_financiero.tipo_cliente', 'cliente_financiero.perfil_riesgo', 'cliente_financiero.nivel_conocimiento_financiero',
+      'objetivo_financiero.tipo_servicio', 'objetivo_financiero.objetivo_especifico', 'objetivo_financiero.horizonte_temporal',
+      'contexto_financiero.canal', 'contexto_financiero.tipo_institucion',
+      'escenario_financiero.tipo_escenario', 'escenario_financiero.complejidad', 'escenario_financiero.tono',
+      'reglas_financieras.marco_cumplimiento',
+    ],
+    required: new Set([
+      'cliente_financiero.tipo_cliente', 'cliente_financiero.perfil_riesgo',
+      'objetivo_financiero.tipo_servicio', 'objetivo_financiero.objetivo_especifico', 'objetivo_financiero.horizonte_temporal',
+      'contexto_financiero.canal', 'escenario_financiero.tipo_escenario', 'escenario_financiero.complejidad',
+      'escenario_financiero.tono',
+    ]),
+  },
+}
 
-const REQUIRED_EXTRACTION_FIELDS = new Set([
-  'cliente_perfil.tipo_cliente',
-  'cliente_perfil.nivel_experiencia_compra',
-  'cliente_perfil.urgencia',
-  'intencion.uso_principal',
-  'contexto_conversacion.canal',
-  'escenario.tipo_escenario',
-  'escenario.complejidad',
-  'escenario.tono_esperado',
-])
-
-function buildDemoProgress(step: number, totalSteps: number, fields: Record<string, { status: string; confidence: number; is_required: boolean }>): ExtractionProgress {
+function buildDemoProgress(step: number, totalSteps: number, fields: Record<string, { status: string; confidence: number; is_required: boolean }>, industryKey: string): ExtractionProgress {
+  const { all: allFields, required: requiredFields } = INDUSTRY_FIELDS[industryKey] ?? INDUSTRY_FIELDS.automotive
   const fieldEntries = Object.entries(fields)
   const progressFields: ExtractionProgress['fields'] = {}
 
-  for (const name of ALL_EXTRACTION_FIELDS) {
+  for (const name of allFields) {
     const existing = fields[name]
 
     progressFields[name] = existing
       ? { status: existing.status as 'extracted' | 'confirmed', confidence: existing.confidence, is_required: existing.is_required }
-      : { status: 'empty', confidence: 0, is_required: REQUIRED_EXTRACTION_FIELDS.has(name) }
+      : { status: 'empty', confidence: 0, is_required: requiredFields.has(name) }
   }
 
   const filled = fieldEntries.length
-  const requiredFilled = fieldEntries.filter(([name, v]) => v.is_required && REQUIRED_EXTRACTION_FIELDS.has(name)).length
+  const requiredFilled = fieldEntries.filter(([name, v]) => v.is_required && requiredFields.has(name)).length
 
   return {
     turn: step,
     max_turns: totalSteps + 1,
-    total_fields: ALL_EXTRACTION_FIELDS.length,
+    total_fields: allFields.length,
     filled_fields: filled,
-    required_total: REQUIRED_EXTRACTION_FIELDS.size,
+    required_total: requiredFields.size,
     required_filled: requiredFilled,
     is_complete: step >= totalSteps,
     fields: progressFields,
@@ -444,7 +600,7 @@ export function SeedExtractPage() {
     setDemoMode(true)
     const script = DEMO_SCRIPTS[industry]?.[locale] ?? DEMO_SCRIPTS.automotive.en
     const step = script[0]
-    const demoProgress = buildDemoProgress(0, script.length, step.fields)
+    const demoProgress = buildDemoProgress(0, script.length, step.fields, industry)
 
     setSessionId(`demo-${Date.now()}`)
     setProgress(demoProgress)
@@ -469,48 +625,80 @@ export function SeedExtractPage() {
 
       if (stepIdx >= script.length) {
         // Extraction complete — build a proper SeedSchema v1 from interview data
-        const isAuto = industry !== 'medical'
-
-        const demoSeed = {
-          version: '1.0',
-          dominio: isAuto ? 'automotive.sales' : 'medical.consultation',
-          idioma: locale,
-          etiquetas: ['ai-extracted', industry],
-          roles: isAuto ? ['customer', 'sales_advisor'] : ['patient', 'physician'],
-          descripcion_roles: isAuto
-            ? {
-                customer: 'Cliente particular, comprador primerizo, urgencia: explorando',
-                sales_advisor: 'Asesor de ventas certificado con acceso al inventario',
-              }
-            : {
-                patient: 'Paciente adulto buscando consulta especializada',
-                physician: 'Médico especialista certificado',
-              },
-          objetivo: isAuto
-            ? 'Simular una conversación de venta_directa automotriz con un cliente particular interesado en uso personal'
-            : 'Simular una consulta médica de evaluación inicial con un paciente adulto',
-          tono: 'profesional',
-          pasos_turnos: {
-            turnos_min: 4,
-            turnos_max: 10,
-            flujo_esperado: isAuto
-              ? ['Saludo', 'Detección de necesidad', 'Manejo de objeciones', 'Presentación/Cotización', 'Cierre/Siguiente paso']
-              : ['Motivo de consulta', 'Revisión de historial', 'Exploración', 'Diagnóstico', 'Plan de tratamiento', 'Seguimiento'],
-          },
-          parametros_factuales: {
-            contexto: isAuto ? 'Canal: whatsapp. Tipo de vehículo: sedan' : 'Canal: presencial. Consulta de primera vez',
-            restricciones: isAuto
-              ? ['Solo ofrecer inventario actual', 'Precios con IVA incluido', 'No comparar con la competencia']
-              : ['Revisar alergias antes de prescribir', 'Protocolo de escalación de emergencia', 'Consentimiento informado requerido'],
-            herramientas: [],
-            metadata: {
-              extracted_by: 'ai-interview',
-              scenario_type: isAuto ? 'venta_directa' : 'consulta_inicial',
-              complexity: 'medio',
-              client_type: isAuto ? 'particular' : 'paciente_nuevo',
-              channel: isAuto ? 'whatsapp' : 'presencial',
+        const seedTemplates: Record<string, Record<string, unknown>> = {
+          automotive: {
+            version: '1.0',
+            dominio: 'automotive.sales',
+            idioma: locale,
+            etiquetas: ['ai-extracted', 'automotive', 'scenario:venta_directa', 'complexity:medio'],
+            roles: ['customer', 'sales_advisor'],
+            descripcion_roles: {
+              customer: 'Cliente particular, experiencia: primera_vez, urgencia: explorando, pago: financiamiento',
+              sales_advisor: 'Asesor de ventas certificado con acceso al inventario',
+            },
+            objetivo: 'Simular una conversación de venta_directa automotriz con un cliente particular interesado en un sedan nuevo para uso personal',
+            tono: 'profesional',
+            pasos_turnos: {
+              turnos_min: 5, turnos_max: 10,
+              flujo_esperado: ['Saludo y bienvenida', 'Detección de necesidades', 'Presentación de opciones', 'Manejo de objeciones', 'Cotización formal', 'Cierre y siguiente paso'],
+            },
+            parametros_factuales: {
+              contexto: 'Canal: whatsapp. Tipo de vehículo: sedan. Condición: nuevo',
+              restricciones: ['Solo ofrecer inventario actual', 'Precios con IVA incluido', 'No comparar con la competencia'],
+              herramientas: ['consultar_inventario', 'generar_cotizacion', 'calcular_financiamiento'],
+              metadata: { extracted_by: 'ai-interview', scenario_type: 'venta_directa', complexity: 'medio', client_type: 'particular', channel: 'whatsapp', vehicle_condition: 'nuevo' },
             },
           },
+          medical: {
+            version: '1.0',
+            dominio: 'medical.consultation',
+            idioma: locale,
+            etiquetas: ['ai-extracted', 'medical', 'scenario:primera_consulta', 'complexity:moderado'],
+            roles: ['patient', 'physician'],
+            descripcion_roles: {
+              patient: 'Paciente adulto, condición moderada, ansioso, con seguro privado',
+              physician: 'Médico especialista certificado en cardiología',
+            },
+            objetivo: 'Simular una primera consulta de cardiología con un paciente adulto con síntomas subagudos de dolor torácico',
+            tono: 'empático',
+            pasos_turnos: {
+              turnos_min: 5, turnos_max: 12,
+              flujo_esperado: ['Saludo y motivo de consulta', 'Historia clínica', 'Revisión de síntomas', 'Exploración física', 'Razonamiento diagnóstico', 'Plan de tratamiento', 'Educación al paciente', 'Seguimiento'],
+            },
+            parametros_factuales: {
+              contexto: 'Canal: presencial. Entorno: consultorio. Especialidad: cardiología. Severidad: moderada. Primera consulta',
+              restricciones: ['Revisar alergias antes de prescribir', 'Consentimiento informado requerido', 'Documentar en nota médica', 'Cumplimiento NOM'],
+              herramientas: ['consultar_historial', 'ordenar_estudios', 'generar_receta', 'agendar_seguimiento'],
+              metadata: { extracted_by: 'ai-interview', scenario_type: 'primera_consulta', complexity: 'moderado', patient_type: 'adulto', specialty: 'cardiologia', channel: 'presencial', setting: 'consultorio' },
+            },
+          },
+          finance: {
+            version: '1.0',
+            dominio: 'finance.advisory',
+            idioma: locale,
+            etiquetas: ['ai-extracted', 'finance', 'scenario:solicitud_credito', 'complexity:moderado'],
+            roles: ['client', 'financial_advisor'],
+            descripcion_roles: {
+              client: 'Persona física, perfil moderado, nivel financiero intermedio, empleado asalariado',
+              financial_advisor: 'Asesor financiero certificado con acceso a productos bancarios',
+            },
+            objetivo: 'Simular una asesoría de solicitud de crédito hipotecario con un cliente asalariado de perfil moderado',
+            tono: 'consultivo',
+            pasos_turnos: {
+              turnos_min: 5, turnos_max: 12,
+              flujo_esperado: ['Saludo e identificación', 'Evaluación de necesidades', 'Análisis de perfil crediticio', 'Presentación de opciones', 'Divulgación de riesgos', 'Simulación de pagos', 'Documentación requerida', 'Cierre y siguientes pasos'],
+            },
+            parametros_factuales: {
+              contexto: 'Canal: sucursal. Institución: banco. Servicio: crédito hipotecario. Horizonte: largo plazo',
+              restricciones: ['Verificación KYC obligatoria', 'Divulgación de CAT y tasa de interés', 'Cumplimiento CNBV', 'Transparencia en comisiones'],
+              herramientas: ['consultar_buro_credito', 'simular_credito', 'comparar_productos', 'generar_solicitud'],
+              metadata: { extracted_by: 'ai-interview', scenario_type: 'solicitud_credito', complexity: 'moderado', client_type: 'persona_fisica', risk_profile: 'moderado', channel: 'sucursal', institution: 'banco' },
+            },
+          },
+        }
+
+        const demoSeed = {
+          ...seedTemplates[industry] ?? seedTemplates.automotive,
           privacidad: { pii_eliminado: true, metodo_anonimizacion: 'presidio_v2', nivel_confianza: 0.99, campos_sensibles_detectados: [] },
           metricas_calidad: { rouge_l_min: 0.20, fidelidad_min: 0.80, diversidad_lexica_min: 0.55, coherencia_dialogica_min: 0.65 },
         }
@@ -519,7 +707,7 @@ export function SeedExtractPage() {
           ? 'Extracción completada. He recopilado todos los parámetros necesarios para tu seed de conversación. Puedes revisarlo y crearlo.'
           : 'Extraction complete! I\'ve gathered all the parameters needed for your conversation seed. You can review and create it.'
 
-        const finalProgress = buildDemoProgress(script.length, script.length, script[script.length - 1].fields)
+        const finalProgress = buildDemoProgress(script.length, script.length, script[script.length - 1].fields, industry)
 
         setProgress(finalProgress)
         addMessage('system', summaryMsg, finalProgress)
@@ -530,7 +718,7 @@ export function SeedExtractPage() {
       }
 
       const step = script[stepIdx]
-      const demoProgress = buildDemoProgress(stepIdx, script.length, step.fields)
+      const demoProgress = buildDemoProgress(stepIdx, script.length, step.fields, industry)
 
       setProgress(demoProgress)
       addMessage('assistant', step.question, demoProgress)
@@ -672,6 +860,7 @@ export function SeedExtractPage() {
                   <SelectContent>
                     <SelectItem value="automotive">{s.automotive}</SelectItem>
                     <SelectItem value="medical">{s.medical}</SelectItem>
+                    <SelectItem value="finance">{s.finance}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
