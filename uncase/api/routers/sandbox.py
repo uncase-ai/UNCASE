@@ -11,8 +11,9 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from uncase.api.deps import get_db, get_settings
+from uncase.api.deps import get_db, get_optional_org, get_settings
 from uncase.config import UNCASESettings
+from uncase.db.models.organization import OrganizationModel
 from uncase.exceptions import SandboxNotConfiguredError
 from uncase.sandbox.schemas import (
     DemoSandboxRequest,
@@ -26,7 +27,10 @@ from uncase.sandbox.schemas import (
     SandboxProgress,
     SandboxTemplate,
 )
+from uncase.schemas.conversation_api import ConversationCreateRequest
 from uncase.schemas.generation import SandboxStatusResponse
+from uncase.services.conversation import ConversationService
+from uncase.services.evaluator import EvaluatorService
 
 router = APIRouter(prefix="/api/v1/sandbox", tags=["sandbox"])
 
@@ -55,7 +59,72 @@ async def _resolve_api_key(
         return settings.litellm_api_key, None
     if settings.anthropic_api_key:
         return settings.anthropic_api_key, None
+    if settings.gemini_api_key:
+        return settings.gemini_api_key, None
+    if settings.google_api_key:
+        return settings.google_api_key, None
     return None, None
+
+
+async def _persist_sandbox_results(
+    response: SandboxGenerateResponse,
+    session: AsyncSession,
+    organization_id: str | None,
+) -> None:
+    """Persist sandbox-generated conversations and quality reports to the database.
+
+    This ensures that results produced inside ephemeral E2B sandboxes (or local
+    fallback) survive after the sandbox is destroyed.
+    """
+    # -- 1. Persist conversations --
+    create_requests: list[ConversationCreateRequest] = []
+    for result in response.results:
+        if result.error:
+            continue
+        for conv in result.conversations:
+            create_requests.append(
+                ConversationCreateRequest(
+                    conversation_id=conv.conversation_id,
+                    seed_id=conv.seed_id,
+                    dominio=conv.dominio,
+                    idioma=conv.idioma,
+                    turnos=conv.turnos,
+                    es_sintetica=conv.es_sintetica,
+                    metadata=dict(conv.metadata),
+                    status="generated",
+                    tags=["sandbox-generated"],
+                )
+            )
+
+    if create_requests:
+        conv_service = ConversationService(session)
+        bulk_result = await conv_service.bulk_create(create_requests, organization_id=organization_id)
+        logger.info(
+            "sandbox_conversations_persisted",
+            created=bulk_result.created,
+            skipped=bulk_result.skipped,
+            errors=len(bulk_result.errors),
+            organization_id=organization_id,
+        )
+
+    # -- 2. Persist quality reports --
+    reports_persisted = 0
+    for result in response.results:
+        if result.error or not result.reports:
+            continue
+        eval_service = EvaluatorService(session=session)
+        for i, report in enumerate(result.reports):
+            dominio = result.conversations[i].dominio if i < len(result.conversations) else None
+            await eval_service._persist_report(report, dominio=dominio, organization_id=organization_id)
+            reports_persisted += 1
+
+    if reports_persisted > 0:
+        await session.commit()
+        logger.info(
+            "sandbox_reports_persisted",
+            count=reports_persisted,
+            organization_id=organization_id,
+        )
 
 
 @router.get("/status", response_model=SandboxStatusResponse)
@@ -75,21 +144,26 @@ async def sandbox_generate(
     request: SandboxGenerateRequest,
     session: Annotated[AsyncSession, Depends(get_db)],
     settings: Annotated[UNCASESettings, Depends(get_settings)],
+    org: Annotated[OrganizationModel | None, Depends(get_optional_org)],
 ) -> SandboxGenerateResponse:
     """Generate conversations in parallel using E2B sandboxes.
 
     Each seed gets its own isolated sandbox running the generation
     pipeline independently. Results are collected after all sandboxes
-    complete.
+    complete. Generated conversations and quality reports are persisted
+    to the database before returning.
 
     Falls back to sequential local generation if E2B is not configured.
     """
+    organization_id = org.id if org else None
+
     logger.info(
         "api_sandbox_generate",
         total_seeds=len(request.seeds),
         count_per_seed=request.count_per_seed,
         model=request.model,
         max_parallel=request.max_parallel,
+        organization_id=organization_id,
     )
 
     # Resolve API key
@@ -97,31 +171,35 @@ async def sandbox_generate(
 
     if not settings.sandbox_available:
         # Fallback to local sequential generation
-        return await _local_fallback(
+        response = await _local_fallback(
             request=request,
             session=session,
             settings=settings,
             api_key=api_key,
             api_base=api_base,
         )
+    else:
+        from uncase.sandbox.e2b_client import E2BSandboxOrchestrator
 
-    from uncase.sandbox.e2b_client import E2BSandboxOrchestrator
+        orchestrator = E2BSandboxOrchestrator(settings=settings)
+        seed_dicts = [seed.model_dump(mode="json") for seed in request.seeds]
 
-    orchestrator = E2BSandboxOrchestrator(settings=settings)
+        response = await orchestrator.fan_out_generate(
+            seeds=seed_dicts,
+            count_per_seed=request.count_per_seed,
+            model=request.model or "claude-sonnet-4-20250514",
+            temperature=request.temperature,
+            api_key=api_key,
+            api_base=api_base,
+            language_override=request.language_override,
+            evaluate_after=request.evaluate_after,
+            max_parallel=request.max_parallel,
+        )
 
-    seed_dicts = [seed.model_dump(mode="json") for seed in request.seeds]
+    # Persist results to DB before returning
+    await _persist_sandbox_results(response, session, organization_id)
 
-    return await orchestrator.fan_out_generate(
-        seeds=seed_dicts,
-        count_per_seed=request.count_per_seed,
-        model=request.model or "claude-sonnet-4-20250514",
-        temperature=request.temperature,
-        api_key=api_key,
-        api_base=api_base,
-        language_override=request.language_override,
-        evaluate_after=request.evaluate_after,
-        max_parallel=request.max_parallel,
-    )
+    return response
 
 
 @router.post("/stream")
@@ -129,16 +207,21 @@ async def sandbox_generate_stream(
     request: SandboxGenerateRequest,
     session: Annotated[AsyncSession, Depends(get_db)],
     settings: Annotated[UNCASESettings, Depends(get_settings)],
+    org: Annotated[OrganizationModel | None, Depends(get_optional_org)],
 ) -> StreamingResponse:
     """Stream progress events during parallel sandbox generation (SSE).
 
     Returns a Server-Sent Events stream with:
     - `data:` events for SandboxProgress updates
     - `event: complete` with the final SandboxGenerateResponse
+
+    Generated conversations and quality reports are persisted to the
+    database when the final event arrives.
     """
     if not settings.sandbox_available:
         raise SandboxNotConfiguredError("Streaming requires E2B sandboxes. Set E2B_API_KEY and E2B_ENABLED=true.")
 
+    organization_id = org.id if org else None
     api_key, api_base = await _resolve_api_key(settings, session, request.provider_id)
 
     from uncase.sandbox.e2b_client import E2BSandboxOrchestrator
@@ -161,7 +244,8 @@ async def sandbox_generate_stream(
             if isinstance(event, SandboxProgress):
                 yield f"data: {event.model_dump_json()}\n\n"
             else:
-                # Final response
+                # Final response — persist before yielding
+                await _persist_sandbox_results(event, session, organization_id)
                 yield f"event: complete\ndata: {event.model_dump_json()}\n\n"
 
     return StreamingResponse(

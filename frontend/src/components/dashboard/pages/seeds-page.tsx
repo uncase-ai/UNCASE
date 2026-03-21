@@ -23,7 +23,7 @@ import {
   X
 } from 'lucide-react'
 
-import type { Conversation, QualityReport, SeedSchema, ToolDefinition } from '@/types/api'
+import type { Conversation, QualityReport, SeedListResponse, SeedSchema, ToolDefinition } from '@/types/api'
 import { SUPPORTED_DOMAINS } from '@/types/api'
 import { checkApiHealth } from '@/lib/api/client'
 import { fetchSeeds } from '@/lib/api/seeds'
@@ -227,17 +227,32 @@ export function SeedsPage() {
   const loadFromApi = useCallback(async () => {
     setSyncing(true)
     setSyncError(null)
-    const { data, error } = await fetchSeeds({ page_size: 100 })
 
-    if (error) {
-      setSyncError(error.message)
-      setSyncing(false)
+    let allItems: SeedListResponse['items'] = []
+    let page = 1
 
-      return
+    while (true) {
+      const { data: pageData, error: pageError } = await fetchSeeds({ page_size: 100, page })
+
+      if (pageError) {
+        setSyncError(pageError.message)
+        setSyncing(false)
+
+        return
+      }
+
+      if (pageData) {
+        allItems = [...allItems, ...pageData.items]
+
+        if (allItems.length >= pageData.total) break
+        page++
+      } else {
+        break
+      }
     }
 
-    if (data) {
-      const apiSeeds: SeedSchema[] = data.items.map(item => ({
+    if (allItems.length > 0) {
+      const apiSeeds: SeedSchema[] = allItems.map(item => ({
         seed_id: item.id ?? '',
         version: (item.version as '1.0') ?? '1.0',
         dominio: item.dominio ?? '',

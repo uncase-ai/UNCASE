@@ -28,6 +28,7 @@ def _make_settings(**overrides: object) -> UNCASESettings:
         "litellm_api_key": "sk-test-fictitious-key",
         "anthropic_api_key": "",
         "gemini_api_key": "",
+        "google_api_key": "",
     }
     defaults.update(overrides)
     return UNCASESettings(**defaults)  # type: ignore[arg-type]
@@ -170,11 +171,22 @@ class TestResolveApiKey:
         service = GeneratorService(settings=settings)
         assert service._resolve_api_key() == "sk-gemini-fallback"
 
+    def test_falls_back_to_google(self) -> None:
+        settings = _make_settings(
+            litellm_api_key="",
+            anthropic_api_key="",
+            gemini_api_key="",
+            google_api_key="sk-google-fallback",
+        )
+        service = GeneratorService(settings=settings)
+        assert service._resolve_api_key() == "sk-google-fallback"
+
     def test_returns_none_when_no_keys(self) -> None:
         settings = _make_settings(
             litellm_api_key="",
             anthropic_api_key="",
             gemini_api_key="",
+            google_api_key="",
         )
         service = GeneratorService(settings=settings)
         assert service._resolve_api_key() is None

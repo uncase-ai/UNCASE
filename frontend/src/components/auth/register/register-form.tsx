@@ -45,7 +45,13 @@ const RegisterForm = () => {
     setIsSubmitting(false)
 
     if (error) {
-      toast.error(error.message || 'Registration failed')
+      if (error.errors && error.errors.length > 0) {
+        const messages = error.errors.map(e => e.message).filter(Boolean)
+
+        toast.error(messages.join('. ') || 'Registration failed')
+      } else {
+        toast.error(error.message || 'Registration failed')
+      }
 
       return
     }
@@ -119,6 +125,9 @@ const RegisterForm = () => {
             <span className='sr-only'>{isPasswordVisible ? 'Hide password' : 'Show password'}</span>
           </Button>
         </div>
+        <p className='text-xs text-muted-foreground'>
+          Must include uppercase, lowercase, number, and special character
+        </p>
       </div>
 
       {/* Confirm Password */}

@@ -43,6 +43,7 @@ export interface ApiError {
   status: number
   message: string
   detail?: string
+  errors?: Array<{ field: string; message: string; type: string }>
 }
 
 export type ApiResponse<T> = { data: T; error: null } | { data: null; error: ApiError }
@@ -55,10 +56,15 @@ interface RequestOptions {
 }
 
 function normalizeError(status: number, body: unknown): ApiError {
-  if (typeof body === 'object' && body !== null && 'detail' in body) {
-    const detail = (body as { detail: string }).detail
+  if (typeof body === 'object' && body !== null) {
+    const obj = body as Record<string, unknown>
+    const detail = typeof obj.detail === 'string' ? obj.detail : `Request failed with status ${status}`
 
-    return { status, message: detail, detail }
+    const errors = Array.isArray(obj.errors)
+      ? (obj.errors as Array<{ field: string; message: string; type: string }>)
+      : undefined
+
+    return { status, message: detail, detail, errors }
   }
 
   return { status, message: `Request failed with status ${status}` }

@@ -31,7 +31,12 @@ class EvaluatorService:
         self._evaluator = ConversationEvaluator()
         self._session = session
 
-    async def _persist_report(self, report: QualityReport, dominio: str | None = None) -> None:
+    async def _persist_report(
+        self,
+        report: QualityReport,
+        dominio: str | None = None,
+        organization_id: str | None = None,
+    ) -> None:
         """Persist a quality report to the database if a session is available."""
         if self._session is None:
             return
@@ -52,6 +57,7 @@ class EvaluatorService:
             passed=report.passed,
             failures=report.failures,
             dominio=dominio,
+            organization_id=organization_id,
         )
         self._session.add(model)
         await self._session.flush()

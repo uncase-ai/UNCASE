@@ -51,7 +51,7 @@ class GeneratorService:
         """Resolve the API key from settings.
 
         Returns the first available key from litellm_api_key, anthropic_api_key,
-        or gemini_api_key.
+        gemini_api_key, or google_api_key.
 
         Raises:
             LLMConfigurationError: If no API key is configured.
@@ -62,6 +62,8 @@ class GeneratorService:
             return self._settings.anthropic_api_key
         if self._settings.gemini_api_key:
             return self._settings.gemini_api_key
+        if self._settings.google_api_key:
+            return self._settings.google_api_key
         return None
 
     async def _resolve_from_provider(
@@ -153,6 +155,10 @@ class GeneratorService:
 
         # Explicit model parameter overrides provider default
         effective_model = model or provider_model
+
+        # If no explicit model specified and using Google key, default to Gemini
+        if not effective_model and api_key == self._settings.google_api_key and api_key:
+            effective_model = "gemini/gemini-2.0-flash"
 
         # Build generator config
         config = self._build_config(
