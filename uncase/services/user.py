@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
 from sqlalchemy import select
@@ -80,8 +81,25 @@ class UserService:
         if not user.is_active:
             raise AuthenticationError("Account is deactivated")
 
+        # Check account lockout
+        if user.locked_until is not None and user.locked_until > datetime.now(UTC):
+            remaining = int((user.locked_until - datetime.now(UTC)).total_seconds() / 60) + 1
+            raise AuthenticationError(f"Account locked. Try again in {remaining} minutes")
+
         if not verify_api_key(password, user.password_hash):
+            user.failed_login_attempts += 1
+            if user.failed_login_attempts >= 5:
+                user.locked_until = datetime.now(UTC) + timedelta(minutes=15)
+                logger.warning("account_locked", user_id=user.id, attempts=user.failed_login_attempts)
+            await self._session.flush()
             raise AuthenticationError("Invalid email or password")
+
+        # Reset lockout on successful login
+        if user.failed_login_attempts > 0:
+            user.failed_login_attempts = 0
+            user.locked_until = None
+        user.last_login_at = datetime.now(UTC)
+        await self._session.flush()
 
         logger.info("user_authenticated", user_id=user.id)
         return user

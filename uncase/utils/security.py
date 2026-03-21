@@ -93,3 +93,29 @@ def parse_api_key(key: str) -> tuple[str, str] | None:
         return None
 
     return key_id, secret
+
+
+VALID_SCOPES = {"read", "write", "admin", "webhook"}
+
+
+def validate_scopes(scopes: str) -> str:
+    """Validate and normalize a comma-separated scope string.
+
+    Args:
+        scopes: Comma-separated scope string (e.g. "read,write").
+
+    Returns:
+        Normalized scope string with duplicates removed.
+
+    Raises:
+        ValueError: If any scope is not in VALID_SCOPES.
+    """
+    parts = {s.strip() for s in scopes.split(",") if s.strip()}
+    if not parts:
+        msg = "At least one scope is required"
+        raise ValueError(msg)
+    invalid = parts - VALID_SCOPES
+    if invalid:
+        msg = f"Invalid scopes: {', '.join(sorted(invalid))}. Valid: {', '.join(sorted(VALID_SCOPES))}"
+        raise ValueError(msg)
+    return ",".join(sorted(parts))

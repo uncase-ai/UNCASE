@@ -24,3 +24,7 @@ class ImportResult(BaseModel):
         default_factory=list,
         description="Successfully imported conversations.",
     )
+    organization_id: str | None = Field(
+        default=None,
+        description="Organization ID that owns this import, if authenticated.",
+    )

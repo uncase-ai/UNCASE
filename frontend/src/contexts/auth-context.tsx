@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 
 import type { MembershipInfo, UserResponse } from '@/types/api'
 import { isDemoMode } from '@/lib/demo'
-import { getStoredAccessToken, clearTokens, storeTokens, loginWithPassword, getMe } from '@/lib/api/auth'
+import { getStoredAccessToken, clearTokens, storeTokens, loginWithPassword, getMe, getSetupStatus } from '@/lib/api/auth'
 
 interface AuthUser extends UserResponse {
   role: MembershipInfo['role']
@@ -17,6 +17,7 @@ interface AuthContextValue {
   user: AuthUser | null
   isDemo: boolean
   isLoading: boolean
+  isOpenMode: boolean
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => void
 }
@@ -32,11 +33,23 @@ const DEMO_USER: AuthUser = {
   org_name: 'Demo Organization',
 }
 
+const OPEN_MODE_USER: AuthUser = {
+  id: 'local-user',
+  email: 'local@uncase.local',
+  display_name: 'Local User',
+  is_active: true,
+  created_at: new Date().toISOString(),
+  role: 'owner',
+  organization_id: 'local-org',
+  org_name: 'Local',
+}
+
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [isDemo, setIsDemo] = useState(false)
+  const [isOpenMode, setIsOpenMode] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   const loadUser = useCallback(async () => {
@@ -52,27 +65,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Check stored token
     const token = getStoredAccessToken()
 
-    if (!token) {
-      setIsLoading(false)
+    if (token) {
+      // Fetch user profile
+      const { data, error } = await getMe()
 
-      return
-    }
+      if (data && !error) {
+        const membership = data.memberships[0]
 
-    // Fetch user profile
-    const { data, error } = await getMe()
+        setUser({
+          ...data.user,
+          role: membership?.role ?? 'viewer',
+          organization_id: membership?.organization_id ?? '',
+          org_name: membership?.org_name ?? '',
+        })
+        setIsLoading(false)
 
-    if (data && !error) {
-      const membership = data.memberships[0]
+        return
+      }
 
-      setUser({
-        ...data.user,
-        role: membership?.role ?? 'viewer',
-        organization_id: membership?.organization_id ?? '',
-        org_name: membership?.org_name ?? '',
-      })
-    } else {
       // Token invalid — clear
       clearTokens()
+    }
+
+    // No token — check if system has users (auth required) or is open mode
+    const { data: setup } = await getSetupStatus()
+
+    if (!setup?.setup_complete) {
+      // No users/orgs — open mode (single-user, no auth wall)
+      setUser(OPEN_MODE_USER)
+      setIsOpenMode(true)
     }
 
     setIsLoading(false)
@@ -82,6 +103,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadUser()
   }, [loadUser])
+
+  // Cross-tab logout synchronization — detect token removal in other tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      // Another tab cleared the tokens — log out this tab too
+      if (e.key === 'uncase-access-token' && e.newValue === null) {
+        setUser(null)
+        setIsDemo(false)
+        setIsOpenMode(false)
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
 
   const loginFn = useCallback(async (email: string, password: string) => {
     const { data, error } = await loginWithPassword(email, password)
@@ -106,6 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearTokens()
     setUser(null)
     setIsDemo(false)
+    setIsOpenMode(false)
 
     if (typeof window !== 'undefined') {
       window.location.href = '/login'
@@ -113,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, isDemo, isLoading, login: loginFn, logout: logoutFn }}>
+    <AuthContext.Provider value={{ user, isDemo, isLoading, isOpenMode, login: loginFn, logout: logoutFn }}>
       {children}
     </AuthContext.Provider>
   )

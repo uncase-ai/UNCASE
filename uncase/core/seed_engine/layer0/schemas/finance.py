@@ -203,10 +203,7 @@ class ContextoFinanciero(BaseModel):
     )
     idioma_preferido: str | None = Field(
         default=None,
-        description=(
-            "Idioma preferido del cliente para la comunicación. "
-            "Valores: 'es', 'en', 'bilingue'. Optional."
-        ),
+        description=("Idioma preferido del cliente para la comunicación. Valores: 'es', 'en', 'bilingue'. Optional."),
     )
 
 
@@ -492,10 +489,12 @@ class SeedFinance(BaseSeedExtraction):
         if self.escenario_financiero.incluir_divulgacion_regulatoria:
             flujo.append("Divulgaciones regulatorias (CAT/GAT/comisiones)")
 
-        flujo.extend([
-            "Documentación y requisitos",
-            "Cierre y siguientes pasos",
-        ])
+        flujo.extend(
+            [
+                "Documentación y requisitos",
+                "Cierre y siguientes pasos",
+            ]
+        )
 
         # ── Build constraints from regulatory rules ──────────────────
         restricciones: list[str] = []
@@ -504,22 +503,16 @@ class SeedFinance(BaseSeedExtraction):
             restricciones.extend(self.reglas_financieras.restricciones_producto)
 
         if self.reglas_financieras.marco_cumplimiento:
-            restricciones.append(
-                f"Cumplir con {self.reglas_financieras.marco_cumplimiento}"
-            )
+            restricciones.append(f"Cumplir con {self.reglas_financieras.marco_cumplimiento}")
 
         if self.reglas_financieras.divulgacion_comisiones == "obligatoria":
             restricciones.append("Divulgar todas las comisiones y costos asociados de forma transparente")
 
         if self.reglas_financieras.prevencion_lavado_dinero:
-            restricciones.append(
-                f"PLD: {self.reglas_financieras.prevencion_lavado_dinero}"
-            )
+            restricciones.append(f"PLD: {self.reglas_financieras.prevencion_lavado_dinero}")
 
         if self.reglas_financieras.proteccion_datos:
-            restricciones.append(
-                f"Protección de datos: {self.reglas_financieras.proteccion_datos}"
-            )
+            restricciones.append(f"Protección de datos: {self.reglas_financieras.proteccion_datos}")
 
         if self.escenario_financiero.incluir_divulgacion_riesgo:
             restricciones.append("Incluir advertencia obligatoria de riesgos")
@@ -558,9 +551,7 @@ class SeedFinance(BaseSeedExtraction):
             contexto_parts.append(f"Situación laboral: {self.cliente_financiero.situacion_laboral}")
 
         if self.cliente_financiero.productos_actuales:
-            contexto_parts.append(
-                f"Productos actuales: {', '.join(self.cliente_financiero.productos_actuales)}"
-            )
+            contexto_parts.append(f"Productos actuales: {', '.join(self.cliente_financiero.productos_actuales)}")
 
         if self.objetivo_financiero.monto_rango:
             contexto_parts.append(f"Monto: {self.objetivo_financiero.monto_rango}")

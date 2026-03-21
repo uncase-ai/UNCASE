@@ -94,10 +94,12 @@ async def list_conversations(
 async def get_conversation(
     conversation_id: str,
     session: Annotated[AsyncSession, Depends(get_db)],
+    org: Annotated[OrganizationModel | None, Depends(get_optional_org)],
 ) -> ConversationResponse:
     """Get a single conversation by its conversation_id."""
     service = _get_service(session)
-    return await service.get_conversation(conversation_id)
+    org_id = org.id if org else None
+    return await service.get_conversation(conversation_id, organization_id=org_id)
 
 
 @router.patch("/{conversation_id}", response_model=ConversationResponse)
@@ -105,10 +107,12 @@ async def update_conversation(
     conversation_id: str,
     data: ConversationUpdateRequest,
     session: Annotated[AsyncSession, Depends(get_db)],
+    org: Annotated[OrganizationModel | None, Depends(get_optional_org)],
 ) -> ConversationResponse:
     """Update conversation metadata (status, rating, tags, notes)."""
     service = _get_service(session)
-    result = await service.update_conversation(conversation_id, data)
+    org_id = org.id if org else None
+    result = await service.update_conversation(conversation_id, data, organization_id=org_id)
     logger.info("conversation_updated", conversation_id=conversation_id)
     return result
 
@@ -117,8 +121,10 @@ async def update_conversation(
 async def delete_conversation(
     conversation_id: str,
     session: Annotated[AsyncSession, Depends(get_db)],
+    org: Annotated[OrganizationModel | None, Depends(get_optional_org)],
 ) -> None:
     """Delete a conversation."""
     service = _get_service(session)
-    await service.delete_conversation(conversation_id)
+    org_id = org.id if org else None
+    await service.delete_conversation(conversation_id, organization_id=org_id)
     logger.info("conversation_deleted", conversation_id=conversation_id)

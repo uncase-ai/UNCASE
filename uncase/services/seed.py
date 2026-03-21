@@ -74,9 +74,9 @@ class SeedService:
         logger.info("seed_created", seed_id=seed_model.id, dominio=seed_model.dominio)
         return self._to_response(seed_model)
 
-    async def get_seed(self, seed_id: str) -> SeedResponse:
+    async def get_seed(self, seed_id: str, *, organization_id: str | None = None) -> SeedResponse:
         """Get a seed by its database ID."""
-        seed_model = await self._get_seed_or_raise(seed_id)
+        seed_model = await self._get_seed_or_raise(seed_id, organization_id=organization_id)
         return self._to_response(seed_model)
 
     async def list_seeds(
@@ -121,9 +121,11 @@ class SeedService:
             page_size=page_size,
         )
 
-    async def update_seed(self, seed_id: str, data: SeedUpdateRequest) -> SeedResponse:
+    async def update_seed(
+        self, seed_id: str, data: SeedUpdateRequest, *, organization_id: str | None = None
+    ) -> SeedResponse:
         """Partially update a seed. Only provided fields are changed."""
-        seed_model = await self._get_seed_or_raise(seed_id)
+        seed_model = await self._get_seed_or_raise(seed_id, organization_id=organization_id)
 
         update_data = data.model_dump(exclude_unset=True)
         if not update_data:
@@ -160,9 +162,9 @@ class SeedService:
         logger.info("seed_updated", seed_id=seed_model.id, fields=list(update_data.keys()))
         return self._to_response(seed_model)
 
-    async def rate_seed(self, seed_id: str, new_rating: float) -> SeedResponse:
+    async def rate_seed(self, seed_id: str, new_rating: float, *, organization_id: str | None = None) -> SeedResponse:
         """Submit a rating for a seed. Computes running average."""
-        seed_model = await self._get_seed_or_raise(seed_id)
+        seed_model = await self._get_seed_or_raise(seed_id, organization_id=organization_id)
 
         old_avg = seed_model.rating or 0.0
         old_count = seed_model.rating_count or 0
@@ -195,9 +197,9 @@ class SeedService:
         logger.info("seed_run_counted", seed_id=seed_id, run_count=seed_model.run_count)
         return self._to_response(seed_model)
 
-    async def delete_seed(self, seed_id: str) -> None:
+    async def delete_seed(self, seed_id: str, *, organization_id: str | None = None) -> None:
         """Delete a seed by ID."""
-        seed_model = await self._get_seed_or_raise(seed_id)
+        seed_model = await self._get_seed_or_raise(seed_id, organization_id=organization_id)
         await self.session.delete(seed_model)
         await self.session.commit()
 
@@ -205,9 +207,17 @@ class SeedService:
 
     # -- Helpers --
 
-    async def _get_seed_or_raise(self, seed_id: str) -> SeedModel:
-        """Fetch a seed or raise SeedNotFoundError."""
-        result = await self.session.execute(select(SeedModel).where(SeedModel.id == seed_id))
+    async def _get_seed_or_raise(self, seed_id: str, *, organization_id: str | None = None) -> SeedModel:
+        """Fetch a seed or raise SeedNotFoundError.
+
+        When *organization_id* is provided the query is scoped to that org.
+        If the seed exists but belongs to a different org, we still raise
+        ``SeedNotFoundError`` so we don't reveal resources across tenants.
+        """
+        query = select(SeedModel).where(SeedModel.id == seed_id)
+        if organization_id is not None:
+            query = query.where(SeedModel.organization_id == organization_id)
+        result = await self.session.execute(query)
         seed_model = result.scalar_one_or_none()
         if seed_model is None:
             raise SeedNotFoundError(f"Seed '{seed_id}' not found")

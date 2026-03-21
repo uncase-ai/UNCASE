@@ -26,7 +26,7 @@ from uncase.schemas.organization import (
     OrganizationResponse,
     OrganizationUpdate,
 )
-from uncase.utils.security import generate_api_key, parse_api_key, verify_api_key
+from uncase.utils.security import generate_api_key, parse_api_key, validate_scopes, verify_api_key
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -104,6 +104,9 @@ class OrganizationService:
         """
         await self._get_org_or_raise(org_id)
 
+        # Validate scopes before creating the key
+        validated_scopes = validate_scopes(data.scopes)
+
         prefix = f"uc_{environment}"
         full_key, key_id, key_hash = generate_api_key(prefix)
 
@@ -113,7 +116,7 @@ class OrganizationService:
             key_hash=key_hash,
             key_prefix=f"{prefix}_{key_id[:4]}...",
             name=data.name,
-            scopes=data.scopes,
+            scopes=validated_scopes,
             organization_id=org_id,
         )
         self.session.add(key_model)
@@ -122,7 +125,7 @@ class OrganizationService:
         audit = APIKeyAuditLogModel(
             id=uuid.uuid4().hex,
             action="created",
-            details=f"Key '{data.name}' created with scopes: {data.scopes}",
+            details=f"Key '{data.name}' created with scopes: {validated_scopes}",
             api_key_id=key_model.id,
         )
         self.session.add(audit)
@@ -220,6 +223,9 @@ class OrganizationService:
 
         if not key_model.is_active:
             raise APIKeyRevokedError()
+
+        if key_model.expires_at is not None and key_model.expires_at < datetime.now(UTC):
+            raise AuthenticationError("API key has expired")
 
         if not verify_api_key(raw_key, key_model.key_hash):
             raise AuthenticationError("Invalid API key")

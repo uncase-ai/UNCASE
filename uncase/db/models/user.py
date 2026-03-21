@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from sqlalchemy import Boolean, ForeignKey, Index, String, UniqueConstraint
+from datetime import datetime  # noqa: TC003 — SQLAlchemy needs runtime access for Mapped annotations
+
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from uncase.db.base import Base, TimestampMixin
@@ -17,6 +19,9 @@ class UserModel(TimestampMixin, Base):
     password_hash: Mapped[str] = mapped_column(String(512), nullable=False)
     display_name: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    failed_login_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     memberships: Mapped[list[OrgMembershipModel]] = relationship(back_populates="user", cascade="all, delete-orphan")
 

@@ -90,7 +90,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ collapsed, onNavigate }: SidebarProps) {
-  const { user, isDemo, logout } = useAuth()
+  const { user, isDemo, isOpenMode, logout } = useAuth()
   const userRole = user?.role
 
   const initials = user?.display_name
@@ -153,6 +153,7 @@ export function Sidebar({ collapsed, onNavigate }: SidebarProps) {
                 <div className="flex items-center gap-1">
                   <Badge variant="outline" className="px-1.5 py-0 text-xs">{user.role}</Badge>
                   {isDemo && <Badge variant="secondary" className="px-1.5 py-0 text-xs">Demo</Badge>}
+                  {isOpenMode && <Badge variant="secondary" className="px-1.5 py-0 text-xs">Local</Badge>}
                 </div>
               </div>
               <Button variant="ghost" size="icon" className="size-7 shrink-0" onClick={logout}>

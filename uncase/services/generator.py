@@ -170,6 +170,8 @@ class GeneratorService:
             conversations = await generator.generate(seed, count=count)
         except GenerationError:
             raise
+        except (KeyboardInterrupt, SystemExit):
+            raise
         except Exception as exc:
             msg = f"Generation failed: {exc}"
             raise GenerationError(msg) from exc

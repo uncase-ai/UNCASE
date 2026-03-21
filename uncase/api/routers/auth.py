@@ -92,6 +92,10 @@ async def verify_token(
     """Verify an access token from the Authorization header.
 
     Expects: ``Authorization: Bearer <token>``
+
+    Note: This endpoint intentionally returns only ``valid: bool`` to avoid
+    acting as an information oracle that leaks org_id, role, or scopes to
+    unauthenticated callers.
     """
     if not authorization or not authorization.startswith("Bearer "):
         return TokenVerifyResponse(valid=False)
@@ -101,13 +105,9 @@ async def verify_token(
     try:
         from uncase.services.auth import _decode_jwt
 
-        payload = _decode_jwt(token, settings.api_secret_key)
-        return TokenVerifyResponse(
-            valid=True,
-            org_id=payload.get("org_id"),
-            role=payload.get("role"),
-            scopes=payload.get("scopes"),
-        )
+        _decode_jwt(token, settings.api_secret_key)
+        # Only confirm validity — do not leak org_id, role, or scopes
+        return TokenVerifyResponse(valid=True)
     except Exception:
         return TokenVerifyResponse(valid=False)
 

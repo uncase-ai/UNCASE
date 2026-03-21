@@ -1,5 +1,5 @@
 // ─── Type-safe fetch wrapper for UNCASE API ───
-// Supports: retries, abort signals, file uploads, error normalization, API key auth
+// Supports: retries, abort signals, file uploads, error normalization, API key auth, auto token refresh
 
 const DEFAULT_API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 const API_KEY_STORAGE_KEY = 'uncase-api-key'
@@ -78,6 +78,46 @@ function sandboxFallback<T>(): ApiResponse<T> {
   return { data: empty, error: null }
 }
 
+// ─── Auto token refresh on 401 ───
+
+let isRefreshing = false
+let refreshPromise: Promise<boolean> | null = null
+
+async function attemptTokenRefresh(): Promise<boolean> {
+  if (isRefreshing && refreshPromise) return refreshPromise
+
+  isRefreshing = true
+  refreshPromise = (async () => {
+    try {
+      const refreshToken = localStorage.getItem('uncase-refresh-token')
+
+      if (!refreshToken) return false
+
+      const res = await fetch(`${getApiBase()}/api/v1/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      })
+
+      if (!res.ok) return false
+
+      const data = await res.json()
+
+      localStorage.setItem('uncase-access-token', data.access_token)
+      localStorage.setItem('uncase-refresh-token', data.refresh_token)
+
+      return true
+    } catch {
+      return false
+    } finally {
+      isRefreshing = false
+      refreshPromise = null
+    }
+  })()
+
+  return refreshPromise
+}
+
 async function request<T>(
   method: string,
   path: string,
@@ -104,6 +144,8 @@ async function request<T>(
     }
   }
 
+  let refreshAttempted = false
+
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const res = await fetch(url, {
@@ -126,6 +168,27 @@ async function request<T>(
         // In sandbox mode, return safe empty data for 404/405 instead of error
         if (sandbox && (res.status === 404 || res.status === 405)) {
           return sandboxFallback<T>()
+        }
+
+        // Auto-refresh on 401 (expired token) — retry once
+        if (res.status === 401 && !refreshAttempted && !path.includes('/auth/') && typeof window !== 'undefined') {
+          refreshAttempted = true
+          const refreshed = await attemptTokenRefresh()
+
+          if (refreshed) {
+            // Retry the original request with new token
+            const newToken = localStorage.getItem('uncase-access-token')
+
+            if (newToken) headers['Authorization'] = `Bearer ${newToken}`
+            continue
+          }
+
+          // Refresh failed — clear tokens and redirect to login
+          localStorage.removeItem('uncase-access-token')
+          localStorage.removeItem('uncase-refresh-token')
+          window.location.href = '/login'
+
+          return { data: null, error: { status: 401, message: 'Session expired' } }
         }
 
         const errorBody = contentType.includes('json') ? await res.json() : await res.text()

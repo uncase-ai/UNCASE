@@ -12,10 +12,19 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from uncase.api.deps import get_db, get_settings
+from uncase.api.deps import get_current_org, get_db, get_settings
 from uncase.config import UNCASESettings
 from uncase.core.privacy.interceptor import PrivacyInterceptor
-from uncase.exceptions import LLMConfigurationError, PIIDetectedError, ProviderNotFoundError
+from uncase.db.models.organization import OrganizationModel
+from uncase.exceptions import (
+    LLMAuthError,
+    LLMConfigurationError,
+    LLMGatewayError,
+    LLMRateLimitError,
+    LLMTimeoutError,
+    PIIDetectedError,
+    ProviderNotFoundError,
+)
 from uncase.services.provider import ProviderService, normalize_model_for_litellm
 
 router = APIRouter(prefix="/api/v1/gateway", tags=["gateway"])
@@ -125,12 +134,14 @@ async def chat_proxy(
     request: ChatRequest,
     session: Annotated[AsyncSession, Depends(get_db)],
     settings: Annotated[UNCASESettings, Depends(get_settings)],
+    org: Annotated[OrganizationModel, Depends(get_current_org)],
 ) -> ChatResponse:
     """Proxy a chat completion request through the LLM gateway.
 
     This endpoint acts as a universal proxy to any configured LLM provider.
     All traffic is scanned for PII both outbound (to the LLM) and inbound
-    (from the LLM response).
+    (from the LLM response). Requires API key authentication since LLM
+    calls incur costs.
 
     Flow:
     1. Resolve provider (explicit ID or default)
@@ -192,14 +203,27 @@ async def chat_proxy(
             **({"tools": [t.model_dump() for t in request.tools]} if request.tools else {}),
             **({"tool_choice": request.tool_choice} if request.tool_choice else {}),
         )
+    except TimeoutError as exc:
+        logger.error("gateway_llm_timeout", provider=provider.name, model=model_to_use, error=str(exc)[:200])
+        raise LLMTimeoutError(f"LLM request timed out: {exc!s}") from exc
     except Exception as exc:
+        # Differentiate litellm-specific errors by class name to avoid
+        # importing litellm at module level (it's a heavy dependency).
+        exc_class = type(exc).__name__
+        if exc_class == "RateLimitError":
+            logger.error("gateway_llm_rate_limit", provider=provider.name, model=model_to_use, error=str(exc)[:200])
+            raise LLMRateLimitError(f"LLM rate limit exceeded: {exc!s}") from exc
+        if exc_class == "AuthenticationError":
+            logger.error("gateway_llm_auth_error", provider=provider.name, model=model_to_use, error=str(exc)[:200])
+            raise LLMAuthError(f"LLM authentication failed: {exc!s}") from exc
         logger.error(
             "gateway_llm_error",
             provider=provider.name,
             model=model_to_use,
             error=str(exc)[:200],
+            error_type=exc_class,
         )
-        raise LLMConfigurationError(f"LLM call failed: {exc!s}") from exc
+        raise LLMGatewayError(f"LLM call failed: {exc!s}") from exc
 
     # 4. Extract response text
     assistant_text = response.choices[0].message.content or ""
@@ -234,6 +258,7 @@ async def chat_proxy(
         "gateway_chat_complete",
         provider=provider.name,
         model=model_to_use,
+        organization_id=org.id,
         outbound_pii=outbound_pii_count,
         inbound_pii=inbound_pii_count,
         privacy_mode=request.privacy_mode,
@@ -264,10 +289,12 @@ async def chat_proxy_stream(
     request: ChatRequest,
     session: Annotated[AsyncSession, Depends(get_db)],
     settings: Annotated[UNCASESettings, Depends(get_settings)],
+    org: Annotated[OrganizationModel, Depends(get_current_org)],
 ) -> StreamingResponse:
     """Stream a chat completion via SSE.
 
     Same as /chat but streams token-by-token using Server-Sent Events.
+    Requires API key authentication since LLM calls incur costs.
     Privacy: outbound scan happens before streaming starts (fail-fast).
     Inbound scan happens after streaming completes.
     Final SSE event includes privacy summary and token usage.
@@ -383,6 +410,7 @@ async def chat_proxy_stream(
             "gateway_stream_complete",
             provider=provider.name,
             model=model_to_use,
+            organization_id=org.id,
             outbound_pii=outbound_pii_count,
             inbound_pii=inbound_pii_count,
             response_length=len(full_response),

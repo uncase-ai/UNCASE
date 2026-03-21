@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import JSON, DateTime, Float, Index, Integer, String, Text
+from sqlalchemy import JSON, DateTime, Float, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from uncase.db.base import Base, TimestampMixin
@@ -34,7 +34,11 @@ class JobModel(Base, TimestampMixin):
 
     # Ownership
     organization_id: Mapped[str | None] = mapped_column(
-        String(32), nullable=True, index=True, comment="Owning organization"
+        String(32),
+        ForeignKey("organizations.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+        comment="Owning organization",
     )
 
     # Configuration

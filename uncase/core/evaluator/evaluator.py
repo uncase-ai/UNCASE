@@ -10,6 +10,7 @@ from uncase.core.evaluator.base import BaseEvaluator
 from uncase.core.evaluator.metrics.coherence import DialogCoherenceMetric
 from uncase.core.evaluator.metrics.diversity import LexicalDiversityMetric
 from uncase.core.evaluator.metrics.fidelity import FactualFidelityMetric
+from uncase.core.evaluator.metrics.memorization import MemorizationMetric
 from uncase.core.evaluator.metrics.privacy import PrivacyMetric
 from uncase.core.evaluator.metrics.rouge import ROUGELMetric
 from uncase.core.evaluator.metrics.tool_call import ToolCallValidatorMetric
@@ -68,6 +69,7 @@ class ConversationEvaluator(BaseEvaluator):
             DialogCoherenceMetric(),
             ToolCallValidatorMetric(),
             PrivacyMetric(),
+            MemorizationMetric(),
             EmbeddingDriftMetric(),
             SemanticFidelityMetric(),
         ]
@@ -113,9 +115,8 @@ class ConversationEvaluator(BaseEvaluator):
             )
 
         # Build QualityMetrics from computed scores.
-        # Memorization is set to 0.0 by default — it requires a trained
-        # model to test extraction attacks, which is a Layer 4 concern.
-        # The evaluator accepts an override if one is provided.
+        # Memorization is computed by MemorizationMetric via LCS-based
+        # extraction attack simulation against seed text.
         metrics = QualityMetrics(
             rouge_l=scores.get("rouge_l", 0.0),
             fidelidad_factual=scores.get("fidelidad_factual", 0.0),
@@ -129,6 +130,15 @@ class ConversationEvaluator(BaseEvaluator):
         )
 
         composite, weighted_mean, passed, failures = compute_composite_score(metrics)
+
+        if skipped:
+            logger.info(
+                "composite_score_computed_with_skipped_metrics",
+                conversation_id=conversation.conversation_id,
+                skipped_metrics=skipped,
+                composite_score=composite,
+                note="Skipped metrics excluded from composite MIN and threshold checks",
+            )
 
         report = QualityReport(
             conversation_id=conversation.conversation_id,

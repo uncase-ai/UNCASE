@@ -5,12 +5,16 @@ Exposes the AgenticExtractionEngine as a stateful, turn-by-turn REST API.
 
 from __future__ import annotations
 
-import structlog
-from fastapi import APIRouter, HTTPException, status
+from typing import Annotated
 
+import structlog
+from fastapi import APIRouter, Depends, HTTPException, status
+
+from uncase.api.deps import get_optional_org
 from uncase.api.session_store import extraction_sessions
 from uncase.core.seed_engine.layer0.config import Layer0Config
 from uncase.core.seed_engine.layer0.engine import AgenticExtractionEngine
+from uncase.db.models.organization import OrganizationModel
 from uncase.schemas.layer0_api import (
     ProgressResponse,
     StartExtractionRequest,
@@ -29,7 +33,10 @@ router = APIRouter(prefix="/api/v1/seeds/extract", tags=["layer0"])
     response_model=StartExtractionResponse,
     status_code=status.HTTP_201_CREATED,
 )
-async def start_extraction(body: StartExtractionRequest) -> StartExtractionResponse:
+async def start_extraction(
+    body: StartExtractionRequest,
+    org: Annotated[OrganizationModel | None, Depends(get_optional_org)],
+) -> StartExtractionResponse:
     """Create a new extraction session and return the initial question."""
     config = Layer0Config(
         industry=body.industry,
@@ -37,7 +44,8 @@ async def start_extraction(body: StartExtractionRequest) -> StartExtractionRespo
         default_locale=body.locale,
     )
     engine = AgenticExtractionEngine(config=config)
-    session_id = extraction_sessions.create(engine)
+    organization_id = org.id if org else None
+    session_id = extraction_sessions.create(engine, organization_id=organization_id)
 
     initial = await engine.get_initial_question()
 
@@ -45,6 +53,7 @@ async def start_extraction(body: StartExtractionRequest) -> StartExtractionRespo
         "extraction_started",
         session_id=session_id,
         industry=body.industry,
+        organization_id=organization_id,
     )
 
     return StartExtractionResponse(session_id=session_id, message=initial)

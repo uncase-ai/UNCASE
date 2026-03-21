@@ -1,11 +1,13 @@
 """Health check endpoints."""
 
+from __future__ import annotations
+
 from typing import Annotated
 
 import structlog
 from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse
-from sqlalchemy import text
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from uncase._version import __version__
@@ -50,4 +52,32 @@ async def health_db(session: Annotated[AsyncSession, Depends(get_db)]) -> dict[s
         "version": __version__,
         "database": db_status,
         "llm_configured": settings.llm_available,
+    }
+
+
+@router.get("/health/setup")
+async def health_setup(session: Annotated[AsyncSession, Depends(get_db)]) -> dict[str, object]:
+    """Check whether the system has been set up (any users/orgs exist).
+
+    Used by the frontend to decide whether to show the login screen
+    or the initial setup/onboarding flow.
+    """
+    from uncase.db.models.organization import OrganizationModel
+    from uncase.db.models.user import UserModel
+
+    try:
+        user_count = (await session.execute(select(func.count(UserModel.id)))).scalar_one()
+        org_count = (await session.execute(select(func.count(OrganizationModel.id)))).scalar_one()
+    except Exception:
+        logger.warning("health_setup_check_failed", version=__version__)
+        return {
+            "has_users": False,
+            "has_organizations": False,
+            "setup_complete": False,
+        }
+
+    return {
+        "has_users": user_count > 0,
+        "has_organizations": org_count > 0,
+        "setup_complete": user_count > 0 and org_count > 0,
     }

@@ -67,10 +67,12 @@ async def list_seeds(
 async def get_seed(
     seed_id: str,
     session: Annotated[AsyncSession, Depends(get_db)],
+    org: Annotated[OrganizationModel | None, Depends(get_optional_org)],
 ) -> SeedResponse:
     """Get a single seed by ID."""
     service = _get_service(session)
-    return await service.get_seed(seed_id)
+    org_id = org.id if org else None
+    return await service.get_seed(seed_id, organization_id=org_id)
 
 
 @router.put("/{seed_id}", response_model=SeedResponse)
@@ -78,10 +80,12 @@ async def update_seed(
     seed_id: str,
     data: SeedUpdateRequest,
     session: Annotated[AsyncSession, Depends(get_db)],
+    org: Annotated[OrganizationModel | None, Depends(get_optional_org)],
 ) -> SeedResponse:
     """Update a seed (partial update — only provided fields are changed)."""
     service = _get_service(session)
-    result = await service.update_seed(seed_id, data)
+    org_id = org.id if org else None
+    result = await service.update_seed(seed_id, data, organization_id=org_id)
     logger.info("seed_updated", seed_id=seed_id)
     return result
 
@@ -91,10 +95,12 @@ async def rate_seed(
     seed_id: str,
     data: SeedRatingRequest,
     session: Annotated[AsyncSession, Depends(get_db)],
+    org: Annotated[OrganizationModel | None, Depends(get_optional_org)],
 ) -> SeedResponse:
     """Submit a rating for a seed. Computes running average."""
     service = _get_service(session)
-    result = await service.rate_seed(seed_id, data.rating)
+    org_id = org.id if org else None
+    result = await service.rate_seed(seed_id, data.rating, organization_id=org_id)
     logger.info("seed_rated", seed_id=seed_id, rating=data.rating, new_avg=result.rating)
     return result
 
@@ -103,8 +109,10 @@ async def rate_seed(
 async def delete_seed(
     seed_id: str,
     session: Annotated[AsyncSession, Depends(get_db)],
+    org: Annotated[OrganizationModel | None, Depends(get_optional_org)],
 ) -> None:
     """Delete a seed."""
     service = _get_service(session)
-    await service.delete_seed(seed_id)
+    org_id = org.id if org else None
+    await service.delete_seed(seed_id, organization_id=org_id)
     logger.info("seed_deleted", seed_id=seed_id)

@@ -3,6 +3,7 @@
 from uncase.core.evaluator.metrics.coherence import DialogCoherenceMetric
 from uncase.core.evaluator.metrics.diversity import LexicalDiversityMetric
 from uncase.core.evaluator.metrics.fidelity import FactualFidelityMetric
+from uncase.core.evaluator.metrics.memorization import MemorizationMetric
 from uncase.core.evaluator.metrics.privacy import PrivacyMetric
 from uncase.core.evaluator.metrics.rouge import ROUGELMetric
 from uncase.core.evaluator.metrics.tool_call import ToolCallValidatorMetric
@@ -13,6 +14,7 @@ __all__ = [
     "EmbeddingDriftMetric",
     "FactualFidelityMetric",
     "LexicalDiversityMetric",
+    "MemorizationMetric",
     "PrivacyMetric",
     "ROUGELMetric",
     "SemanticFidelityMetric",

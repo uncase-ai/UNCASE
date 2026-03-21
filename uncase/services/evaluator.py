@@ -64,7 +64,16 @@ class EvaluatorService:
             bc = BlockchainService(self._session)
             await bc.hash_and_store(report, model.id)
         except Exception as exc:
-            logger.warning("blockchain_hash_failed", report_id=model.id, error=str(exc))
+            logger.error(
+                "blockchain_hash_failed",
+                report_id=model.id,
+                conversation_id=report.conversation_id,
+                seed_id=report.seed_id,
+                dominio=dominio,
+                blockchain_hash_stored=False,
+                error=str(exc),
+                exc_info=True,
+            )
 
         logger.info(
             "evaluation_persisted",

@@ -109,7 +109,7 @@ class PipelineOrchestrator:
 
         self._settings = settings or _Settings()
         self._progress = progress_callback or (lambda *_args: None)
-        self._seed_engine = SeedEngine()
+        self._seed_engine = SeedEngine(confidence_threshold=self._settings.uncase_pii_confidence_threshold)
         self._evaluator = ConversationEvaluator()
         self._semaphore = asyncio.Semaphore(max_concurrency)
         self._max_concurrency = max_concurrency
@@ -126,8 +126,8 @@ class PipelineOrchestrator:
         base_model: str = "meta-llama/Llama-3.1-8B",
         use_qlora: bool = True,
         use_dp_sgd: bool = False,
-        dp_epsilon: float = 8.0,
-        output_dir: str = "./outputs/pipeline",
+        dp_epsilon: float | None = None,
+        output_dir: str | None = None,
         run_id: str | None = None,
     ) -> PipelineResult:
         """Run the full end-to-end pipeline.
@@ -150,6 +150,10 @@ class PipelineOrchestrator:
             PipelineResult with all artifacts and statistics.
         """
         import uuid
+
+        # Resolve None defaults from settings
+        dp_epsilon = dp_epsilon if dp_epsilon is not None else self._settings.uncase_dp_epsilon
+        output_dir = output_dir if output_dir is not None else self._settings.uncase_models_dir
 
         run_id = run_id or uuid.uuid4().hex[:12]
         total_start = time.monotonic()

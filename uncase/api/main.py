@@ -239,8 +239,9 @@ def create_app() -> FastAPI:
         title="UNCASE API",
         description="SCSF framework API for synthetic conversational data generation.",
         version=__version__,
-        docs_url="/docs",
-        redoc_url="/redoc",
+        docs_url=None if settings.is_production else "/docs",
+        redoc_url=None if settings.is_production else "/redoc",
+        openapi_url=None if settings.is_production else "/openapi.json",
         lifespan=lifespan,
     )
 
@@ -261,8 +262,16 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=settings.cors_origins_list,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=[
+            "Authorization",
+            "Content-Type",
+            "X-API-Key",
+            "X-Request-ID",
+            "X-HF-Token",
+            "Accept",
+            "Origin",
+        ],
     )
 
     # Exception handlers

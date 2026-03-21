@@ -8,11 +8,13 @@ import structlog
 from fastapi import APIRouter, Depends, File, Header, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from uncase.api.deps import get_db
+from uncase.api.deps import get_db, get_optional_org, get_settings
+from uncase.config import UNCASESettings
 from uncase.connectors.huggingface import HuggingFaceConnector
 from uncase.connectors.webhook import WebhookConnector
 from uncase.connectors.whatsapp import WhatsAppConnector
 from uncase.core.privacy.scanner import PIIScanner
+from uncase.db.models.organization import OrganizationModel
 from uncase.schemas.connector import (
     ConnectorImportResponse,
     HFDatasetInfoResponse,
@@ -32,6 +34,8 @@ logger = structlog.get_logger(__name__)
 async def import_whatsapp(
     file: Annotated[UploadFile, File(description="WhatsApp chat export (.txt)")],
     session: Annotated[AsyncSession, Depends(get_db)],
+    settings: Annotated[UNCASESettings, Depends(get_settings)],
+    org: Annotated[OrganizationModel | None, Depends(get_optional_org)],
 ) -> ConnectorImportResponse:
     """Import conversations from a WhatsApp chat export file.
 
@@ -43,12 +47,14 @@ async def import_whatsapp(
     - Anonymizes detected PII with placeholder tokens
     """
     content = await file.read()
-    connector = WhatsAppConnector()
+    connector = WhatsAppConnector(pii_confidence=settings.uncase_pii_confidence_threshold)
     result = await connector.ingest(content)
 
+    organization_id = org.id if org else None
     logger.info(
         "whatsapp_import_api",
         filename=file.filename,
+        organization_id=organization_id,
         conversations=result.total_imported,
         pii_anonymized=result.total_pii_anonymized,
     )
@@ -67,6 +73,8 @@ async def import_whatsapp(
 async def receive_webhook(
     payload: WebhookPayload,
     session: Annotated[AsyncSession, Depends(get_db)],
+    settings: Annotated[UNCASESettings, Depends(get_settings)],
+    org: Annotated[OrganizationModel | None, Depends(get_optional_org)],
 ) -> ConnectorImportResponse:
     """Receive conversation data from external systems.
 
@@ -76,11 +84,13 @@ async def receive_webhook(
     """
     import json
 
-    connector = WebhookConnector()
+    connector = WebhookConnector(pii_confidence=settings.uncase_pii_confidence_threshold)
     result = await connector.ingest(json.dumps(payload.model_dump()))
 
+    organization_id = org.id if org else None
     logger.info(
         "webhook_import_api",
+        organization_id=organization_id,
         conversations=result.total_imported,
         pii_anonymized=result.total_pii_anonymized,
     )
@@ -98,13 +108,14 @@ async def receive_webhook(
 @router.post("/scan-pii", response_model=PIIScanResponse)
 async def scan_text_for_pii(
     text: str,
+    settings: Annotated[UNCASESettings, Depends(get_settings)],
 ) -> PIIScanResponse:
     """Scan a text for PII without importing.
 
     Useful for previewing what PII would be detected and anonymized
     before running a full import.
     """
-    scanner = PIIScanner()
+    scanner = PIIScanner(confidence_threshold=settings.uncase_pii_confidence_threshold)
     result = scanner.scan_and_anonymize(text)
 
     return PIIScanResponse(
@@ -158,6 +169,7 @@ async def search_hf_datasets(
 @router.post("/huggingface/import", response_model=ConnectorImportResponse)
 async def import_hf_dataset(
     repo_id: Annotated[str, Query(description="HuggingFace dataset repo (user/dataset)")],
+    org: Annotated[OrganizationModel | None, Depends(get_optional_org)],
     split: Annotated[str, Query(description="Dataset split to import")] = "train",
     token: Annotated[str | None, Header(alias="X-HF-Token", description="HuggingFace API token")] = None,
 ) -> ConnectorImportResponse:
@@ -169,10 +181,12 @@ async def import_hf_dataset(
     connector = HuggingFaceConnector(token=token)
     result = await connector.download_dataset(repo_id=repo_id, split=split, token=token)
 
+    organization_id = org.id if org else None
     logger.info(
         "hf_import_api",
         repo_id=repo_id,
         split=split,
+        organization_id=organization_id,
         imported=result.total_imported,
         skipped=result.total_skipped,
     )
@@ -190,6 +204,7 @@ async def import_hf_dataset(
 @router.post("/huggingface/upload", response_model=HFUploadResponse)
 async def upload_to_hf(
     request: HFUploadRequest,
+    org: Annotated[OrganizationModel | None, Depends(get_optional_org)],
 ) -> HFUploadResponse:
     """Upload conversations to Hugging Face as a JSONL dataset.
 
@@ -208,9 +223,11 @@ async def upload_to_hf(
         private=request.private,
     )
 
+    organization_id = org.id if org else None
     logger.info(
         "hf_upload_api",
         repo_id=request.repo_id,
+        organization_id=organization_id,
         conversations=len(request.conversation_ids),
     )
 

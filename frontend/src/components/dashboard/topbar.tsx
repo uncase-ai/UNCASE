@@ -31,7 +31,7 @@ interface TopbarProps {
 
 export function Topbar({ sidebarCollapsed, onToggleSidebar, onOpenMobile }: TopbarProps) {
   const { theme, setTheme } = useTheme()
-  const { user, isDemo, logout } = useAuth()
+  const { user, isDemo, isOpenMode, logout } = useAuth()
   const [apiConnected, setApiConnected] = useState<boolean | null>(null)
 
   const checkHealth = useCallback(async () => {
@@ -175,6 +175,7 @@ export function Topbar({ sidebarCollapsed, onToggleSidebar, onOpenMobile }: Topb
                 <div className="flex items-center gap-1.5 pt-0.5">
                   <Badge variant="outline" className="px-1.5 py-0 text-xs">{user.role}</Badge>
                   {isDemo && <Badge variant="secondary" className="px-1.5 py-0 text-xs">Demo</Badge>}
+                  {isOpenMode && <Badge variant="secondary" className="px-1.5 py-0 text-xs">Local</Badge>}
                 </div>
               </div>
             </DropdownMenuLabel>

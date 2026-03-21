@@ -217,6 +217,34 @@ class LLMConfigurationError(UNCASEError):
     detail = "LLM provider not configured"
 
 
+class LLMGatewayError(UNCASEError):
+    """LLM upstream call failed (generic upstream failure)."""
+
+    status_code = 502
+    detail = "LLM upstream call failed"
+
+
+class LLMTimeoutError(UNCASEError):
+    """LLM upstream call timed out."""
+
+    status_code = 504
+    detail = "LLM request timed out"
+
+
+class LLMRateLimitError(UNCASEError):
+    """LLM provider rate limit exceeded."""
+
+    status_code = 429
+    detail = "LLM rate limit exceeded"
+
+
+class LLMAuthError(UNCASEError):
+    """LLM provider authentication failed."""
+
+    status_code = 401
+    detail = "LLM provider authentication failed"
+
+
 # -- Sandbox --
 
 

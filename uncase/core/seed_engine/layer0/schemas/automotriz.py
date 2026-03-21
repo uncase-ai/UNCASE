@@ -160,8 +160,7 @@ class ContextoConversacion(BaseModel):
     horario_contacto: str | None = Field(
         default=None,
         description=(
-            "Preferencia de horario de contacto. "
-            "Valores: 'manana', 'tarde', 'noche', 'cualquier_hora'. Optional."
+            "Preferencia de horario de contacto. Valores: 'manana', 'tarde', 'noche', 'cualquier_hora'. Optional."
         ),
     )
     region_geografica: str | None = Field(

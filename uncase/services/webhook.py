@@ -181,7 +181,14 @@ class WebhookService:
             )
             return len(matching)
         except Exception:
-            logger.warning("webhook_dispatch_failed", event_type=event_type, exc_info=True)
+            logger.error(
+                "webhook_dispatch_failed",
+                event_type=event_type,
+                organization_id=organization_id,
+                resource_id=resource_id,
+                resource_type=resource_type,
+                exc_info=True,
+            )
             return 0
 
     # -- Delivery execution --

@@ -139,19 +139,30 @@ class BlockchainService:
             )
             self._session.add(proof_model)
 
-        # Attempt on-chain anchoring
+        # Attempt on-chain anchoring with retry
         if self._anchor_client:
-            try:
-                tx_hash = await self._anchor_client.anchor_root(next_batch_number, tree.root)
-                batch.tx_hash = tx_hash
-                batch.anchored = True
-            except Exception as exc:
-                batch.anchor_error = str(exc)
-                logger.error(
-                    "batch_anchor_failed",
-                    batch_number=next_batch_number,
-                    error=str(exc),
-                )
+            max_retries = 3
+            for attempt in range(1, max_retries + 1):
+                try:
+                    tx_hash = await self._anchor_client.anchor_root(next_batch_number, tree.root)
+                    batch.tx_hash = tx_hash
+                    batch.anchored = True
+                    batch.anchor_error = None
+                    break
+                except Exception as exc:
+                    batch.anchor_error = str(exc)
+                    logger.error(
+                        "batch_anchor_failed",
+                        batch_number=next_batch_number,
+                        attempt=attempt,
+                        max_retries=max_retries,
+                        error=str(exc),
+                        exc_info=attempt == max_retries,
+                    )
+                    if attempt < max_retries:
+                        import asyncio
+
+                        await asyncio.sleep(2**attempt)  # Exponential backoff: 2s, 4s
 
         await self._session.commit()
 

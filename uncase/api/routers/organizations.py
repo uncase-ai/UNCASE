@@ -3,10 +3,11 @@
 from typing import Annotated
 
 import structlog
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from uncase.api.deps import get_db
+from uncase.api.deps import get_db, get_optional_org, require_scopes
+from uncase.db.models.organization import OrganizationModel
 from uncase.schemas.organization import (
     APIKeyCreate,
     APIKeyCreatedResponse,
@@ -17,9 +18,9 @@ from uncase.schemas.organization import (
 )
 from uncase.services.organization import OrganizationService
 
-# NOTE: Phase 0 — Organization endpoints are intentionally unauthenticated
-# to allow bootstrapping the first organization and API key. Authentication
-# guards (require_scopes("admin")) will be added in Phase 1.
+# NOTE: Phase 1 — Organization creation is open for bootstrapping; first API key
+# creation is open if the org has no keys yet (bootstrapping). All other endpoints
+# require admin API key.
 router = APIRouter(prefix="/api/v1/organizations", tags=["organizations"])
 
 logger = structlog.get_logger(__name__)
@@ -48,8 +49,11 @@ async def create_organization(
 async def get_organization(
     org_id: str,
     session: Annotated[AsyncSession, Depends(get_db)],
+    org: Annotated[OrganizationModel, Depends(require_scopes("admin"))],
 ) -> OrganizationResponse:
     """Get an organization by ID."""
+    if org.id != org_id:
+        raise HTTPException(status_code=403, detail="Access denied: organization mismatch")
     service = _get_service(session)
     return await service.get_organization(org_id)
 
@@ -59,8 +63,11 @@ async def update_organization(
     org_id: str,
     data: OrganizationUpdate,
     session: Annotated[AsyncSession, Depends(get_db)],
+    org: Annotated[OrganizationModel, Depends(require_scopes("admin"))],
 ) -> OrganizationResponse:
     """Update an organization."""
+    if org.id != org_id:
+        raise HTTPException(status_code=403, detail="Access denied: organization mismatch")
     service = _get_service(session)
     result = await service.update_organization(org_id, data)
     logger.info("organization_updated", org_id=org_id)
@@ -79,14 +86,27 @@ async def create_api_key(
     org_id: str,
     data: APIKeyCreate,
     session: Annotated[AsyncSession, Depends(get_db)],
+    org: Annotated[OrganizationModel | None, Depends(get_optional_org)] = None,
 ) -> APIKeyCreatedResponse:
     """Issue a new API key for an organization.
 
     The full key is returned exactly once in the response.
+    Bootstrapping: the first API key can be created without auth
+    (when the org has zero existing keys). Subsequent keys require
+    admin scope.
     """
     service = _get_service(session)
+    existing_keys = await service.list_api_keys(org_id)
+    is_bootstrap = len(existing_keys) == 0
+
+    if not is_bootstrap:
+        if org is None:
+            raise HTTPException(status_code=401, detail="X-API-Key header required")
+        if org.id != org_id:
+            raise HTTPException(status_code=403, detail="Access denied: organization mismatch")
+
     result = await service.create_api_key(org_id, data)
-    logger.info("api_key_created", org_id=org_id, key_name=data.name)
+    logger.info("api_key_created", org_id=org_id, key_name=data.name, bootstrap=is_bootstrap)
     return result
 
 
@@ -94,8 +114,11 @@ async def create_api_key(
 async def list_api_keys(
     org_id: str,
     session: Annotated[AsyncSession, Depends(get_db)],
+    org: Annotated[OrganizationModel, Depends(require_scopes("admin"))],
 ) -> list[APIKeyResponse]:
     """List all API keys for an organization."""
+    if org.id != org_id:
+        raise HTTPException(status_code=403, detail="Access denied: organization mismatch")
     service = _get_service(session)
     return await service.list_api_keys(org_id)
 
@@ -105,8 +128,11 @@ async def revoke_api_key(
     org_id: str,
     key_id: str,
     session: Annotated[AsyncSession, Depends(get_db)],
+    org: Annotated[OrganizationModel, Depends(require_scopes("admin"))],
 ) -> None:
     """Revoke an API key."""
+    if org.id != org_id:
+        raise HTTPException(status_code=403, detail="Access denied: organization mismatch")
     service = _get_service(session)
     await service.revoke_api_key(org_id, key_id)
     logger.info("api_key_revoked", org_id=org_id, key_id=key_id)
@@ -117,8 +143,11 @@ async def rotate_api_key(
     org_id: str,
     key_id: str,
     session: Annotated[AsyncSession, Depends(get_db)],
+    org: Annotated[OrganizationModel, Depends(require_scopes("admin"))],
 ) -> APIKeyCreatedResponse:
     """Rotate an API key: revoke old and issue new with same name/scopes."""
+    if org.id != org_id:
+        raise HTTPException(status_code=403, detail="Access denied: organization mismatch")
     service = _get_service(session)
     result = await service.rotate_api_key(org_id, key_id)
     logger.info("api_key_rotated", org_id=org_id, old_key_id=key_id)

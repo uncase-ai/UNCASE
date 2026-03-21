@@ -102,7 +102,7 @@ const LoginForm = () => {
       </div>
 
       <PrimaryFlowButton className='w-full *:w-full [&>button]:after:-inset-55' type='submit' disabled={isSubmitting}>
-        {isSubmitting ? <><Loader2 className='mr-2 size-4 animate-spin' />Signing in...</> : 'Login to flow'}
+        {isSubmitting ? <><Loader2 className='mr-2 size-4 animate-spin' />Signing in...</> : 'Sign In'}
       </PrimaryFlowButton>
     </form>
   )

@@ -34,8 +34,10 @@ class TestVerifyEndpoint:
         assert response.status_code == 200
         data = response.json()
         assert data["valid"] is True
-        assert data["org_id"] == "org123"
-        assert data["role"] == "admin"
+        # org_id/role/scopes are intentionally stripped from verify response
+        # to prevent the endpoint from being used as an information oracle
+        assert data.get("org_id") is None
+        assert data.get("role") is None
 
     async def test_verify_expired_token(self, client: AsyncClient) -> None:
         token = _create_jwt(

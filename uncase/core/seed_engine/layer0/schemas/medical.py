@@ -44,8 +44,7 @@ class PacientePerfil(BaseModel):
     alergias_conocidas: list[str] | None = Field(
         default=None,
         description=(
-            "Lista de alergias conocidas del paciente. "
-            "Ejemplos: 'penicilina', 'sulfas', 'latex', 'mariscos'. Optional."
+            "Lista de alergias conocidas del paciente. Ejemplos: 'penicilina', 'sulfas', 'latex', 'mariscos'. Optional."
         ),
     )
     condiciones_cronicas: list[str] | None = Field(
@@ -151,16 +150,12 @@ class ContextoClinico(BaseModel):
     requiere_interprete: bool | None = Field(
         default=None,
         description=(
-            "Si se necesita un intérprete por barrera lingüística o "
-            "discapacidad auditiva del paciente. Optional."
+            "Si se necesita un intérprete por barrera lingüística o discapacidad auditiva del paciente. Optional."
         ),
     )
     acompanante: str | None = Field(
         default=None,
-        description=(
-            "Si el paciente viene acompañado y por quién. "
-            "Valores: 'solo', 'familiar', 'cuidador'. Optional."
-        ),
+        description=("Si el paciente viene acompañado y por quién. Valores: 'solo', 'familiar', 'cuidador'. Optional."),
     )
 
 
@@ -371,9 +366,7 @@ class SeedMedical(BaseSeedExtraction):
                 f"Paciente {tipo_paciente}, severidad: {severidad}, "
                 f"cobertura: {cobertura}, estado emocional: {estado_emocional}"
             ),
-            "physician": (
-                f"Médico especialista en {especialidad} con acceso al expediente clínico"
-            ),
+            "physician": (f"Médico especialista en {especialidad} con acceso al expediente clínico"),
         }
 
         # Build flow steps
@@ -394,9 +387,7 @@ class SeedMedical(BaseSeedExtraction):
         # Build constraints from clinical rules
         restricciones: list[str] = []
         if self.reglas_clinicas.contraindicaciones:
-            restricciones.extend(
-                f"Contraindicación: {c}" for c in self.reglas_clinicas.contraindicaciones
-            )
+            restricciones.extend(f"Contraindicación: {c}" for c in self.reglas_clinicas.contraindicaciones)
         if self.reglas_clinicas.requiere_consentimiento_informado:
             restricciones.append("Requiere obtención de consentimiento informado")
         if self.reglas_clinicas.nivel_confidencialidad == "alto":
@@ -406,13 +397,9 @@ class SeedMedical(BaseSeedExtraction):
         if self.reglas_clinicas.marco_regulatorio:
             restricciones.append(f"Marco regulatorio: {self.reglas_clinicas.marco_regulatorio}")
         if self.reglas_clinicas.guias_clinicas:
-            restricciones.extend(
-                f"Seguir guía: {g}" for g in self.reglas_clinicas.guias_clinicas
-            )
+            restricciones.extend(f"Seguir guía: {g}" for g in self.reglas_clinicas.guias_clinicas)
         if self.paciente_perfil.alergias_conocidas:
-            restricciones.extend(
-                f"Alergia conocida: {a}" for a in self.paciente_perfil.alergias_conocidas
-            )
+            restricciones.extend(f"Alergia conocida: {a}" for a in self.paciente_perfil.alergias_conocidas)
 
         # Build context from clinical context + patient profile
         contexto_parts: list[str] = [
@@ -423,17 +410,11 @@ class SeedMedical(BaseSeedExtraction):
         if duracion:
             contexto_parts.append(f"Duración de síntomas: {duracion}")
         if self.paciente_perfil.condiciones_cronicas:
-            contexto_parts.append(
-                f"Condiciones crónicas: {', '.join(self.paciente_perfil.condiciones_cronicas)}"
-            )
+            contexto_parts.append(f"Condiciones crónicas: {', '.join(self.paciente_perfil.condiciones_cronicas)}")
         if self.paciente_perfil.medicamentos_actuales:
-            contexto_parts.append(
-                f"Medicamentos actuales: {', '.join(self.paciente_perfil.medicamentos_actuales)}"
-            )
+            contexto_parts.append(f"Medicamentos actuales: {', '.join(self.paciente_perfil.medicamentos_actuales)}")
         if self.motivo_consulta.tratamientos_previos:
-            contexto_parts.append(
-                f"Tratamientos previos: {', '.join(self.motivo_consulta.tratamientos_previos)}"
-            )
+            contexto_parts.append(f"Tratamientos previos: {', '.join(self.motivo_consulta.tratamientos_previos)}")
         if self.motivo_consulta.es_seguimiento:
             contexto_parts.append("Consulta de seguimiento")
         if self.motivo_consulta.fuente_referencia:

@@ -98,6 +98,11 @@ class ConversationService:
                 self.session.add(model)
                 created += 1
             except Exception as exc:
+                logger.warning(
+                    "bulk_create_item_failed",
+                    conversation_id=item.conversation_id,
+                    error=str(exc),
+                )
                 errors.append(f"{item.conversation_id}: {exc}")
 
         if created > 0:
@@ -106,9 +111,11 @@ class ConversationService:
         logger.info("conversations_bulk_created", created=created, skipped=skipped, errors=len(errors))
         return ConversationBulkCreateResponse(created=created, skipped=skipped, errors=errors)
 
-    async def get_conversation(self, conversation_id: str) -> ConversationResponse:
+    async def get_conversation(
+        self, conversation_id: str, *, organization_id: str | None = None
+    ) -> ConversationResponse:
         """Get a conversation by its conversation_id."""
-        model = await self._get_or_raise(conversation_id)
+        model = await self._get_or_raise(conversation_id, organization_id=organization_id)
         return self._to_response(model)
 
     async def list_conversations(
@@ -166,9 +173,11 @@ class ConversationService:
             page_size=page_size,
         )
 
-    async def update_conversation(self, conversation_id: str, data: ConversationUpdateRequest) -> ConversationResponse:
+    async def update_conversation(
+        self, conversation_id: str, data: ConversationUpdateRequest, *, organization_id: str | None = None
+    ) -> ConversationResponse:
         """Update conversation metadata (status, rating, tags, notes)."""
-        model = await self._get_or_raise(conversation_id)
+        model = await self._get_or_raise(conversation_id, organization_id=organization_id)
 
         update_data = data.model_dump(exclude_unset=True)
         if not update_data:
@@ -188,20 +197,27 @@ class ConversationService:
         logger.info("conversation_updated", conversation_id=conversation_id, fields=list(update_data.keys()))
         return self._to_response(model)
 
-    async def delete_conversation(self, conversation_id: str) -> None:
+    async def delete_conversation(self, conversation_id: str, *, organization_id: str | None = None) -> None:
         """Delete a conversation by conversation_id."""
-        model = await self._get_or_raise(conversation_id)
+        model = await self._get_or_raise(conversation_id, organization_id=organization_id)
         await self.session.delete(model)
         await self.session.commit()
         logger.info("conversation_deleted", conversation_id=conversation_id)
 
     # -- Helpers --
 
-    async def _get_or_raise(self, conversation_id: str) -> ConversationModel:
-        """Fetch by conversation_id or raise ConversationNotFoundError."""
-        result = await self.session.execute(
-            select(ConversationModel).where(ConversationModel.conversation_id == conversation_id)
-        )
+    async def _get_or_raise(self, conversation_id: str, *, organization_id: str | None = None) -> ConversationModel:
+        """Fetch by conversation_id or raise ConversationNotFoundError.
+
+        When *organization_id* is provided the query is scoped to that org.
+        If the conversation exists but belongs to a different org, we still
+        raise ``ConversationNotFoundError`` so we don't reveal resources
+        across tenants.
+        """
+        query = select(ConversationModel).where(ConversationModel.conversation_id == conversation_id)
+        if organization_id is not None:
+            query = query.where(ConversationModel.organization_id == organization_id)
+        result = await self.session.execute(query)
         model = result.scalar_one_or_none()
         if model is None:
             raise ConversationNotFoundError(f"Conversation '{conversation_id}' not found")

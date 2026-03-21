@@ -39,9 +39,11 @@ class SeedEngine:
 
     @staticmethod
     async def _from_text_local(raw_conversation: str, domain: str) -> dict[str, Any]:
+        from uncase.config import UNCASESettings
         from uncase.core.seed_engine.engine import SeedEngine as _Engine
 
-        engine = _Engine()
+        settings = UNCASESettings()
+        engine = _Engine(confidence_threshold=settings.uncase_pii_confidence_threshold)
         seed = await engine.create_seed(raw_conversation, domain)
         return seed.model_dump(mode="json")
 
@@ -135,14 +137,17 @@ class Trainer:
         base_model: str = "meta-llama/Llama-3.1-8B",
         use_qlora: bool = True,
         use_dp_sgd: bool = False,
-        dp_epsilon: float = 8.0,
-        output_dir: str = "./outputs/lora",
+        dp_epsilon: float | None = None,
+        output_dir: str | None = None,
     ) -> None:
+        from uncase.config import UNCASESettings
+
+        settings = UNCASESettings()
         self._base_model = base_model
         self._use_qlora = use_qlora
         self._use_dp_sgd = use_dp_sgd
-        self._dp_epsilon = dp_epsilon
-        self._output_dir = output_dir
+        self._dp_epsilon = dp_epsilon if dp_epsilon is not None else settings.uncase_dp_epsilon
+        self._output_dir = output_dir if output_dir is not None else settings.uncase_models_dir
 
     def train(self, conversations: list[dict[str, Any]]) -> str:
         """Train a LoRA adapter (synchronous). Returns adapter path."""

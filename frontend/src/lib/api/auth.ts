@@ -68,3 +68,15 @@ export function logout(): void {
     window.location.href = '/login'
   }
 }
+
+// ─── Setup status ───
+
+export interface SetupStatus {
+  has_users: boolean
+  has_organizations: boolean
+  setup_complete: boolean
+}
+
+export function getSetupStatus(signal?: AbortSignal) {
+  return apiGet<SetupStatus>('/health/setup', { signal })
+}
