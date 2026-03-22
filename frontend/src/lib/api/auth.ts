@@ -1,4 +1,4 @@
-import type { LoginRequest, RegisterRequest, TokenResponse, TokenVerifyResponse, UserMeResponse } from '@/types/api'
+import type { LoginRequest, OrgDetailResponse, OrgMembersListResponse, RegisterRequest, TokenResponse, TokenVerifyResponse, UserMeResponse } from '@/types/api'
 import { apiGet, apiPost } from './client'
 
 // ─── Auth API ───
@@ -79,4 +79,14 @@ export interface SetupStatus {
 
 export function getSetupStatus(signal?: AbortSignal) {
   return apiGet<SetupStatus>('/health/setup', { signal })
+}
+
+// ─── Organization detail ───
+
+export function getMyOrganization(signal?: AbortSignal) {
+  return apiGet<OrgDetailResponse>('/api/v1/auth/organization', { signal })
+}
+
+export function getOrgMembers(signal?: AbortSignal) {
+  return apiGet<OrgMembersListResponse>('/api/v1/auth/organization/members', { signal })
 }

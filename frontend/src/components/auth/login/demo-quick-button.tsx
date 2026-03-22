@@ -17,7 +17,6 @@ import {
 } from '@/components/ui/dialog'
 import { Progress } from '@/components/ui/progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { SecondaryFlowButton } from '@/components/ui/flow-button'
 
 const DOMAINS = [
   { value: 'automotive.sales', label: 'Automotive Sales' },
@@ -52,10 +51,10 @@ export default function DemoQuickButton() {
 
   return (
     <>
-      <SecondaryFlowButton className="w-full *:w-full" onClick={() => setDialogOpen(true)}>
+      <Button variant="secondary" className="w-full" onClick={() => setDialogOpen(true)}>
         <PlayIcon className="size-4" />
         Instant Demo
-      </SecondaryFlowButton>
+      </Button>
 
       <Dialog open={dialogOpen} onOpenChange={(open) => !sandbox.booting && setDialogOpen(open)}>
         <DialogContent className="sm:max-w-md">

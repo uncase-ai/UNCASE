@@ -78,3 +78,34 @@ class UserMeResponse(BaseModel):
 
     user: UserResponse
     memberships: list[MembershipInfo]
+
+
+class OrgDetailResponse(BaseModel):
+    """Full organization details with user's role."""
+
+    id: str
+    name: str
+    slug: str
+    description: str | None = None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    role: str = Field(..., description="Current user's role in this organization")
+    member_count: int = Field(..., description="Total number of members")
+
+
+class OrgMemberResponse(BaseModel):
+    """Organization member info."""
+
+    user_id: str
+    email: str
+    display_name: str
+    role: str
+    joined_at: str
+
+
+class OrgMembersListResponse(BaseModel):
+    """Response for listing org members."""
+
+    members: list[OrgMemberResponse]
+    total: int

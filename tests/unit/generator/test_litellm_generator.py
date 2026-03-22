@@ -68,7 +68,7 @@ class TestBuildSystemPrompt:
         seed = make_seed(dominio="automotive.sales")
         prompt = _build_system_prompt(seed)
 
-        assert "automotive sales domain" in prompt
+        assert "Automotive Sales" in prompt
         assert "dealership" in prompt.lower()
 
     def test_includes_all_six_domains(self) -> None:
@@ -194,8 +194,8 @@ class TestBuildSystemPrompt:
         seed = make_seed()
         prompt = _build_system_prompt(seed)
 
-        assert "NEVER include any real personal information" in prompt
-        assert "factual accuracy" in prompt.lower() or "Factual Constraints" in prompt
+        assert "ABSOLUTELY NO real personal identifiable information" in prompt
+        assert "Factual Fidelity" in prompt or "Factual Constraints" in prompt
 
     def test_no_tools_section_when_empty(self) -> None:
         from uncase.schemas.seed import ParametrosFactuales
@@ -210,7 +210,8 @@ class TestBuildSystemPrompt:
         )
         prompt = _build_system_prompt(seed)
 
-        assert "Available Tools" not in prompt
+        assert "Tool Usage Protocol" not in prompt
+        assert "No tools are defined" in prompt
 
 
 # ─── _build_feedback_augmentation tests ───
@@ -245,20 +246,20 @@ class TestBuildFeedbackAugmentation:
         result = _build_feedback_augmentation(report)
 
         assert "Dialog Coherence" in result
-        assert "responds to or builds upon" in result
+        assert "Role alternation" in result
 
     def test_diversity_failure_adds_instructions(self) -> None:
         report = self._make_report(["diversidad_lexica=0.40 (min 0.55)"])
         result = _build_feedback_augmentation(report)
 
         assert "Lexical Diversity" in result
-        assert "varied vocabulary" in result
+        assert "synonyms" in result.lower()
 
     def test_rouge_failure_adds_instructions(self) -> None:
         report = self._make_report(["rouge_l=0.50 (min 0.65)"])
         result = _build_feedback_augmentation(report)
 
-        assert "Structural Coherence" in result
+        assert "ROUGE-L" in result
 
     def test_fidelity_failure_adds_instructions(self) -> None:
         report = self._make_report(["fidelidad_factual=0.80 (min 0.90)"])
@@ -270,8 +271,8 @@ class TestBuildFeedbackAugmentation:
         report = self._make_report(["privacy_score=0.05 (must be 0.0)"])
         result = _build_feedback_augmentation(report)
 
-        assert "Privacy (CRITICAL)" in result
-        assert "ABSOLUTELY NO" in result
+        assert "Privacy (CRITICAL" in result
+        assert "fictional" in result.lower()
 
     def test_memorization_failure_adds_instructions(self) -> None:
         report = self._make_report(["memorizacion=0.02 (must be < 0.01)"])
@@ -291,7 +292,7 @@ class TestBuildFeedbackAugmentation:
 
         assert "Dialog Coherence" in result
         assert "Lexical Diversity" in result
-        assert "Privacy (CRITICAL)" in result
+        assert "Privacy (CRITICAL" in result
 
 
 # ─── _parse_llm_response tests ───

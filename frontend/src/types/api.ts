@@ -924,6 +924,31 @@ export interface MembershipInfo {
   role: 'owner' | 'admin' | 'member' | 'viewer'
 }
 
+export interface OrgDetailResponse {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  role: 'owner' | 'admin' | 'member' | 'viewer'
+  member_count: number
+}
+
+export interface OrgMemberResponse {
+  user_id: string
+  email: string
+  display_name: string
+  role: 'owner' | 'admin' | 'member' | 'viewer'
+  joined_at: string
+}
+
+export interface OrgMembersListResponse {
+  members: OrgMemberResponse[]
+  total: number
+}
+
 export interface UserMeResponse {
   user: UserResponse
   memberships: MembershipInfo[]

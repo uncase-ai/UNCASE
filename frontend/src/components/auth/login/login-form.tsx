@@ -7,18 +7,18 @@ import { EyeIcon, EyeOffIcon, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 
-import { loginWithPassword, storeTokens } from '@/lib/api/auth'
+import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { PrimaryFlowButton } from '@/components/ui/flow-button'
 
 const LoginForm = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isVisible, setIsVisible] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { login } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,20 +26,17 @@ const LoginForm = () => {
     if (!email || !password) return
 
     setIsSubmitting(true)
-    const { data, error } = await loginWithPassword(email, password)
+    const { success, error } = await login(email, password)
 
     setIsSubmitting(false)
 
-    if (error) {
-      toast.error(error.message || 'Invalid credentials')
+    if (!success) {
+      toast.error(error || 'Invalid credentials')
 
       return
     }
 
-    if (data) {
-      storeTokens(data.access_token, data.refresh_token)
-      router.push('/dashboard')
-    }
+    router.push('/dashboard')
   }
 
   return (
@@ -101,9 +98,9 @@ const LoginForm = () => {
         </Link>
       </div>
 
-      <PrimaryFlowButton className='w-full *:w-full [&>button]:after:-inset-55' type='submit' disabled={isSubmitting}>
+      <Button className='w-full' type='submit' disabled={isSubmitting}>
         {isSubmitting ? <><Loader2 className='mr-2 size-4 animate-spin' />Signing in...</> : 'Sign In'}
-      </PrimaryFlowButton>
+      </Button>
     </form>
   )
 }

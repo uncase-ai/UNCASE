@@ -2,18 +2,18 @@
 
 import { useEffect, useState } from 'react'
 
-import { Check, Copy, Eye, EyeOff, Key, Link2, Loader2, Play, Plus, RefreshCw, Server, Shield, ShieldOff, Star, Trash2, X, Zap } from 'lucide-react'
+import { Building2, Check, Copy, Crown, Eye, EyeOff, Key, Link2, Loader2, Play, Plus, RefreshCw, Server, Shield, ShieldOff, Star, Trash2, UserIcon, Users, X, Zap } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
-import type { APIKeyCreatedResponse, APIKeyResponse, BlockchainStats, OrganizationResponse, ProviderResponse, ProviderTestResponse } from '@/types/api'
+import type { APIKeyCreatedResponse, APIKeyResponse, BlockchainStats, OrgDetailResponse, OrgMemberResponse, ProviderResponse, ProviderTestResponse } from '@/types/api'
 import { PROVIDER_TYPES } from '@/types/api'
+import { useAuth } from '@/contexts/auth-context'
+import { getMyOrganization, getOrgMembers } from '@/lib/api/auth'
 import { checkApiHealth, clearStoredApiKey, setStoredApiKey } from '@/lib/api/client'
 import { fetchBlockchainStats } from '@/lib/api/blockchain'
 import {
   createApiKey,
-  createOrganization,
   fetchApiKeys,
-  fetchOrganization,
   revokeApiKey,
   rotateApiKey
 } from '@/lib/api/organizations'
@@ -59,21 +59,30 @@ function saveBypassWords(words: string[]) {
 
 export { loadBypassWords }
 
+const ROLE_LABELS: Record<string, string> = {
+  owner: 'Owner',
+  admin: 'Admin',
+  member: 'Member',
+  viewer: 'Viewer'
+}
+
+const ROLE_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'info' | 'error'> = {
+  owner: 'success',
+  admin: 'info',
+  member: 'default',
+  viewer: 'warning'
+}
+
 export function SettingsPage() {
   const { theme, setTheme } = useTheme()
+  const { user, isOpenMode } = useAuth()
 
   // ─── Organization ───
-  const [orgId, setOrgId] = useState<string>('')
+  const [orgDetail, setOrgDetail] = useState<OrgDetailResponse | null>(null)
   const [orgLoading, setOrgLoading] = useState(false)
-  const [org, setOrg] = useState<OrganizationResponse | null>(null)
   const [orgError, setOrgError] = useState<string | null>(null)
-
-  // ─── Create Org ───
-  const [showCreateOrg, setShowCreateOrg] = useState(false)
-  const [newOrgName, setNewOrgName] = useState('')
-  const [newOrgSlug, setNewOrgSlug] = useState('')
-  const [newOrgDesc, setNewOrgDesc] = useState('')
-  const [createOrgLoading, setCreateOrgLoading] = useState(false)
+  const [members, setMembers] = useState<OrgMemberResponse[]>([])
+  const [membersLoading, setMembersLoading] = useState(false)
 
   // ─── API Keys ───
   const [keys, setKeys] = useState<APIKeyResponse[]>([])
@@ -181,14 +190,20 @@ export function SettingsPage() {
     custom: 'model-name'
   }
 
-  const loadOrg = async (id: string) => {
+  const loadOrgDetail = async () => {
     setOrgLoading(true)
     setOrgError(null)
-    const res = await fetchOrganization(id)
+    const res = await getMyOrganization()
 
     if (res.data) {
-      setOrg(res.data)
-      loadKeys(id)
+      setOrgDetail(res.data)
+      localStorage.setItem(ORG_ID_KEY, res.data.id)
+      loadKeys(res.data.id)
+
+      // Load members if user is owner/admin
+      if (res.data.role === 'owner' || res.data.role === 'admin') {
+        loadMembers()
+      }
     } else {
       setOrgError(res.error?.message ?? 'Failed to load organization')
     }
@@ -204,12 +219,18 @@ export function SettingsPage() {
     setKeysLoading(false)
   }
 
-  useEffect(() => {
-    const stored = localStorage.getItem(ORG_ID_KEY)
+  const loadMembers = async () => {
+    setMembersLoading(true)
+    const res = await getOrgMembers()
 
-    if (stored) {
-      setOrgId(stored)
-      loadOrg(stored)
+    if (res.data) setMembers(res.data.members)
+    setMembersLoading(false)
+  }
+
+  useEffect(() => {
+    // Load org details via Bearer token (not API key)
+    if (user && !isOpenMode) {
+      loadOrgDetail()
     }
 
     // Load active API key prefix for display
@@ -224,64 +245,34 @@ export function SettingsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleConnectOrg = () => {
-    if (!orgId.trim()) return
-    localStorage.setItem(ORG_ID_KEY, orgId.trim())
-    loadOrg(orgId.trim())
-  }
-
-  const handleCreateOrg = async () => {
-    if (!newOrgName.trim()) return
-    setCreateOrgLoading(true)
-
-    const res = await createOrganization({
-      name: newOrgName.trim(),
-      slug: newOrgSlug.trim() || undefined,
-      description: newOrgDesc.trim() || undefined
-    })
-
-    if (res.data) {
-      setOrg(res.data)
-      setOrgId(res.data.id)
-      localStorage.setItem(ORG_ID_KEY, res.data.id)
-      setShowCreateOrg(false)
-      setNewOrgName('')
-      setNewOrgSlug('')
-      setNewOrgDesc('')
-      loadKeys(res.data.id)
-    }
-
-    setCreateOrgLoading(false)
-  }
-
   const handleCreateKey = async () => {
-    if (!newKeyName.trim() || !org) return
+    if (!newKeyName.trim() || !orgDetail) return
     setCreateKeyLoading(true)
-    const res = await createApiKey(org.id, { name: newKeyName.trim(), scopes: newKeyScopes })
+    const res = await createApiKey(orgDetail.id, { name: newKeyName.trim(), scopes: newKeyScopes })
 
     if (res.data) {
       setCreatedKey(res.data)
       setShowCreateKey(false)
       setNewKeyName('')
-      loadKeys(org.id)
+      loadKeys(orgDetail.id)
     }
 
     setCreateKeyLoading(false)
   }
 
   const handleRevokeKey = async (keyId: string) => {
-    if (!org) return
-    await revokeApiKey(org.id, keyId)
-    loadKeys(org.id)
+    if (!orgDetail) return
+    await revokeApiKey(orgDetail.id, keyId)
+    loadKeys(orgDetail.id)
   }
 
   const handleRotateKey = async (keyId: string) => {
-    if (!org) return
-    const res = await rotateApiKey(org.id, keyId)
+    if (!orgDetail) return
+    const res = await rotateApiKey(orgDetail.id, keyId)
 
     if (res.data) {
       setCreatedKey(res.data)
-      loadKeys(org.id)
+      loadKeys(orgDetail.id)
     }
   }
 
@@ -455,48 +446,122 @@ export function SettingsPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-sm">Organization</CardTitle>
-              <CardDescription>Connect to or create an organization</CardDescription>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Building2 className="size-4" /> Organization
+              </CardTitle>
+              <CardDescription>
+                {orgDetail ? 'Your organization details and membership' : 'Organization membership'}
+              </CardDescription>
             </div>
-            <Button variant="outline" size="sm" onClick={() => setShowCreateOrg(true)}>
-              <Plus className="mr-1 size-3" /> Create Organization
-            </Button>
+            {orgDetail && (
+              <StatusBadge variant={ROLE_VARIANTS[orgDetail.role] ?? 'default'}>
+                {ROLE_LABELS[orgDetail.role] ?? orgDetail.role}
+              </StatusBadge>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {org ? (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">{org.name}</p>
-                  <p className="text-xs text-muted-foreground">Slug: {org.slug}</p>
+          {orgLoading ? (
+            <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" /> Loading organization...
+            </div>
+          ) : orgDetail ? (
+            <div className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-lg border px-4 py-3">
+                  <p className="text-xs font-medium uppercase text-muted-foreground">Name</p>
+                  <p className="text-sm font-medium">{orgDetail.name}</p>
                 </div>
-                <StatusBadge variant={org.is_active ? 'success' : 'error'}>
-                  {org.is_active ? 'Active' : 'Inactive'}
-                </StatusBadge>
+                <div className="rounded-lg border px-4 py-3">
+                  <p className="text-xs font-medium uppercase text-muted-foreground">Slug</p>
+                  <p className="text-sm font-mono">{orgDetail.slug}</p>
+                </div>
+                <div className="rounded-lg border px-4 py-3">
+                  <p className="text-xs font-medium uppercase text-muted-foreground">Members</p>
+                  <p className="text-sm font-medium">{orgDetail.member_count}</p>
+                </div>
+                <div className="rounded-lg border px-4 py-3">
+                  <p className="text-xs font-medium uppercase text-muted-foreground">Status</p>
+                  <StatusBadge variant={orgDetail.is_active ? 'success' : 'error'}>
+                    {orgDetail.is_active ? 'Active' : 'Inactive'}
+                  </StatusBadge>
+                </div>
               </div>
-              {org.description && <p className="text-sm text-muted-foreground">{org.description}</p>}
-              <p className="text-xs text-muted-foreground">ID: {org.id}</p>
+              {orgDetail.description && (
+                <p className="text-sm text-muted-foreground">{orgDetail.description}</p>
+              )}
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>ID: <code>{orgDetail.id}</code></span>
+                <span>·</span>
+                <span>Your role: <strong>{ROLE_LABELS[orgDetail.role] ?? orgDetail.role}</strong></span>
+              </div>
+            </div>
+          ) : isOpenMode ? (
+            <div className="py-4 text-center text-sm text-muted-foreground">
+              Running in open mode (no organization). Register an account to create an organization.
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <Input
-                placeholder="Organization ID"
-                value={orgId}
-                onChange={e => setOrgId(e.target.value)}
-                className="max-w-xs"
-              />
-              <Button variant="outline" size="sm" onClick={handleConnectOrg} disabled={orgLoading}>
-                {orgLoading ? 'Loading...' : 'Connect'}
-              </Button>
+            <div className="py-4 text-center text-sm text-muted-foreground">
+              {orgError ? (
+                <p className="text-destructive">{orgError}</p>
+              ) : (
+                'No organization found. Contact your administrator.'
+              )}
             </div>
           )}
-          {orgError && <p className="text-xs text-destructive">{orgError}</p>}
         </CardContent>
       </Card>
 
-      {/* API Keys */}
-      {org && (
+      {/* Members — only for owner/admin */}
+      {orgDetail && (orgDetail.role === 'owner' || orgDetail.role === 'admin') && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Users className="size-4" /> Members
+                </CardTitle>
+                <CardDescription>People in {orgDetail.name}</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {membersLoading ? (
+              <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" /> Loading members...
+              </div>
+            ) : members.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">No members found.</p>
+            ) : (
+              <div className="space-y-2">
+                {members.map(member => (
+                  <div key={member.user_id} className="flex items-center justify-between rounded-lg border px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex size-8 items-center justify-center rounded-full bg-muted">
+                        {member.role === 'owner' ? (
+                          <Crown className="size-4 text-amber-500" />
+                        ) : (
+                          <UserIcon className="size-4 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{member.display_name}</p>
+                        <p className="text-xs text-muted-foreground">{member.email}</p>
+                      </div>
+                    </div>
+                    <StatusBadge variant={ROLE_VARIANTS[member.role] ?? 'default'}>
+                      {ROLE_LABELS[member.role] ?? member.role}
+                    </StatusBadge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* API Keys — only for owner/admin */}
+      {orgDetail && (orgDetail.role === 'owner' || orgDetail.role === 'admin') && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -504,7 +569,7 @@ export function SettingsPage() {
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <Key className="size-4" /> API Keys
                 </CardTitle>
-                <CardDescription>Manage API keys for {org.name}</CardDescription>
+                <CardDescription>Manage API keys for {orgDetail.name}</CardDescription>
               </div>
               <Button variant="outline" size="sm" onClick={() => setShowCreateKey(true)}>
                 <Plus className="mr-1 size-3" /> Create Key
@@ -567,33 +632,6 @@ export function SettingsPage() {
           </DialogContent>
         </Dialog>
       )}
-
-      {/* Create Org dialog */}
-      <Dialog open={showCreateOrg} onOpenChange={setShowCreateOrg}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create Organization</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <Label>Name *</Label>
-              <Input value={newOrgName} onChange={e => setNewOrgName(e.target.value)} placeholder="My Organization" />
-            </div>
-            <div className="space-y-1">
-              <Label>Slug</Label>
-              <Input value={newOrgSlug} onChange={e => setNewOrgSlug(e.target.value)} placeholder="my-org" />
-              <p className="text-xs text-muted-foreground">Lowercase, hyphens only. Auto-generated if empty.</p>
-            </div>
-            <div className="space-y-1">
-              <Label>Description</Label>
-              <Input value={newOrgDesc} onChange={e => setNewOrgDesc(e.target.value)} placeholder="Optional description" />
-            </div>
-            <Button onClick={handleCreateOrg} disabled={createOrgLoading || !newOrgName.trim()}>
-              {createOrgLoading ? 'Creating...' : 'Create'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Create Key dialog */}
       <Dialog open={showCreateKey} onOpenChange={setShowCreateKey}>

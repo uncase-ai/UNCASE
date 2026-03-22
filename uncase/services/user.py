@@ -195,3 +195,31 @@ class UserService:
             role=role,
         )
         return membership
+
+    async def get_org_members(self, organization_id: str) -> list[dict[str, str]]:
+        """List all members of an organization with their user details.
+
+        Args:
+            organization_id: Organization UUID hex string.
+
+        Returns:
+            List of dicts with user_id, email, display_name, role, and created_at.
+        """
+        stmt = (
+            select(OrgMembershipModel)
+            .where(OrgMembershipModel.organization_id == organization_id)
+            .options(selectinload(OrgMembershipModel.user))
+        )
+        result = await self._session.execute(stmt)
+        memberships = result.scalars().all()
+
+        return [
+            {
+                "user_id": m.user_id,
+                "email": m.user.email if m.user else "",
+                "display_name": m.user.display_name if m.user else "",
+                "role": m.role,
+                "joined_at": m.created_at.isoformat() if m.created_at else "",
+            }
+            for m in memberships
+        ]

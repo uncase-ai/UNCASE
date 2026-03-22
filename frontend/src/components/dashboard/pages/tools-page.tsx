@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Cloud, CloudOff, Code2, Loader2, Lock, Plus, Puzzle, RefreshCw, Sprout, Trash2, Unlock } from 'lucide-react'
 
 import type { SeedSchema, ToolDefinition } from '@/types/api'
@@ -64,6 +65,7 @@ const BUILTIN_PREFIXES = [
 ]
 
 export function ToolsPage() {
+  const router = useRouter()
   const [tools, setTools] = useState<ToolDefinition[]>(() => loadTools())
   const [apiOnline, setApiOnline] = useState<boolean | null>(null)
   const [syncing, setSyncing] = useState(false)
@@ -372,15 +374,19 @@ export function ToolsPage() {
                         </Badge>
                       ))}
                       {seedCount > 0 && (
-                        <Link
-                          href={`/dashboard/pipeline/seeds?tool=${encodeURIComponent(tool.name)}`}
-                          onClick={e => e.stopPropagation()}
+                        <button
+                          type="button"
+                          onClick={e => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            router.push(`/dashboard/pipeline/seeds?tool=${encodeURIComponent(tool.name)}`)
+                          }}
                         >
                           <Badge variant="outline" className="gap-0.5 text-xs transition-colors hover:bg-muted">
                             <Sprout className="size-2.5" />
                             {seedCount} seed{seedCount > 1 ? 's' : ''}
                           </Badge>
-                        </Link>
+                        </button>
                       )}
                     </div>
                   </CardContent>

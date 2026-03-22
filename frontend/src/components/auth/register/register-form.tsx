@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { PrimaryFlowButton } from '@/components/ui/flow-button'
 
 const RegisterForm = () => {
   const [displayName, setDisplayName] = useState('')
@@ -171,9 +170,9 @@ const RegisterForm = () => {
         <Label htmlFor='agreeTerms'>I agree to privacy policy & terms</Label>
       </div>
 
-      <PrimaryFlowButton className='w-full *:w-full [&>button]:after:-inset-55' type='submit' disabled={isSubmitting}>
+      <Button className='w-full' type='submit' disabled={isSubmitting}>
         {isSubmitting ? <><Loader2 className='mr-2 size-4 animate-spin' />Creating account...</> : 'Create Account'}
-      </PrimaryFlowButton>
+      </Button>
     </form>
   )
 }

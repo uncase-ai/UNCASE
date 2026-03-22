@@ -5,14 +5,23 @@ from __future__ import annotations
 from typing import Annotated
 
 import structlog
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from uncase.api.deps import get_current_user, get_db, get_settings
 from uncase.config import UNCASESettings
 from uncase.db.models.user import UserModel
-from uncase.schemas.user import MembershipInfo, UserLoginRequest, UserMeResponse, UserRegisterRequest, UserResponse
+from uncase.schemas.user import (
+    MembershipInfo,
+    OrgDetailResponse,
+    OrgMemberResponse,
+    OrgMembersListResponse,
+    UserLoginRequest,
+    UserMeResponse,
+    UserRegisterRequest,
+    UserResponse,
+)
 from uncase.services.auth import AuthService
 from uncase.services.user import UserService
 
@@ -183,4 +192,86 @@ async def get_me(
     return UserMeResponse(
         user=UserResponse.model_validate(user),
         memberships=[MembershipInfo(**m) for m in memberships_raw],
+    )
+
+
+@router.get("/organization", response_model=OrgDetailResponse)
+async def get_my_organization(
+    user: Annotated[UserModel, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> OrgDetailResponse:
+    """Return full details of the authenticated user's organization.
+
+    Requires a valid Bearer token. Returns the first org membership's organization.
+    """
+    user_service = UserService(session)
+    memberships_raw = await user_service.get_memberships(user.id)
+
+    if not memberships_raw:
+        raise HTTPException(status_code=404, detail="User has no organization membership")
+
+    membership = memberships_raw[0]
+    org_id = membership["organization_id"]
+    role = membership["role"]
+
+    # Fetch full org details
+    from sqlalchemy import func
+    from sqlalchemy import select as sa_select
+
+    from uncase.db.models.organization import OrganizationModel
+    from uncase.db.models.user import OrgMembershipModel
+
+    stmt = sa_select(OrganizationModel).where(OrganizationModel.id == org_id)
+    result = await session.execute(stmt)
+    org = result.scalar_one_or_none()
+
+    if org is None:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    # Count members
+    count_stmt = sa_select(func.count()).where(OrgMembershipModel.organization_id == org_id)
+    count_result = await session.execute(count_stmt)
+    member_count = count_result.scalar() or 0
+
+    return OrgDetailResponse(
+        id=org.id,
+        name=org.name,
+        slug=org.slug,
+        description=org.description,
+        is_active=org.is_active,
+        created_at=org.created_at,
+        updated_at=org.updated_at,
+        role=role,
+        member_count=member_count,
+    )
+
+
+@router.get("/organization/members", response_model=OrgMembersListResponse)
+async def get_org_members(
+    user: Annotated[UserModel, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> OrgMembersListResponse:
+    """List members of the authenticated user's organization.
+
+    Only accessible by users with admin or owner role.
+    Requires a valid Bearer token.
+    """
+    user_service = UserService(session)
+    memberships_raw = await user_service.get_memberships(user.id)
+
+    if not memberships_raw:
+        raise HTTPException(status_code=404, detail="User has no organization membership")
+
+    membership = memberships_raw[0]
+    role = membership["role"]
+
+    if role not in ("owner", "admin"):
+        raise HTTPException(status_code=403, detail="Only owners and admins can view members")
+
+    org_id = membership["organization_id"]
+    members = await user_service.get_org_members(org_id)
+
+    return OrgMembersListResponse(
+        members=[OrgMemberResponse(**m) for m in members],
+        total=len(members),
     )

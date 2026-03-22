@@ -72,6 +72,13 @@ class PasosTurnos(BaseModel):
     turnos_min: int = Field(..., ge=1, description="Minimum number of turns")
     turnos_max: int = Field(..., ge=1, description="Maximum number of turns")
     flujo_esperado: list[str] = Field(..., min_length=1, description="Expected conversation flow steps")
+    flujo_con_roles: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Role-annotated flow steps (e.g. 'cliente: Solicita información sobre vehículos'). "
+            "When present, provides stronger guidance for role assignment per flow stage."
+        ),
+    )
 
     @model_validator(mode="after")
     def validate_turnos_range(self) -> PasosTurnos:
@@ -124,6 +131,38 @@ class SeedSchema(BaseModel):
 
     # Quality
     metricas_calidad: MetricasCalidad = Field(default_factory=MetricasCalidad, description="Quality thresholds")
+
+    # Domain-specific generation instructions (self-contained seed)
+    instrucciones_dominio: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Domain-specific instructions that guide the generator. These are injected "
+            "directly into the system prompt to enforce industry regulations, compliance "
+            "rules, and domain conventions (e.g. 'Always verify patient identity before "
+            "discussing diagnosis', 'Never recommend specific financial products without "
+            "risk disclosure')."
+        ),
+    )
+
+    restricciones_negativas: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Patterns or content that must NOT appear in generated conversations. "
+            "Used to prevent common LLM failure modes like generic greetings, "
+            "out-of-domain content, or prohibited advice (e.g. 'Do not provide "
+            "specific legal advice', 'Do not use informal language')."
+        ),
+    )
+
+    ejemplo_conversacion: list[dict[str, str]] | None = Field(
+        default=None,
+        description=(
+            "2-4 example turns demonstrating the expected conversation style, "
+            "vocabulary, and structure. Each dict has 'rol' and 'contenido' keys. "
+            "Used as few-shot examples in the system prompt to ground the LLM's "
+            "output format and tone."
+        ),
+    )
 
     # Scenario templates (optional — Phase 2)
     scenarios: list[ScenarioTemplate] | None = Field(
