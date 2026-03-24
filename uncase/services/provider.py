@@ -33,8 +33,10 @@ logger = get_logger(__name__)
 # Without these prefixes LiteLLM falls back to Vertex AI / Azure AD
 # which require separate cloud credentials.
 _PROVIDER_MODEL_PREFIXES: dict[str, str] = {
+    "anthropic": "anthropic/",
     "google": "gemini/",
     "groq": "groq/",
+    "openai": "openai/",
 }
 
 
